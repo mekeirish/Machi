@@ -1,1 +1,8 @@
-
+[
+    {
+        "nom": "Farid",
+        "telephone": "0000000021",
+        "email": "farid@gmail.com",
+        "motDePasse": "farid123"
+    }
+]
