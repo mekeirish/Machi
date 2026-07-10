@@ -72,7 +72,7 @@
         .btn-create {
             position: absolute;
             top: 1.2rem;
-            right: 7.5rem; /* à côté du logout */
+            right: 7.5rem;
             background: rgba(0,180,170,0.12);
             border: 1px solid rgba(0,180,170,0.2);
             border-radius: 40px;
@@ -132,10 +132,10 @@
         .btn-cancel { background: rgba(255,70,70,0.12); border-color: rgba(255,70,70,0.2); color: #ffb0b0; }
         .btn-cancel:hover { background: rgba(255,70,70,0.22); }
 
-        /* --- Liste des courses (grille) --- */
+        /* --- Grille des courses --- */
         .courses-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
             gap: 1rem;
             margin-top: 1.5rem;
         }
@@ -143,7 +143,7 @@
             background: rgba(255,255,255,0.03);
             border: 1px solid rgba(255,255,255,0.06);
             border-radius: 1.2rem;
-            padding: 0.8rem;
+            padding: 0.8rem 0.6rem;
             text-align: center;
             backdrop-filter: blur(4px);
             transition: background 0.2s;
@@ -162,13 +162,40 @@
             color: #8aa0c8;
             margin-top: 0.2rem;
         }
-        .course-card .prix-places {
-            display: flex;
-            justify-content: center;
-            gap: 0.8rem;
-            margin-top: 0.4rem;
+        .course-card .prix {
             font-size: 0.8rem;
             color: #b0c8e8;
+            margin-top: 0.3rem;
+        }
+
+        /* --- Les 7 carreaux --- */
+        .seat-grid {
+            display: flex;
+            justify-content: center;
+            gap: 0.4rem;
+            margin-top: 0.6rem;
+        }
+        .seat {
+            width: 22px;
+            height: 22px;
+            border-radius: 6px;
+            border: 1px solid rgba(255,255,255,0.15);
+            transition: background 0.2s;
+        }
+        .seat.driver {
+            background: #00b8b0;
+            border-color: #00d4cc;
+            box-shadow: 0 0 8px rgba(0,200,180,0.3);
+        }
+        .seat.available {
+            background: transparent;
+            border-color: rgba(255,255,255,0.3);
+        }
+        .seat.disabled {
+            background: rgba(255,255,255,0.04);
+            border-color: rgba(255,255,255,0.06);
+            opacity: 0.3;
+            cursor: not-allowed;
         }
 
         /* --- Toast --- */
@@ -191,9 +218,10 @@
 
         /* --- Responsive --- */
         @media (max-width: 600px) {
-            .btn-create { right: 1rem; top: 4.5rem; } /* décalé sous logout */
+            .btn-create { right: 1rem; top: 4.5rem; }
             .btn-logout { top: 1rem; right: 1rem; }
-            .courses-grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
+            .courses-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }
+            .seat { width: 18px; height: 18px; }
         }
         @media (max-width: 480px) {
             .glass-card { padding: 1.8rem 1.2rem; }
@@ -216,7 +244,7 @@
         </div>
     </div>
 
-    <!-- INTERFACE PRINCIPALE (dashboard) -->
+    <!-- INTERFACE PRINCIPALE -->
     <div id="mainInterface">
         <button id="btnLogout" class="btn-logout">✕ Déconnexion</button>
         <button id="btnCreateCourse" class="btn-create" style="display:none;">➕ Créer</button>
@@ -237,7 +265,7 @@
         <div class="modal-content">
             <h2 class="text-2xl font-semibold text-center text-cyan-200 mb-5">Créer un compte</h2>
             <label>Je suis</label>
-            <select id="role" class="mb-1">
+            <select id="role">
                 <option value="passager">🚶 Passager</option>
                 <option value="chauffeur">🚗 Chauffeur</option>
             </select>
@@ -283,8 +311,8 @@
             <input type="time" id="courseHeure" />
             <label>Prix (unités)</label>
             <input type="number" id="coursePrix" placeholder="ex: 150" min="1" />
-            <label>Places disponibles</label>
-            <input type="number" id="coursePlaces" placeholder="ex: 3" min="1" max="7" />
+            <label>Places disponibles (hors chauffeur)</label>
+            <input type="number" id="coursePlaces" placeholder="ex: 3" min="1" max="6" />
             <div class="flex gap-3 mt-6">
                 <button id="btnValiderCourse" class="btn-led btn-validate flex-1">✔ Confirmer</button>
                 <button id="btnAnnulerCourse" class="btn-led btn-cancel flex-1">✖ Annuler</button>
@@ -308,11 +336,9 @@
             const coursesGrid = document.getElementById('coursesGrid');
             const noCoursesMsg = document.getElementById('noCoursesMsg');
 
-            // Boutons accueil
             const btnInscription = document.getElementById('btnInscription');
             const btnConnexion = document.getElementById('btnConnexion');
 
-            // Inscription
             const modalInscription = document.getElementById('modalInscription');
             const btnValiderInscription = document.getElementById('btnValiderInscription');
             const btnAnnulerInscription = document.getElementById('btnAnnulerInscription');
@@ -322,18 +348,15 @@
             const emailInput = document.getElementById('email');
             const pwdInput = document.getElementById('motDePasse');
 
-            // Connexion
             const modalConnexion = document.getElementById('modalConnexion');
             const loginEmail = document.getElementById('loginEmail');
             const loginPassword = document.getElementById('loginPassword');
             const btnValiderConnexion = document.getElementById('btnValiderConnexion');
             const btnAnnulerConnexion = document.getElementById('btnAnnulerConnexion');
 
-            // Déconnexion et Créer
             const btnLogout = document.getElementById('btnLogout');
             const btnCreateCourse = document.getElementById('btnCreateCourse');
 
-            // Modale création course
             const modalCreateCourse = document.getElementById('modalCreateCourse');
             const courseDepart = document.getElementById('courseDepart');
             const courseArrivee = document.getElementById('courseArrivee');
@@ -343,7 +366,6 @@
             const btnValiderCourse = document.getElementById('btnValiderCourse');
             const btnAnnulerCourse = document.getElementById('btnAnnulerCourse');
 
-            // Toast
             const toast = document.getElementById('toast');
 
             // --- Clés localStorage ---
@@ -412,25 +434,24 @@
                 welcomeMessage.textContent = `👋 Bonjour ${user.nom}`;
                 userRoleBadge.textContent = `Rôle : ${roleFr}`;
 
-                // Afficher le bouton "Créer" seulement pour les chauffeurs
                 if (user.role === 'chauffeur') {
                     btnCreateCourse.style.display = 'inline-block';
                 } else {
                     btnCreateCourse.style.display = 'none';
                 }
 
-                // Charger les courses
                 renderCourses(user);
             }
 
-            // --- Affichage des courses ---
+            // --- Affichage des courses avec les 7 carreaux ---
             function renderCourses(user) {
                 const allCourses = getCourses();
-                // Filtrer : pour un chauffeur, ses propres courses ; pour un passager, toutes ? On affiche toutes pour l'instant.
-                // Mais on va afficher toutes les courses pour tout le monde (plus tard on filtrera)
-                const coursesToShow = user.role === 'chauffeur' ?
-                    allCourses.filter(c => c.chauffeurEmail === user.email) :
-                    allCourses; // pour passager, toutes les courses disponibles
+                let coursesToShow = [];
+                if (user.role === 'chauffeur') {
+                    coursesToShow = allCourses.filter(c => c.chauffeurEmail === user.email);
+                } else {
+                    coursesToShow = allCourses; // passager voit tout
+                }
 
                 coursesGrid.innerHTML = '';
                 if (coursesToShow.length === 0) {
@@ -444,14 +465,54 @@
                 coursesToShow.forEach(c => {
                     const card = document.createElement('div');
                     card.className = 'course-card';
-                    card.innerHTML = `
-                        <div class="titre">${c.depart} → ${c.arrivee}</div>
-                        <div class="detail">🕐 ${c.heure}</div>
-                        <div class="prix-places">
-                            <span>💰 ${c.prix}</span>
-                            <span>👥 ${c.places}</span>
-                        </div>
-                    `;
+
+                    // Titre et infos
+                    const titre = document.createElement('div');
+                    titre.className = 'titre';
+                    titre.textContent = `${c.depart} → ${c.arrivee}`;
+                    card.appendChild(titre);
+
+                    const detail = document.createElement('div');
+                    detail.className = 'detail';
+                    detail.textContent = `🕐 ${c.heure}`;
+                    card.appendChild(detail);
+
+                    const prix = document.createElement('div');
+                    prix.className = 'prix';
+                    prix.textContent = `💰 ${c.prix} unités`;
+                    card.appendChild(prix);
+
+                    // --- Les 7 carreaux ---
+                    const seatGrid = document.createElement('div');
+                    seatGrid.className = 'seat-grid';
+
+                    // Nombre total de places = places passagers + 1 (chauffeur)
+                    const totalPlaces = c.places + 1; // c.places est le nombre de passagers
+                    // On s'assure que totalPlaces <= 7
+                    const placesEffectives = Math.min(totalPlaces, 7);
+                    // Nombre de places désactivées = 7 - placesEffectives
+
+                    // 1er carreau : chauffeur (toujours illuminé)
+                    const driverSeat = document.createElement('div');
+                    driverSeat.className = 'seat driver';
+                    seatGrid.appendChild(driverSeat);
+
+                    // Carreaux pour les passagers (disponibles)
+                    for (let i = 0; i < c.places; i++) {
+                        const seat = document.createElement('div');
+                        seat.className = 'seat available';
+                        seatGrid.appendChild(seat);
+                    }
+
+                    // Carreaux désactivés (places non disponibles)
+                    const disabledCount = 7 - placesEffectives;
+                    for (let i = 0; i < disabledCount; i++) {
+                        const seat = document.createElement('div');
+                        seat.className = 'seat disabled';
+                        seatGrid.appendChild(seat);
+                    }
+
+                    card.appendChild(seatGrid);
                     coursesGrid.appendChild(card);
                 });
             }
@@ -554,7 +615,7 @@
                     return;
                 }
                 if (prix < 1) { showToast('💰 Prix invalide', true); return; }
-                if (places < 1 || places > 7) { showToast('👥 Places entre 1 et 7', true); return; }
+                if (places < 1 || places > 6) { showToast('👥 Places entre 1 et 6 (hors chauffeur)', true); return; }
 
                 const session = getSession();
                 if (!session) { showToast('❌ Vous devez être connecté', true); return; }
@@ -566,7 +627,7 @@
                     arrivee,
                     heure,
                     prix,
-                    places,
+                    places, // nombre de places passagers
                     dateCreation: new Date().toISOString()
                 };
 
@@ -575,7 +636,6 @@
                 saveCourses(courses);
                 showToast(`✅ Course créée : ${depart} → ${arrivee}`);
                 closeModalCreateCourse();
-                // Rafraîchir l'affichage
                 renderCourses(session);
             }
 
