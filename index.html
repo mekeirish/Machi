@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes" />
-    <title>Machi – Chauffeur</title>
+    <title>Machi – Mobile</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz@14..32&display=swap" rel="stylesheet" />
     <style>
@@ -11,11 +11,11 @@
         body {
             font-family: 'Inter', sans-serif;
             min-height: 100vh;
+            background: #0a0d1a;
             display: flex;
             align-items: center;
             justify-content: center;
-            background: #0a0d1a;
-            position: relative;
+            padding: 1rem;
         }
 
         /* --- Cartes glass --- */
@@ -24,20 +24,22 @@
             backdrop-filter: blur(12px) saturate(160%);
             -webkit-backdrop-filter: blur(12px) saturate(160%);
             border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 2.5rem;
-            padding: 2rem;
+            border-radius: 2rem;
+            padding: 1.5rem 1.2rem;
             width: 100%;
+            max-width: 500px;
             transition: opacity 0.3s ease;
         }
         #mainInterface {
             display: none;
-            max-width: 1000px;
+            max-width: 500px;
             min-height: 60vh;
             position: relative;
+            padding-bottom: 5rem;
         }
         #mainInterface.active { display: block; }
 
-        /* --- Boutons --- */
+        /* --- Boutons (plats, sans dégradé ni ombre) --- */
         .btn-led {
             background: #1e2a4a;
             border: 1px solid rgba(255, 255, 255, 0.06);
@@ -54,35 +56,36 @@
         .btn-led:hover { background: #2b3b66; color: #fff; }
         .btn-led:active { background: #16203a; }
 
-        .btn-logout {
-            background: rgba(255,70,70,0.12);
-            border: 1px solid rgba(255,70,70,0.2);
+        /* --- En-tête avec boutons --- */
+        .header-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 0.6rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+        .header-actions .btn-logout,
+        .header-actions .btn-create {
+            background: rgba(255,70,70,0.10);
+            border: 1px solid rgba(255,70,70,0.15);
             border-radius: 40px;
-            padding: 0.4rem 1.2rem;
+            padding: 0.35rem 1.2rem;
             color: #ffb0b0;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             cursor: pointer;
             transition: background 0.2s;
-            position: absolute;
-            top: 1.2rem;
-            right: 1.5rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
         }
-        .btn-logout:hover { background: rgba(255,70,70,0.25); }
-
-        .btn-create {
-            position: absolute;
-            top: 1.2rem;
-            right: 7.5rem;
-            background: rgba(0,180,170,0.12);
-            border: 1px solid rgba(0,180,170,0.2);
-            border-radius: 40px;
-            padding: 0.4rem 1.2rem;
+        .header-actions .btn-create {
+            background: rgba(0,180,170,0.10);
+            border-color: rgba(0,180,170,0.15);
             color: #a0f0e8;
-            font-size: 0.85rem;
-            cursor: pointer;
-            transition: background 0.2s;
         }
-        .btn-create:hover { background: rgba(0,180,170,0.25); }
+        .header-actions .btn-logout:hover { background: rgba(255,70,70,0.2); }
+        .header-actions .btn-create:hover { background: rgba(0,180,170,0.2); }
 
         /* --- Modales --- */
         .modal-overlay {
@@ -101,26 +104,27 @@
             backdrop-filter: blur(16px) saturate(180%);
             border: 1px solid rgba(255,255,255,0.06);
             border-radius: 2rem;
-            padding: 2rem 1.8rem;
+            padding: 2rem 1.5rem;
             max-width: 420px;
             width: 90%;
         }
         .modal-content label {
             color: #b0c8e8;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             font-weight: 500;
             margin-top: 0.75rem;
             display: block;
         }
-        .modal-content input {
+        .modal-content input,
+        .modal-content select {
             width: 100%;
-            padding: 0.7rem 1rem;
-            margin-top: 0.25rem;
+            padding: 0.6rem 1rem;
+            margin-top: 0.2rem;
             background: rgba(255,255,255,0.05);
             border: 1px solid rgba(255,255,255,0.1);
             border-radius: 40px;
             color: #e8f0ff;
-            font-size: 1rem;
+            font-size: 0.95rem;
             outline: none;
             transition: border 0.15s;
         }
@@ -132,70 +136,82 @@
         .btn-cancel { background: rgba(255,70,70,0.12); border-color: rgba(255,70,70,0.2); color: #ffb0b0; }
         .btn-cancel:hover { background: rgba(255,70,70,0.22); }
 
-        /* --- Grille des courses --- */
-        .courses-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+        /* --- Liste des trajets (verticale, pleine largeur) --- */
+        .courses-list {
+            display: flex;
+            flex-direction: column;
             gap: 1rem;
-            margin-top: 1.5rem;
+            margin-top: 1rem;
         }
         .course-card {
             background: rgba(255,255,255,0.03);
             border: 1px solid rgba(255,255,255,0.06);
             border-radius: 1.2rem;
-            padding: 0.8rem 0.6rem;
-            text-align: center;
+            padding: 0.8rem 1rem;
+            width: 100%;
             backdrop-filter: blur(4px);
             transition: background 0.2s;
         }
         .course-card:hover { background: rgba(255,255,255,0.06); }
-        .course-card .titre {
+
+        /* --- Ligne d'info : trajet, heure, prix --- */
+        .course-info {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: baseline;
+            gap: 0.4rem 0.6rem;
+            margin-bottom: 0.5rem;
+        }
+        .course-info .titre {
             font-weight: 600;
-            font-size: 0.9rem;
+            font-size: 1rem;
             color: #d6eaff;
+            flex: 1 1 auto;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
         }
-        .course-card .detail {
-            font-size: 0.75rem;
+        .course-info .heure {
+            font-size: 0.8rem;
             color: #8aa0c8;
-            margin-top: 0.2rem;
+            white-space: nowrap;
         }
-        .course-card .prix {
+        .course-info .prix {
             font-size: 0.8rem;
             color: #b0c8e8;
-            margin-top: 0.3rem;
+            white-space: nowrap;
+            font-weight: 500;
         }
 
-        /* --- Les 7 carreaux --- */
+        /* --- Les 7 carreaux (pleine largeur) --- */
         .seat-grid {
             display: flex;
-            justify-content: center;
-            gap: 0.4rem;
-            margin-top: 0.6rem;
+            justify-content: space-between;
+            gap: 0.3rem;
+            margin-top: 0.3rem;
+            width: 100%;
         }
         .seat {
-            width: 22px;
-            height: 22px;
-            border-radius: 6px;
-            border: 1px solid rgba(255,255,255,0.15);
+            flex: 1;
+            aspect-ratio: 1 / 1;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.10);
             transition: background 0.2s;
+            min-height: 28px;
         }
         .seat.driver {
             background: #00b8b0;
             border-color: #00d4cc;
-            box-shadow: 0 0 8px rgba(0,200,180,0.3);
+            box-shadow: 0 0 10px rgba(0,200,180,0.2);
         }
         .seat.available {
             background: transparent;
-            border-color: rgba(255,255,255,0.3);
+            border-color: rgba(255,255,255,0.25);
         }
         .seat.disabled {
             background: rgba(255,255,255,0.04);
-            border-color: rgba(255,255,255,0.06);
-            opacity: 0.3;
-            cursor: not-allowed;
+            border-color: rgba(255,255,255,0.05);
+            opacity: 0.25;
         }
 
         /* --- Toast --- */
@@ -207,63 +223,79 @@
             background: rgba(0,180,170,0.15);
             backdrop-filter: blur(8px);
             border: 1px solid rgba(0,255,200,0.15);
-            padding: 0.8rem 2rem;
+            padding: 0.7rem 1.8rem;
             border-radius: 60px;
             color: #c0fff0;
             font-weight: 500;
             display: none;
             z-index: 100;
+            font-size: 0.9rem;
+            max-width: 90%;
+            text-align: center;
         }
         .toast.show { display: block; }
 
-        /* --- Responsive --- */
-        @media (max-width: 600px) {
-            .btn-create { right: 1rem; top: 4.5rem; }
-            .btn-logout { top: 1rem; right: 1rem; }
-            .courses-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }
-            .seat { width: 18px; height: 18px; }
+        /* --- Accueil --- */
+        #homeScreen .btn-led {
+            flex: 1;
+            text-align: center;
         }
+
+        /* --- Responsive --- */
         @media (max-width: 480px) {
-            .glass-card { padding: 1.8rem 1.2rem; }
-            #mainInterface { padding: 1.2rem; }
+            body { padding: 0.5rem; }
+            .glass-card, #mainInterface { padding: 1rem 0.8rem; border-radius: 1.5rem; }
+            .modal-content { padding: 1.5rem 1rem; }
+            .course-info .titre { font-size: 0.9rem; }
+            .seat { min-height: 24px; border-radius: 6px; }
+            .header-actions .btn-logout,
+            .header-actions .btn-create { font-size: 0.7rem; padding: 0.25rem 0.9rem; }
+        }
+        @media (min-width: 600px) {
+            #mainInterface, .glass-card { max-width: 550px; }
+            .seat { min-height: 32px; }
         }
     </style>
 </head>
 <body>
 
     <!-- ÉCRAN D'ACCUEIL -->
-    <div id="homeScreen" class="glass-card" style="max-width:440px;">
-        <h1 class="text-3xl font-bold text-center text-cyan-200 mb-2">Machi</h1>
-        <p class="text-center text-slate-400 text-sm mb-8 tracking-wider">⚡ mobilité en circuit fermé</p>
-        <div class="flex flex-col sm:flex-row gap-4">
+    <div id="homeScreen" class="glass-card">
+        <h1 class="text-3xl font-bold text-center text-cyan-200 mb-1">Machi</h1>
+        <p class="text-center text-slate-400 text-sm mb-6 tracking-wider">⚡ mobilité en circuit fermé</p>
+        <div class="flex flex-col sm:flex-row gap-3">
             <button id="btnInscription" class="btn-led">✨ S'inscrire</button>
             <button id="btnConnexion" class="btn-led">🔐 Se connecter</button>
         </div>
-        <div class="mt-6 text-center text-xs text-slate-500">
+        <div class="mt-5 text-center text-xs text-slate-500">
             <span id="stats">👤 0 inscrits</span>
         </div>
     </div>
 
     <!-- INTERFACE PRINCIPALE -->
     <div id="mainInterface">
-        <button id="btnLogout" class="btn-logout">✕ Déconnexion</button>
-        <button id="btnCreateCourse" class="btn-create" style="display:none;">➕ Créer</button>
-
-        <div class="mt-2">
-            <h2 id="welcomeMessage" class="text-2xl font-semibold text-cyan-200 mb-1">Bienvenue</h2>
-            <p id="userRoleBadge" class="text-sm text-slate-400 mb-4">Rôle : —</p>
-            <hr class="border-white/5 mb-4" />
-            <div id="coursesContainer">
-                <p class="text-slate-500 text-center text-sm" id="noCoursesMsg">Aucune course pour le moment.</p>
-                <div id="coursesGrid" class="courses-grid"></div>
+        <!-- En-tête avec boutons -->
+        <div class="header-actions">
+            <div class="text-slate-400 text-sm truncate" id="userRoleBadge">Rôle : —</div>
+            <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+                <button id="btnCreateCourse" class="btn-create" style="display:none;">➕ Créer</button>
+                <button id="btnLogout" class="btn-logout">✕ Déconnexion</button>
             </div>
+        </div>
+
+        <h2 id="welcomeMessage" class="text-xl font-semibold text-cyan-200 mb-1">Bienvenue</h2>
+        <hr class="border-white/5 my-3" />
+
+        <div id="coursesContainer">
+            <p class="text-slate-500 text-center text-sm" id="noCoursesMsg">Aucune course pour le moment.</p>
+            <div id="coursesList" class="courses-list"></div>
         </div>
     </div>
 
     <!-- MODALE INSCRIPTION -->
     <div id="modalInscription" class="modal-overlay">
         <div class="modal-content">
-            <h2 class="text-2xl font-semibold text-center text-cyan-200 mb-5">Créer un compte</h2>
+            <h2 class="text-xl font-semibold text-center text-cyan-200 mb-4">Créer un compte</h2>
             <label>Je suis</label>
             <select id="role">
                 <option value="passager">🚶 Passager</option>
@@ -277,7 +309,7 @@
             <input type="email" id="email" placeholder="ex: farid@gmail.com" />
             <label>Mot de passe</label>
             <input type="password" id="motDePasse" placeholder="••••••••" />
-            <div class="flex gap-3 mt-6">
+            <div class="flex gap-3 mt-5">
                 <button id="btnValiderInscription" class="btn-led btn-validate flex-1">✔ Valider</button>
                 <button id="btnAnnulerInscription" class="btn-led btn-cancel flex-1">✖ Annuler</button>
             </div>
@@ -287,12 +319,12 @@
     <!-- MODALE CONNEXION -->
     <div id="modalConnexion" class="modal-overlay">
         <div class="modal-content">
-            <h2 class="text-2xl font-semibold text-center text-cyan-200 mb-5">🔐 Se connecter</h2>
+            <h2 class="text-xl font-semibold text-center text-cyan-200 mb-4">🔐 Se connecter</h2>
             <label>Email</label>
             <input type="email" id="loginEmail" placeholder="ex: farid@gmail.com" />
             <label>Mot de passe</label>
             <input type="password" id="loginPassword" placeholder="••••••••" />
-            <div class="flex gap-3 mt-6">
+            <div class="flex gap-3 mt-5">
                 <button id="btnValiderConnexion" class="btn-led btn-validate flex-1">✔ Se connecter</button>
                 <button id="btnAnnulerConnexion" class="btn-led btn-cancel flex-1">✖ Annuler</button>
             </div>
@@ -302,18 +334,18 @@
     <!-- MODALE CRÉATION COURSE -->
     <div id="modalCreateCourse" class="modal-overlay">
         <div class="modal-content">
-            <h2 class="text-2xl font-semibold text-center text-cyan-200 mb-5">🚗 Nouvelle course</h2>
+            <h2 class="text-xl font-semibold text-center text-cyan-200 mb-4">🚗 Nouvelle course</h2>
             <label>Départ</label>
-            <input type="text" id="courseDepart" placeholder="ex: Alger Centre" />
+            <input type="text" id="courseDepart" placeholder="ex: Tiaret" />
             <label>Arrivée</label>
-            <input type="text" id="courseArrivee" placeholder="ex: Aéroport" />
+            <input type="text" id="courseArrivee" placeholder="ex: Mahdia" />
             <label>Heure de départ</label>
             <input type="time" id="courseHeure" />
             <label>Prix (unités)</label>
-            <input type="number" id="coursePrix" placeholder="ex: 150" min="1" />
-            <label>Places disponibles (hors chauffeur)</label>
+            <input type="number" id="coursePrix" placeholder="ex: 12" min="1" />
+            <label>Places (hors chauffeur)</label>
             <input type="number" id="coursePlaces" placeholder="ex: 3" min="1" max="6" />
-            <div class="flex gap-3 mt-6">
+            <div class="flex gap-3 mt-5">
                 <button id="btnValiderCourse" class="btn-led btn-validate flex-1">✔ Confirmer</button>
                 <button id="btnAnnulerCourse" class="btn-led btn-cancel flex-1">✖ Annuler</button>
             </div>
@@ -327,13 +359,13 @@
         (function() {
             "use strict";
 
-            // --- Éléments DOM ---
+            // --- DOM ---
             const homeScreen = document.getElementById('homeScreen');
             const mainInterface = document.getElementById('mainInterface');
             const welcomeMessage = document.getElementById('welcomeMessage');
             const userRoleBadge = document.getElementById('userRoleBadge');
             const stats = document.getElementById('stats');
-            const coursesGrid = document.getElementById('coursesGrid');
+            const coursesList = document.getElementById('coursesList');
             const noCoursesMsg = document.getElementById('noCoursesMsg');
 
             const btnInscription = document.getElementById('btnInscription');
@@ -368,13 +400,13 @@
 
             const toast = document.getElementById('toast');
 
-            // --- Clés localStorage ---
+            // --- Clés ---
             const STORAGE_KEY_CHAUFFEURS = 'chauffeurs';
             const STORAGE_KEY_PASSAGERS = 'passagers';
             const STORAGE_KEY_SESSION = 'machi_session';
             const STORAGE_KEY_COURSES = 'courses';
 
-            // --- Fonctions stockage ---
+            // --- Stockage ---
             function getData(key) {
                 try { return JSON.parse(localStorage.getItem(key)) || []; } catch { return []; }
             }
@@ -392,12 +424,11 @@
             function setSession(user) { localStorage.setItem(STORAGE_KEY_SESSION, JSON.stringify(user)); }
             function clearSession() { localStorage.removeItem(STORAGE_KEY_SESSION); }
 
-            // --- Amorçage utilisateurs demo ---
+            // --- Amorçage utilisateurs ---
             function seedDefaultUsers() {
                 if (getChauffeurs().length === 0 && getPassagers().length === 0) {
                     savePassagers([{ nom: "Farid", telephone: "0000000021", email: "farid@gmail.com", motDePasse: "farid123" }]);
                     saveChauffeurs([{ nom: "Said", telephone: "1111111111111", email: "said@gmail.com", motDePasse: "said123" }]);
-                    console.log('🌱 Utilisateurs démo créés');
                 }
             }
 
@@ -417,7 +448,7 @@
                 toast._timer = setTimeout(() => toast.classList.remove('show'), 3000);
             }
 
-            // --- Affichage des écrans ---
+            // --- Affichage ---
             function showHomeScreen() {
                 homeScreen.style.display = 'block';
                 mainInterface.classList.remove('active');
@@ -443,69 +474,71 @@
                 renderCourses(user);
             }
 
-            // --- Affichage des courses avec les 7 carreaux ---
+            // --- Rendu des courses (liste verticale) ---
             function renderCourses(user) {
                 const allCourses = getCourses();
                 let coursesToShow = [];
                 if (user.role === 'chauffeur') {
                     coursesToShow = allCourses.filter(c => c.chauffeurEmail === user.email);
                 } else {
-                    coursesToShow = allCourses; // passager voit tout
+                    coursesToShow = allCourses;
                 }
 
-                coursesGrid.innerHTML = '';
+                coursesList.innerHTML = '';
                 if (coursesToShow.length === 0) {
                     noCoursesMsg.style.display = 'block';
-                    coursesGrid.style.display = 'none';
+                    coursesList.style.display = 'none';
                     return;
                 }
                 noCoursesMsg.style.display = 'none';
-                coursesGrid.style.display = 'grid';
+                coursesList.style.display = 'flex';
 
                 coursesToShow.forEach(c => {
                     const card = document.createElement('div');
                     card.className = 'course-card';
 
-                    // Titre et infos
-                    const titre = document.createElement('div');
+                    // --- Ligne d'info : trajet + heure + prix ---
+                    const info = document.createElement('div');
+                    info.className = 'course-info';
+
+                    const titre = document.createElement('span');
                     titre.className = 'titre';
                     titre.textContent = `${c.depart} → ${c.arrivee}`;
-                    card.appendChild(titre);
+                    info.appendChild(titre);
 
-                    const detail = document.createElement('div');
-                    detail.className = 'detail';
-                    detail.textContent = `🕐 ${c.heure}`;
-                    card.appendChild(detail);
+                    const heure = document.createElement('span');
+                    heure.className = 'heure';
+                    heure.textContent = `🕐 ${c.heure}`;
+                    info.appendChild(heure);
 
-                    const prix = document.createElement('div');
+                    const prix = document.createElement('span');
                     prix.className = 'prix';
-                    prix.textContent = `💰 ${c.prix} unités`;
-                    card.appendChild(prix);
+                    prix.textContent = `💰 ${c.prix}`;
+                    info.appendChild(prix);
 
-                    // --- Les 7 carreaux ---
+                    card.appendChild(info);
+
+                    // --- 7 carreaux ---
                     const seatGrid = document.createElement('div');
                     seatGrid.className = 'seat-grid';
 
-                    // Nombre total de places = places passagers + 1 (chauffeur)
-                    const totalPlaces = c.places + 1; // c.places est le nombre de passagers
-                    // On s'assure que totalPlaces <= 7
+                    const totalPlaces = c.places + 1;
                     const placesEffectives = Math.min(totalPlaces, 7);
-                    // Nombre de places désactivées = 7 - placesEffectives
+                    const disabledCount = 7 - placesEffectives;
 
-                    // 1er carreau : chauffeur (toujours illuminé)
+                    // Chauffeur (1er)
                     const driverSeat = document.createElement('div');
                     driverSeat.className = 'seat driver';
                     seatGrid.appendChild(driverSeat);
 
-                    // Carreaux pour les passagers (disponibles)
+                    // Places disponibles
                     for (let i = 0; i < c.places; i++) {
                         const seat = document.createElement('div');
                         seat.className = 'seat available';
                         seatGrid.appendChild(seat);
                     }
 
-                    // Carreaux désactivés (places non disponibles)
-                    const disabledCount = 7 - placesEffectives;
+                    // Désactivés
                     for (let i = 0; i < disabledCount; i++) {
                         const seat = document.createElement('div');
                         seat.className = 'seat disabled';
@@ -513,7 +546,7 @@
                     }
 
                     card.appendChild(seatGrid);
-                    coursesGrid.appendChild(card);
+                    coursesList.appendChild(card);
                 });
             }
 
@@ -526,7 +559,6 @@
                 const chauffeurs = getChauffeurs();
                 const passagers = getPassagers();
                 let foundUser = null;
-                let role = '';
 
                 for (let u of chauffeurs) {
                     if (u.email === email && u.motDePasse === password) {
@@ -550,7 +582,6 @@
                 showMainInterface(foundUser);
             }
 
-            // --- Déconnexion ---
             function logout() {
                 clearSession();
                 showHomeScreen();
@@ -602,7 +633,7 @@
                 closeModalInscription();
             }
 
-            // --- Création d'une course ---
+            // --- Création course ---
             function handleCreateCourse() {
                 const depart = courseDepart.value.trim();
                 const arrivee = courseArrivee.value.trim();
@@ -615,7 +646,7 @@
                     return;
                 }
                 if (prix < 1) { showToast('💰 Prix invalide', true); return; }
-                if (places < 1 || places > 6) { showToast('👥 Places entre 1 et 6 (hors chauffeur)', true); return; }
+                if (places < 1 || places > 6) { showToast('👥 Places entre 1 et 6', true); return; }
 
                 const session = getSession();
                 if (!session) { showToast('❌ Vous devez être connecté', true); return; }
@@ -627,7 +658,7 @@
                     arrivee,
                     heure,
                     prix,
-                    places, // nombre de places passagers
+                    places,
                     dateCreation: new Date().toISOString()
                 };
 
@@ -639,7 +670,7 @@
                 renderCourses(session);
             }
 
-            // --- Modales : Inscription ---
+            // --- Modales ---
             function openModalInscription() {
                 modalInscription.classList.add('active');
                 nomInput.value = ''; telInput.value = ''; emailInput.value = ''; pwdInput.value = '';
@@ -648,7 +679,6 @@
             }
             function closeModalInscription() { modalInscription.classList.remove('active'); }
 
-            // --- Modales : Connexion ---
             function openModalConnexion() {
                 modalConnexion.classList.add('active');
                 loginEmail.value = ''; loginPassword.value = '';
@@ -656,7 +686,6 @@
             }
             function closeModalConnexion() { modalConnexion.classList.remove('active'); }
 
-            // --- Modales : Création course ---
             function openModalCreateCourse() {
                 modalCreateCourse.classList.add('active');
                 courseDepart.value = ''; courseArrivee.value = ''; courseHeure.value = ''; coursePrix.value = ''; coursePlaces.value = '';
@@ -664,7 +693,7 @@
             }
             function closeModalCreateCourse() { modalCreateCourse.classList.remove('active'); }
 
-            // --- Vérification session au chargement ---
+            // --- Session au chargement ---
             function checkSession() {
                 const session = getSession();
                 if (session) {
@@ -681,11 +710,9 @@
             }
 
             // --- Événements ---
-            // Accueil
             btnInscription.addEventListener('click', openModalInscription);
             btnConnexion.addEventListener('click', openModalConnexion);
 
-            // Inscription
             btnValiderInscription.addEventListener('click', handleInscription);
             btnAnnulerInscription.addEventListener('click', closeModalInscription);
             modalInscription.addEventListener('click', (e) => { if (e.target === modalInscription) closeModalInscription(); });
@@ -696,7 +723,6 @@
                 el.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleInscription(); });
             });
 
-            // Connexion
             btnValiderConnexion.addEventListener('click', handleLogin);
             btnAnnulerConnexion.addEventListener('click', closeModalConnexion);
             modalConnexion.addEventListener('click', (e) => { if (e.target === modalConnexion) closeModalConnexion(); });
@@ -707,10 +733,8 @@
                 el.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleLogin(); });
             });
 
-            // Déconnexion
             btnLogout.addEventListener('click', logout);
 
-            // Créer course
             btnCreateCourse.addEventListener('click', openModalCreateCourse);
             btnValiderCourse.addEventListener('click', handleCreateCourse);
             btnAnnulerCourse.addEventListener('click', closeModalCreateCourse);
@@ -722,7 +746,7 @@
                 el.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleCreateCourse(); });
             });
 
-            // --- Initialisation ---
+            // --- Lancement ---
             seedDefaultUsers();
             checkSession();
         })();
