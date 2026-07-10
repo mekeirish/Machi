@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes" />
+    <title>Machi – Inscription</title>
+    <!-- Tailwind CSS via CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Police pour un rendu moderne -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz@14..32&display=swap" rel="stylesheet" />
+    <style>
+        /* --- Reset & fond --- */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #0b0e1a;
+            /* Effet LED : points lumineux animés */
+            background-image:
+                radial-gradient(circle at 20% 30%, rgba(0, 255, 255, 0.08) 0%, transparent 30%),
+                radial-gradient(circle at 80% 70%, rgba(255, 0, 200, 0.06) 0%, transparent 35%),
+                radial-gradient(circle at 40% 90%, rgba(255, 255, 0, 0.05) 0%, transparent 25%);
+            animation: pulseLED 6s infinite alternate;
+        }
+        @keyframes pulseLED {
+            0% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+
+        /* --- Carte glassmorphism --- */
+        .glass-card {
+            background: rgba(20, 25, 45, 0.55);
+            backdrop-filter: blur(14px) saturate(180%);
+            -webkit-backdrop-filter: blur(14px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6), 0 0 30px rgba(0, 255, 255, 0.15);
+            border-radius: 2.5rem;
+            padding: 2.5rem 2rem;
+            width: 100%;
+            max-width: 440px;
+            transition: box-shadow 0.3s ease;
+        }
+        .glass-card:hover {
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.8), 0 0 50px rgba(0, 255, 255, 0.25);
+        }
+
+        /* --- Boutons LED --- */
+        .btn-led {
+            position: relative;
+            background: linear-gradient(145deg, #1e2a4a, #0f1628);
+            border: none;
+            border-radius: 60px;
+            padding: 0.9rem 1.8rem;
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: #e0f0ff;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            box-shadow: 0 0 15px rgba(0, 180, 255, 0.2), inset 0 1px 1px rgba(255,255,255,0.05);
+            text-shadow: 0 0 8px rgba(0, 180, 255, 0.3);
+            flex: 1;
+            text-align: center;
+        }
+        .btn-led:hover {
+            transform: scale(1.03);
+            background: linear-gradient(145deg, #263b66, #141f3a);
+            box-shadow: 0 0 30px rgba(0, 200, 255, 0.5), 0 0 60px rgba(0, 200, 255, 0.2);
+            color: #ffffff;
+        }
+        .btn-led:active {
+            transform: scale(0.97);
+        }
+
+        /* --- Modale glassmorphism --- */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            z-index: 50;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-overlay.active {
+            display: flex;
+        }
+        .modal-content {
+            background: rgba(18, 24, 44, 0.85);
+            backdrop-filter: blur(18px) saturate(200%);
+            -webkit-backdrop-filter: blur(18px) saturate(200%);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 2rem;
+            padding: 2rem 1.8rem;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.8), 0 0 40px rgba(0, 200, 255, 0.1);
+            animation: fadeSlide 0.3s ease;
+        }
+        @keyframes fadeSlide {
+            from { opacity: 0; transform: translateY(20px) scale(0.96); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .modal-content label {
+            color: #b0c8e8;
+            font-size: 0.9rem;
+            font-weight: 500;
+            letter-spacing: 0.3px;
+            margin-top: 0.75rem;
+            display: block;
+        }
+        .modal-content input,
+        .modal-content select {
+            width: 100%;
+            padding: 0.7rem 1rem;
+            margin-top: 0.25rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 40px;
+            color: #e8f0ff;
+            font-size: 1rem;
+            outline: none;
+            transition: border 0.2s;
+        }
+        .modal-content input:focus,
+        .modal-content select:focus {
+            border-color: rgba(0, 200, 255, 0.6);
+            box-shadow: 0 0 20px rgba(0, 200, 255, 0.15);
+        }
+        .modal-content input::placeholder {
+            color: #6a7a9a;
+        }
+        .modal-content select option {
+            background: #1a2340;
+        }
+
+        .btn-validate {
+            background: linear-gradient(145deg, #00b8b0, #00807a);
+            box-shadow: 0 0 20px rgba(0, 200, 180, 0.3);
+        }
+        .btn-validate:hover {
+            box-shadow: 0 0 40px rgba(0, 200, 180, 0.6);
+        }
+        .btn-cancel {
+            background: rgba(255, 70, 70, 0.15);
+            border: 1px solid rgba(255, 70, 70, 0.3);
+            color: #ff9a9a;
+        }
+        .btn-cancel:hover {
+            background: rgba(255, 70, 70, 0.25);
+        }
+
+        /* --- Message toast --- */
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 200, 180, 0.2);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(0, 255, 200, 0.3);
+            padding: 0.8rem 2rem;
+            border-radius: 60px;
+            color: #c0fff0;
+            font-weight: 500;
+            box-shadow: 0 0 30px rgba(0, 200, 180, 0.2);
+            display: none;
+            z-index: 100;
+        }
+        .toast.show {
+            display: block;
+            animation: toastIn 0.4s ease;
+        }
+        @keyframes toastIn {
+            from { opacity: 0; transform: translateX(-50%) translateY(20px); }
+            to { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
+
+        /* --- Responsive --- */
+        @media (max-width: 480px) {
+            .glass-card { padding: 1.8rem 1.2rem; }
+            .btn-led { font-size: 1rem; padding: 0.7rem 1.2rem; }
+        }
+    </style>
+
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#4b6cb7">
+<link rel="apple-touch-icon" href="icon.png"></head>
+<body>
+
+    <!-- Carte principale -->
+    <div class="glass-card">
+        <h1 class="text-3xl font-bold text-center text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-pink-300 mb-2">
+            Machi
+        </h1>
+        <p class="text-center text-slate-400 text-sm mb-8 tracking-wider">⚡ mobilité en circuit fermé</p>
+
+        <div class="flex flex-col sm:flex-row gap-4">
+            <button id="btnInscription" class="btn-led">✨ S’inscrire</button>
+            <button id="btnConnexion" class="btn-led" style="box-shadow:0 0 15px rgba(200,0,255,0.2);">
+                🔐 Se connecter
+            </button>
+        </div>
+
+        <!-- Petit rappel des données (pour démo) -->
+        <div class="mt-6 text-center text-xs text-slate-500">
+            <span id="stats">👤 0 inscrits</span>
+        </div>
+    </div>
+
+    <!-- MODALE D'INSCRIPTION -->
+    <div id="modalInscription" class="modal-overlay">
+        <div class="modal-content">
+            <h2 class="text-2xl font-semibold text-center text-cyan-200 mb-5">Créer un compte</h2>
+
+            <label for="role">Je suis</label>
+            <select id="role" class="mb-1">
+                <option value="passager">🚶 Passager</option>
+                <option value="chauffeur">🚗 Chauffeur</option>
+            </select>
+
+            <label for="nom">Nom complet</label>
+            <input type="text" id="nom" placeholder="ex: Karim Benali" />
+
+            <label for="telephone">Téléphone</label>
+            <input type="tel" id="telephone" placeholder="0555 12 34 56" />
+
+            <div class="flex gap-3 mt-6">
+                <button id="btnValider" class="btn-led btn-validate flex-1">✔ Valider</button>
+                <button id="btnAnnuler" class="btn-led btn-cancel flex-1">✖ Annuler</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast de notification -->
+    <div id="toast" class="toast"></div>
+
+    <script>
+        (function() {
+            "use strict";
+
+            // --- Éléments DOM ---
+            const modal = document.getElementById('modalInscription');
+            const btnInscription = document.getElementById('btnInscription');
+            const btnConnexion = document.getElementById('btnConnexion');
+            const btnAnnuler = document.getElementById('btnAnnuler');
+            const btnValider = document.getElementById('btnValider');
+            const roleSelect = document.getElementById('role');
+            const nomInput = document.getElementById('nom');
+            const telInput = document.getElementById('telephone');
+            const toast = document.getElementById('toast');
+            const stats = document.getElementById('stats');
+
+            // --- Clés localStorage ---
+            const STORAGE_KEY_CHAUFFEURS = 'chauffeurs';
+            const STORAGE_KEY_PASSAGERS = 'passagers';
+
+            // --- Fonctions utilitaires ---
+            function getData(key) {
+                try {
+                    return JSON.parse(localStorage.getItem(key)) || [];
+                } catch {
+                    return [];
+                }
+            }
+
+            function setData(key, data) {
+                localStorage.setItem(key, JSON.stringify(data));
+            }
+
+            function getChauffeurs() { return getData(STORAGE_KEY_CHAUFFEURS); }
+            function getPassagers() { return getData(STORAGE_KEY_PASSAGERS); }
+            function saveChauffeurs(list) { setData(STORAGE_KEY_CHAUFFEURS, list); }
+            function savePassagers(list) { setData(STORAGE_KEY_PASSAGERS, list); }
+
+            // --- Mise à jour du compteur ---
+            function updateStats() {
+                const nb = getChauffeurs().length + getPassagers().length;
+                stats.textContent = `👤 ${nb} inscrit${nb > 1 ? 's' : ''}`;
+            }
+
+            // --- Afficher un toast ---
+            function showToast(message, isError = false) {
+                toast.textContent = message;
+                toast.style.borderColor = isError ? 'rgba(255,100,100,0.5)' : 'rgba(0,255,200,0.3)';
+                toast.style.color = isError ? '#ffb0b0' : '#c0fff0';
+                toast.classList.add('show');
+                clearTimeout(toast._timer);
+                toast._timer = setTimeout(() => {
+                    toast.classList.remove('show');
+                }, 3000);
+            }
+
+            // --- Ouvrir / fermer la modale ---
+            function openModal() {
+                modal.classList.add('active');
+                nomInput.value = '';
+                telInput.value = '';
+                roleSelect.value = 'passager';
+                nomInput.focus();
+            }
+
+            function closeModal() {
+                modal.classList.remove('active');
+            }
+
+            // --- Validation du formulaire ---
+            function handleValidation() {
+                const role = roleSelect.value;
+                const nom = nomInput.value.trim();
+                const tel = telInput.value.trim();
+
+                if (!nom || !tel) {
+                    showToast('⚠️ Veuillez remplir tous les champs', true);
+                    return;
+                }
+                if (!/^\d[\d\s]{7,}$/.test(tel.replace(/\s/g, ''))) {
+                    showToast('📞 Numéro de téléphone invalide (8+ chiffres)', true);
+                    return;
+                }
+
+                // Création de l'objet utilisateur
+                const utilisateur = {
+                    id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+                    nom: nom,
+                    telephone: tel,
+                    dateInscription: new Date().toISOString()
+                };
+
+                // Sauvegarde selon le rôle
+                if (role === 'chauffeur') {
+                    const list = getChauffeurs();
+                    list.push(utilisateur);
+                    saveChauffeurs(list);
+                    showToast(`🚗 Chauffeur « ${nom} » enregistré !`);
+                } else {
+                    const list = getPassagers();
+                    list.push(utilisateur);
+                    savePassagers(list);
+                    showToast(`🚶 Passager « ${nom} » enregistré !`);
+                }
+
+                updateStats();
+                closeModal();
+
+                // (Optionnel) afficher dans la console les données pour vérification
+                console.log('📦 Données actuelles :', {
+                    chauffeurs: getChauffeurs(),
+                    passagers: getPassagers()
+                });
+            }
+
+            // --- Gestion des événements ---
+            btnInscription.addEventListener('click', openModal);
+            btnAnnuler.addEventListener('click', closeModal);
+            btnValider.addEventListener('click', handleValidation);
+
+            // Fermeture en cliquant sur l'overlay (hors modale)
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) closeModal();
+            });
+
+            // Touche Échap pour fermer
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && modal.classList.contains('active')) closeModal();
+            });
+
+            // Validation avec la touche Entrée dans les champs
+            [nomInput, telInput, roleSelect].forEach(el => {
+                el.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter') handleValidation();
+                });
+            });
+
+            // Bouton "Se connecter" (placeholder)
+            btnConnexion.addEventListener('click', function() {
+                showToast('🔐 Fonctionnalité à venir', false);
+            });
+
+            // --- Initialisation ---
+            updateStats();
+
+            // Afficher un message de bienvenue si aucune donnée
+            if (getChauffeurs().length === 0 && getPassagers().length === 0) {
+                console.log('💡 Aucune donnée en localStorage. Les fichiers JSON seront simulés.');
+            }
+
+            // --- [OPTIONNEL] Exporter les données en JSON (pour les sauvegarder manuellement) ---
+            // Vous pouvez décommenter ceci pour avoir un bouton d'export, mais ce n'est pas demandé.
+            /*
+            const exportBtn = document.createElement('button');
+            exportBtn.textContent = '📥 Exporter JSON';
+            exportBtn.className = 'btn-led mt-4 w-full text-sm';
+            exportBtn.style.background = 'rgba(255,255,255,0.05)';
+            document.querySelector('.glass-card').appendChild(exportBtn);
+            exportBtn.addEventListener('click', function() {
+                const data = {
+                    chauffeurs: getChauffeurs(),
+                    passagers: getPassagers()
+                };
+                const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'machi_data.json';
+                a.click();
+                URL.revokeObjectURL(url);
+                showToast('📁 Fichier JSON téléchargé !');
+            });
+            */
+
+        })();
+    </script>
+
+
+<script>if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js'));}</script>
+</body>
+</html>
