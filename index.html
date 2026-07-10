@@ -18,7 +18,6 @@
             padding: 1rem;
         }
 
-        /* --- Cartes glass --- */
         .glass-card, #mainInterface {
             background: rgba(20, 25, 45, 0.6);
             backdrop-filter: blur(12px) saturate(160%);
@@ -39,7 +38,6 @@
         }
         #mainInterface.active { display: block; }
 
-        /* --- Boutons (plats, sans dégradé ni ombre) --- */
         .btn-led {
             background: #1e2a4a;
             border: 1px solid rgba(255, 255, 255, 0.06);
@@ -56,7 +54,6 @@
         .btn-led:hover { background: #2b3b66; color: #fff; }
         .btn-led:active { background: #16203a; }
 
-        /* --- En-tête avec boutons --- */
         .header-actions {
             display: flex;
             justify-content: space-between;
@@ -87,7 +84,6 @@
         .header-actions .btn-logout:hover { background: rgba(255,70,70,0.2); }
         .header-actions .btn-create:hover { background: rgba(0,180,170,0.2); }
 
-        /* --- Modales --- */
         .modal-overlay {
             display: none;
             position: fixed;
@@ -136,7 +132,6 @@
         .btn-cancel { background: rgba(255,70,70,0.12); border-color: rgba(255,70,70,0.2); color: #ffb0b0; }
         .btn-cancel:hover { background: rgba(255,70,70,0.22); }
 
-        /* --- Liste des trajets (verticale, pleine largeur) --- */
         .courses-list {
             display: flex;
             flex-direction: column;
@@ -151,10 +146,10 @@
             width: 100%;
             backdrop-filter: blur(4px);
             transition: background 0.2s;
+            position: relative;
         }
         .course-card:hover { background: rgba(255,255,255,0.06); }
 
-        /* --- Ligne d'info : trajet, heure, prix --- */
         .course-info {
             display: flex;
             flex-wrap: wrap;
@@ -183,7 +178,6 @@
             font-weight: 500;
         }
 
-        /* --- Les 7 carreaux (pleine largeur) --- */
         .seat-grid {
             display: flex;
             justify-content: space-between;
@@ -196,25 +190,80 @@
             aspect-ratio: 1 / 1;
             border-radius: 8px;
             border: 1px solid rgba(255,255,255,0.10);
-            transition: background 0.2s;
+            transition: background 0.2s, border-color 0.2s;
             min-height: 28px;
+            cursor: default;
         }
         .seat.driver {
             background: #00b8b0;
             border-color: #00d4cc;
             box-shadow: 0 0 10px rgba(0,200,180,0.2);
+            cursor: default;
         }
         .seat.available {
             background: transparent;
             border-color: rgba(255,255,255,0.25);
+            cursor: pointer;
+        }
+        .seat.available:hover {
+            background: rgba(255,255,255,0.05);
+            border-color: rgba(255,255,255,0.5);
+        }
+        .seat.reserved {
+            background: #b44cff;
+            border-color: #b44cff;
+            box-shadow: 0 0 12px rgba(180,76,255,0.3);
+            cursor: pointer;
+        }
+        .seat.reserved:hover {
+            filter: brightness(1.15);
         }
         .seat.disabled {
             background: rgba(255,255,255,0.04);
             border-color: rgba(255,255,255,0.05);
             opacity: 0.25;
+            cursor: default;
         }
 
-        /* --- Toast --- */
+        /* Tooltip flottant pour le chauffeur */
+        .tooltip-reservation {
+            position: fixed;
+            background: rgba(18,24,44,0.95);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 1rem;
+            padding: 0.6rem 1rem;
+            color: #e8f0ff;
+            font-size: 0.85rem;
+            display: none;
+            z-index: 60;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+            min-width: 150px;
+            align-items: center;
+            gap: 0.6rem;
+            pointer-events: auto;
+        }
+        .tooltip-reservation .nom {
+            flex: 1;
+        }
+        .tooltip-reservation .btn-supprimer {
+            background: rgba(255,70,70,0.2);
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            color: #ffb0b0;
+            font-size: 0.9rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+        .tooltip-reservation .btn-supprimer:hover {
+            background: rgba(255,70,70,0.4);
+        }
+
         .toast {
             position: fixed;
             bottom: 2rem;
@@ -235,13 +284,11 @@
         }
         .toast.show { display: block; }
 
-        /* --- Accueil --- */
         #homeScreen .btn-led {
             flex: 1;
             text-align: center;
         }
 
-        /* --- Responsive --- */
         @media (max-width: 480px) {
             body { padding: 0.5rem; }
             .glass-card, #mainInterface { padding: 1rem 0.8rem; border-radius: 1.5rem; }
@@ -274,7 +321,6 @@
 
     <!-- INTERFACE PRINCIPALE -->
     <div id="mainInterface">
-        <!-- En-tête avec boutons -->
         <div class="header-actions">
             <div class="text-slate-400 text-sm truncate" id="userRoleBadge">Rôle : —</div>
             <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
@@ -292,7 +338,13 @@
         </div>
     </div>
 
-    <!-- MODALE INSCRIPTION -->
+    <!-- TOOLTIP FLOTTANT (pour chauffeur) -->
+    <div id="tooltipReservation" class="tooltip-reservation">
+        <span class="nom">Passager</span>
+        <button class="btn-supprimer" id="btnSupprimerResa">✕</button>
+    </div>
+
+    <!-- MODALES (inchangées) -->
     <div id="modalInscription" class="modal-overlay">
         <div class="modal-content">
             <h2 class="text-xl font-semibold text-center text-cyan-200 mb-4">Créer un compte</h2>
@@ -316,7 +368,6 @@
         </div>
     </div>
 
-    <!-- MODALE CONNEXION -->
     <div id="modalConnexion" class="modal-overlay">
         <div class="modal-content">
             <h2 class="text-xl font-semibold text-center text-cyan-200 mb-4">🔐 Se connecter</h2>
@@ -331,7 +382,6 @@
         </div>
     </div>
 
-    <!-- MODALE CRÉATION COURSE -->
     <div id="modalCreateCourse" class="modal-overlay">
         <div class="modal-content">
             <h2 class="text-xl font-semibold text-center text-cyan-200 mb-4">🚗 Nouvelle course</h2>
@@ -352,7 +402,6 @@
         </div>
     </div>
 
-    <!-- Toast -->
     <div id="toast" class="toast"></div>
 
     <script>
@@ -398,7 +447,13 @@
             const btnValiderCourse = document.getElementById('btnValiderCourse');
             const btnAnnulerCourse = document.getElementById('btnAnnulerCourse');
 
+            const tooltip = document.getElementById('tooltipReservation');
+            const btnSupprimerResa = document.getElementById('btnSupprimerResa');
             const toast = document.getElementById('toast');
+
+            // Variables pour le tooltip
+            let tooltipCourseId = null;
+            let tooltipPlaceIndex = null;
 
             // --- Clés ---
             const STORAGE_KEY_CHAUFFEURS = 'chauffeurs';
@@ -424,7 +479,7 @@
             function setSession(user) { localStorage.setItem(STORAGE_KEY_SESSION, JSON.stringify(user)); }
             function clearSession() { localStorage.removeItem(STORAGE_KEY_SESSION); }
 
-            // --- Amorçage utilisateurs ---
+            // --- Utilisateurs démo ---
             function seedDefaultUsers() {
                 if (getChauffeurs().length === 0 && getPassagers().length === 0) {
                     savePassagers([{ nom: "Farid", telephone: "0000000021", email: "farid@gmail.com", motDePasse: "farid123" }]);
@@ -454,6 +509,7 @@
                 mainInterface.classList.remove('active');
                 mainInterface.style.display = 'none';
                 updateStats();
+                tooltip.style.display = 'none';
             }
 
             function showMainInterface(user) {
@@ -474,14 +530,14 @@
                 renderCourses(user);
             }
 
-            // --- Rendu des courses (liste verticale) ---
+            // --- Rendu des courses ---
             function renderCourses(user) {
                 const allCourses = getCourses();
                 let coursesToShow = [];
                 if (user.role === 'chauffeur') {
                     coursesToShow = allCourses.filter(c => c.chauffeurEmail === user.email);
                 } else {
-                    coursesToShow = allCourses;
+                    coursesToShow = allCourses; // passager voit tout
                 }
 
                 coursesList.innerHTML = '';
@@ -493,55 +549,82 @@
                 noCoursesMsg.style.display = 'none';
                 coursesList.style.display = 'flex';
 
-                coursesToShow.forEach(c => {
+                coursesToShow.forEach(course => {
                     const card = document.createElement('div');
                     card.className = 'course-card';
+                    card.dataset.courseId = course.id;
 
-                    // --- Ligne d'info : trajet + heure + prix ---
+                    // Info ligne
                     const info = document.createElement('div');
                     info.className = 'course-info';
-
                     const titre = document.createElement('span');
                     titre.className = 'titre';
-                    titre.textContent = `${c.depart} → ${c.arrivee}`;
+                    titre.textContent = `${course.depart} → ${course.arrivee}`;
                     info.appendChild(titre);
-
                     const heure = document.createElement('span');
                     heure.className = 'heure';
-                    heure.textContent = `🕐 ${c.heure}`;
+                    heure.textContent = `🕐 ${course.heure}`;
                     info.appendChild(heure);
-
                     const prix = document.createElement('span');
                     prix.className = 'prix';
-                    prix.textContent = `💰 ${c.prix}`;
+                    prix.textContent = `💰 ${course.prix}`;
                     info.appendChild(prix);
-
                     card.appendChild(info);
 
-                    // --- 7 carreaux ---
+                    // Grille des places
                     const seatGrid = document.createElement('div');
                     seatGrid.className = 'seat-grid';
 
-                    const totalPlaces = c.places + 1;
+                    const totalPlaces = course.places + 1;
                     const placesEffectives = Math.min(totalPlaces, 7);
                     const disabledCount = 7 - placesEffectives;
 
-                    // Chauffeur (1er)
-                    const driverSeat = document.createElement('div');
-                    driverSeat.className = 'seat driver';
-                    seatGrid.appendChild(driverSeat);
-
-                    // Places disponibles
-                    for (let i = 0; i < c.places; i++) {
-                        const seat = document.createElement('div');
-                        seat.className = 'seat available';
-                        seatGrid.appendChild(seat);
+                    // Construire le statut de chaque place (index 0 = chauffeur)
+                    const reservations = course.reservations || [];
+                    // On crée un tableau de statuts : pour chaque place (0 à 6)
+                    // 0: chauffeur, >0: disponible ou réservé
+                    const placeStatus = [];
+                    // place 0 = chauffeur
+                    placeStatus[0] = 'driver';
+                    for (let i = 1; i < placesEffectives; i++) {
+                        // vérifier si cette place est réservée
+                        const resa = reservations.find(r => r.placeIndex === i);
+                        if (resa) {
+                            placeStatus[i] = { type: 'reserved', email: resa.email, nom: resa.nom };
+                        } else {
+                            placeStatus[i] = { type: 'available' };
+                        }
+                    }
+                    // places désactivées (au-delà de placesEffectives-1)
+                    for (let i = placesEffectives; i < 7; i++) {
+                        placeStatus[i] = { type: 'disabled' };
                     }
 
-                    // Désactivés
-                    for (let i = 0; i < disabledCount; i++) {
+                    // Créer les éléments seat
+                    for (let i = 0; i < 7; i++) {
                         const seat = document.createElement('div');
-                        seat.className = 'seat disabled';
+                        seat.className = 'seat';
+                        seat.dataset.placeIndex = i;
+                        seat.dataset.courseId = course.id;
+
+                        const status = placeStatus[i];
+                        if (typeof status === 'string') {
+                            if (status === 'driver') {
+                                seat.classList.add('driver');
+                                seat.dataset.status = 'driver';
+                            } else if (status === 'disabled') {
+                                seat.classList.add('disabled');
+                                seat.dataset.status = 'disabled';
+                            }
+                        } else if (status.type === 'available') {
+                            seat.classList.add('available');
+                            seat.dataset.status = 'available';
+                        } else if (status.type === 'reserved') {
+                            seat.classList.add('reserved');
+                            seat.dataset.status = 'reserved';
+                            seat.dataset.reservedEmail = status.email;
+                            seat.dataset.reservedNom = status.nom;
+                        }
                         seatGrid.appendChild(seat);
                     }
 
@@ -550,7 +633,106 @@
                 });
             }
 
-            // --- Connexion ---
+            // --- Gestion des clics sur les places (délégation) ---
+            function handleSeatClick(e) {
+                const seat = e.target.closest('.seat');
+                if (!seat) return;
+                const status = seat.dataset.status;
+                const courseId = seat.dataset.courseId;
+                const placeIndex = parseInt(seat.dataset.placeIndex);
+                const session = getSession();
+                if (!session) return;
+
+                // Vérifier le rôle
+                if (session.role === 'chauffeur') {
+                    // Le chauffeur ne peut que voir les réservations (clic sur reserved)
+                    if (status === 'reserved') {
+                        // Afficher le tooltip
+                        const nom = seat.dataset.reservedNom;
+                        const email = seat.dataset.reservedEmail;
+                        if (nom) {
+                            tooltipCourseId = courseId;
+                            tooltipPlaceIndex = placeIndex;
+                            // Positionner le tooltip près du carreau
+                            const rect = seat.getBoundingClientRect();
+                            tooltip.style.left = (rect.left + rect.width / 2 - 75) + 'px';
+                            tooltip.style.top = (rect.top - 10) + 'px';
+                            tooltip.style.display = 'flex';
+                            tooltip.querySelector('.nom').textContent = `👤 ${nom}`;
+                            // Stocker les infos pour le bouton supprimer
+                        } else {
+                            tooltip.style.display = 'none';
+                        }
+                    } else {
+                        // Clic sur autre chose : cacher tooltip
+                        tooltip.style.display = 'none';
+                    }
+                } else if (session.role === 'passager') {
+                    // Passager : peut réserver une place disponible
+                    if (status === 'available') {
+                        // Vérifier que le passager n'a pas déjà une réservation sur ce trajet
+                        const courses = getCourses();
+                        const course = courses.find(c => c.id === courseId);
+                        if (!course) return;
+                        const reservations = course.reservations || [];
+                        // Vérifier si le passager a déjà réservé une place dans ce trajet
+                        const dejaReserve = reservations.some(r => r.email === session.email);
+                        if (dejaReserve) {
+                            showToast('❌ Vous avez déjà réservé une place dans ce trajet', true);
+                            return;
+                        }
+                        // Réserver la place
+                        const resa = {
+                            email: session.email,
+                            nom: session.nom,
+                            placeIndex: placeIndex
+                        };
+                        reservations.push(resa);
+                        course.reservations = reservations;
+                        saveCourses(courses);
+                        showToast(`✅ Place réservée pour ${session.nom}`);
+                        // Re-rendre
+                        renderCourses(session);
+                    } else if (status === 'reserved') {
+                        // Si le passager clique sur sa propre réservation, on pourrait annuler ? On ne l'a pas demandé, mais on peut permettre.
+                        // Pour l'instant, on ne fait rien, mais on pourrait ajouter une annulation. On va juste ignorer.
+                        showToast('ℹ️ Cette place est déjà réservée', false);
+                    } else {
+                        // driver ou disabled : rien
+                    }
+                }
+            }
+
+            // --- Supprimer une réservation (chauffeur) ---
+            function handleSupprimerResa() {
+                if (!tooltipCourseId || tooltipPlaceIndex === null) return;
+                const courses = getCourses();
+                const course = courses.find(c => c.id === tooltipCourseId);
+                if (!course) return;
+                const reservations = course.reservations || [];
+                const idx = reservations.findIndex(r => r.placeIndex === tooltipPlaceIndex);
+                if (idx !== -1) {
+                    reservations.splice(idx, 1);
+                    course.reservations = reservations;
+                    saveCourses(courses);
+                    showToast('🗑️ Place libérée');
+                    tooltip.style.display = 'none';
+                    // Re-rendre
+                    const session = getSession();
+                    if (session) renderCourses(session);
+                } else {
+                    tooltip.style.display = 'none';
+                }
+            }
+
+            // --- Clic en dehors du tooltip pour le fermer ---
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('.tooltip-reservation') && !e.target.closest('.seat.reserved')) {
+                    tooltip.style.display = 'none';
+                }
+            });
+
+            // --- Connexion / Déconnexion ---
             function handleLogin() {
                 const email = loginEmail.value.trim();
                 const password = loginPassword.value.trim();
@@ -586,6 +768,7 @@
                 clearSession();
                 showHomeScreen();
                 showToast('🔓 Déconnecté');
+                tooltip.style.display = 'none';
             }
 
             // --- Inscription ---
@@ -659,6 +842,7 @@
                     heure,
                     prix,
                     places,
+                    reservations: [], // initialement vide
                     dateCreation: new Date().toISOString()
                 };
 
@@ -746,7 +930,13 @@
                 el.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleCreateCourse(); });
             });
 
-            // --- Lancement ---
+            // Clic sur les places (délégation)
+            coursesList.addEventListener('click', handleSeatClick);
+
+            // Bouton supprimer réservation
+            btnSupprimerResa.addEventListener('click', handleSupprimerResa);
+
+            // --- Initialisation ---
             seedDefaultUsers();
             checkSession();
         })();
