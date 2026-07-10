@@ -7,6 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz@14..32&display=swap" rel="stylesheet" />
     <style>
+        /* --- Identique à la version précédente, avec quelques ajouts pour l'admin --- */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Inter', sans-serif;
@@ -84,6 +85,47 @@
         .header-actions .btn-logout:hover { background: rgba(255,70,70,0.2); }
         .header-actions .btn-create:hover { background: rgba(0,180,170,0.2); }
 
+        /* --- Panneau admin --- */
+        .admin-panel {
+            margin-top: 1rem;
+        }
+        .admin-panel .btn-admin {
+            background: #1e2a4a;
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 60px;
+            padding: 0.6rem 1.5rem;
+            color: #d6eaff;
+            cursor: pointer;
+            transition: background 0.2s;
+            width: 100%;
+            text-align: center;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        .admin-panel .btn-admin:hover { background: #2b3b66; }
+        .admin-panel .btn-admin.active { background: #2b3b66; border-color: #4a8cff; }
+
+        .admin-list {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 1rem;
+            padding: 0.8rem;
+            margin-top: 0.5rem;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .admin-list .item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.3rem 0;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+            font-size: 0.85rem;
+            color: #b0c8e8;
+        }
+        .admin-list .item:last-child { border-bottom: none; }
+        .admin-list .item .email { color: #8aa0c8; font-size: 0.75rem; }
+
+        /* --- Modales, carreaux, etc. inchangés --- */
         .modal-overlay {
             display: none;
             position: fixed;
@@ -225,7 +267,6 @@
             cursor: default;
         }
 
-        /* Tooltip flottant pour le chauffeur */
         .tooltip-reservation {
             position: fixed;
             background: rgba(18,24,44,0.95);
@@ -332,13 +373,25 @@
         <h2 id="welcomeMessage" class="text-xl font-semibold text-cyan-200 mb-1">Bienvenue</h2>
         <hr class="border-white/5 my-3" />
 
-        <div id="coursesContainer">
-            <p class="text-slate-500 text-center text-sm" id="noCoursesMsg">Aucune course pour le moment.</p>
-            <div id="coursesList" class="courses-list"></div>
+        <!-- Conteneur principal : soit les courses, soit le panneau admin -->
+        <div id="mainContent">
+            <!-- Courses (pour chauffeur et passager) -->
+            <div id="coursesContainer">
+                <p class="text-slate-500 text-center text-sm" id="noCoursesMsg">Aucune course pour le moment.</p>
+                <div id="coursesList" class="courses-list"></div>
+            </div>
+
+            <!-- Panneau Admin (caché par défaut) -->
+            <div id="adminPanel" class="admin-panel" style="display:none;">
+                <button id="btnAdminChauffeurs" class="btn-admin">🚗 Chauffeurs</button>
+                <div id="adminChauffeursList" class="admin-list" style="display:none;"></div>
+                <button id="btnAdminPassagers" class="btn-admin">🚶 Passagers</button>
+                <div id="adminPassagersList" class="admin-list" style="display:none;"></div>
+            </div>
         </div>
     </div>
 
-    <!-- TOOLTIP FLOTTANT (pour chauffeur) -->
+    <!-- TOOLTIP (pour chauffeur) -->
     <div id="tooltipReservation" class="tooltip-reservation">
         <span class="nom">Passager</span>
         <button class="btn-supprimer" id="btnSupprimerResa">✕</button>
@@ -416,6 +469,12 @@
             const stats = document.getElementById('stats');
             const coursesList = document.getElementById('coursesList');
             const noCoursesMsg = document.getElementById('noCoursesMsg');
+            const coursesContainer = document.getElementById('coursesContainer');
+            const adminPanel = document.getElementById('adminPanel');
+            const btnAdminChauffeurs = document.getElementById('btnAdminChauffeurs');
+            const btnAdminPassagers = document.getElementById('btnAdminPassagers');
+            const adminChauffeursList = document.getElementById('adminChauffeursList');
+            const adminPassagersList = document.getElementById('adminPassagersList');
 
             const btnInscription = document.getElementById('btnInscription');
             const btnConnexion = document.getElementById('btnConnexion');
@@ -451,7 +510,6 @@
             const btnSupprimerResa = document.getElementById('btnSupprimerResa');
             const toast = document.getElementById('toast');
 
-            // Variables pour le tooltip
             let tooltipCourseId = null;
             let tooltipPlaceIndex = null;
 
@@ -479,12 +537,13 @@
             function setSession(user) { localStorage.setItem(STORAGE_KEY_SESSION, JSON.stringify(user)); }
             function clearSession() { localStorage.removeItem(STORAGE_KEY_SESSION); }
 
-            // --- Utilisateurs démo ---
+            // --- Utilisateurs démo + admin ---
             function seedDefaultUsers() {
                 if (getChauffeurs().length === 0 && getPassagers().length === 0) {
                     savePassagers([{ nom: "Farid", telephone: "0000000021", email: "farid@gmail.com", motDePasse: "farid123" }]);
                     saveChauffeurs([{ nom: "Said", telephone: "1111111111111", email: "said@gmail.com", motDePasse: "said123" }]);
                 }
+                // L'admin n'est pas stocké, il est vérifié en dur lors de la connexion
             }
 
             // --- Mise à jour compteur ---
@@ -517,27 +576,37 @@
                 mainInterface.style.display = 'block';
                 requestAnimationFrame(() => mainInterface.classList.add('active'));
 
-                const roleFr = user.role === 'chauffeur' ? 'Chauffeur' : 'Passager';
-                welcomeMessage.textContent = `👋 Bonjour ${user.nom}`;
+                const roleFr = user.role === 'admin' ? 'Admin' : (user.role === 'chauffeur' ? 'Chauffeur' : 'Passager');
+                welcomeMessage.textContent = `👋 Bonjour ${user.nom || 'Admin'}`;
                 userRoleBadge.textContent = `Rôle : ${roleFr}`;
 
-                if (user.role === 'chauffeur') {
-                    btnCreateCourse.style.display = 'inline-block';
-                } else {
-                    btnCreateCourse.style.display = 'none';
-                }
+                // Cacher le bouton "Créer" par défaut
+                btnCreateCourse.style.display = 'none';
 
-                renderCourses(user);
+                if (user.role === 'admin') {
+                    // Afficher le panneau admin, cacher les courses
+                    coursesContainer.style.display = 'none';
+                    adminPanel.style.display = 'block';
+                    // Initialiser les listes
+                    renderAdminLists();
+                } else {
+                    coursesContainer.style.display = 'block';
+                    adminPanel.style.display = 'none';
+                    if (user.role === 'chauffeur') {
+                        btnCreateCourse.style.display = 'inline-block';
+                    }
+                    renderCourses(user);
+                }
             }
 
-            // --- Rendu des courses ---
+            // --- Rendu des courses (inchangé) ---
             function renderCourses(user) {
                 const allCourses = getCourses();
                 let coursesToShow = [];
                 if (user.role === 'chauffeur') {
                     coursesToShow = allCourses.filter(c => c.chauffeurEmail === user.email);
                 } else {
-                    coursesToShow = allCourses; // passager voit tout
+                    coursesToShow = allCourses;
                 }
 
                 coursesList.innerHTML = '';
@@ -554,7 +623,6 @@
                     card.className = 'course-card';
                     card.dataset.courseId = course.id;
 
-                    // Info ligne
                     const info = document.createElement('div');
                     info.className = 'course-info';
                     const titre = document.createElement('span');
@@ -571,7 +639,6 @@
                     info.appendChild(prix);
                     card.appendChild(info);
 
-                    // Grille des places
                     const seatGrid = document.createElement('div');
                     seatGrid.className = 'seat-grid';
 
@@ -579,15 +646,10 @@
                     const placesEffectives = Math.min(totalPlaces, 7);
                     const disabledCount = 7 - placesEffectives;
 
-                    // Construire le statut de chaque place (index 0 = chauffeur)
                     const reservations = course.reservations || [];
-                    // On crée un tableau de statuts : pour chaque place (0 à 6)
-                    // 0: chauffeur, >0: disponible ou réservé
                     const placeStatus = [];
-                    // place 0 = chauffeur
                     placeStatus[0] = 'driver';
                     for (let i = 1; i < placesEffectives; i++) {
-                        // vérifier si cette place est réservée
                         const resa = reservations.find(r => r.placeIndex === i);
                         if (resa) {
                             placeStatus[i] = { type: 'reserved', email: resa.email, nom: resa.nom };
@@ -595,12 +657,10 @@
                             placeStatus[i] = { type: 'available' };
                         }
                     }
-                    // places désactivées (au-delà de placesEffectives-1)
                     for (let i = placesEffectives; i < 7; i++) {
                         placeStatus[i] = { type: 'disabled' };
                     }
 
-                    // Créer les éléments seat
                     for (let i = 0; i < 7; i++) {
                         const seat = document.createElement('div');
                         seat.className = 'seat';
@@ -633,7 +693,38 @@
                 });
             }
 
-            // --- Gestion des clics sur les places (délégation) ---
+            // --- Panneau admin ---
+            function renderAdminLists() {
+                // Chauffeurs
+                const chauffeurs = getChauffeurs();
+                adminChauffeursList.innerHTML = '';
+                if (chauffeurs.length === 0) {
+                    adminChauffeursList.innerHTML = '<div class="item">Aucun chauffeur</div>';
+                } else {
+                    chauffeurs.forEach(c => {
+                        const div = document.createElement('div');
+                        div.className = 'item';
+                        div.innerHTML = `<span>${c.nom} (${c.telephone})</span><span class="email">${c.email}</span>`;
+                        adminChauffeursList.appendChild(div);
+                    });
+                }
+
+                // Passagers
+                const passagers = getPassagers();
+                adminPassagersList.innerHTML = '';
+                if (passagers.length === 0) {
+                    adminPassagersList.innerHTML = '<div class="item">Aucun passager</div>';
+                } else {
+                    passagers.forEach(p => {
+                        const div = document.createElement('div');
+                        div.className = 'item';
+                        div.innerHTML = `<span>${p.nom} (${p.telephone})</span><span class="email">${p.email}</span>`;
+                        adminPassagersList.appendChild(div);
+                    });
+                }
+            }
+
+            // --- Gestion des clics sur les places ---
             function handleSeatClick(e) {
                 const seat = e.target.closest('.seat');
                 if (!seat) return;
@@ -643,62 +734,64 @@
                 const session = getSession();
                 if (!session) return;
 
-                // Vérifier le rôle
+                // Admin n'a pas d'action
+                if (session.role === 'admin') return;
+
                 if (session.role === 'chauffeur') {
-                    // Le chauffeur ne peut que voir les réservations (clic sur reserved)
                     if (status === 'reserved') {
-                        // Afficher le tooltip
                         const nom = seat.dataset.reservedNom;
                         const email = seat.dataset.reservedEmail;
                         if (nom) {
                             tooltipCourseId = courseId;
                             tooltipPlaceIndex = placeIndex;
-                            // Positionner le tooltip près du carreau
                             const rect = seat.getBoundingClientRect();
                             tooltip.style.left = (rect.left + rect.width / 2 - 75) + 'px';
                             tooltip.style.top = (rect.top - 10) + 'px';
                             tooltip.style.display = 'flex';
                             tooltip.querySelector('.nom').textContent = `👤 ${nom}`;
-                            // Stocker les infos pour le bouton supprimer
                         } else {
                             tooltip.style.display = 'none';
                         }
                     } else {
-                        // Clic sur autre chose : cacher tooltip
                         tooltip.style.display = 'none';
                     }
                 } else if (session.role === 'passager') {
-                    // Passager : peut réserver une place disponible
                     if (status === 'available') {
-                        // Vérifier que le passager n'a pas déjà une réservation sur ce trajet
+                        // Réserver
                         const courses = getCourses();
                         const course = courses.find(c => c.id === courseId);
                         if (!course) return;
                         const reservations = course.reservations || [];
-                        // Vérifier si le passager a déjà réservé une place dans ce trajet
                         const dejaReserve = reservations.some(r => r.email === session.email);
                         if (dejaReserve) {
                             showToast('❌ Vous avez déjà réservé une place dans ce trajet', true);
                             return;
                         }
-                        // Réserver la place
-                        const resa = {
-                            email: session.email,
-                            nom: session.nom,
-                            placeIndex: placeIndex
-                        };
-                        reservations.push(resa);
+                        reservations.push({ email: session.email, nom: session.nom, placeIndex });
                         course.reservations = reservations;
                         saveCourses(courses);
                         showToast(`✅ Place réservée pour ${session.nom}`);
-                        // Re-rendre
                         renderCourses(session);
                     } else if (status === 'reserved') {
-                        // Si le passager clique sur sa propre réservation, on pourrait annuler ? On ne l'a pas demandé, mais on peut permettre.
-                        // Pour l'instant, on ne fait rien, mais on pourrait ajouter une annulation. On va juste ignorer.
-                        showToast('ℹ️ Cette place est déjà réservée', false);
-                    } else {
-                        // driver ou disabled : rien
+                        // Vérifier si c'est sa propre réservation
+                        const reservedEmail = seat.dataset.reservedEmail;
+                        if (reservedEmail === session.email) {
+                            // Annuler la réservation
+                            const courses = getCourses();
+                            const course = courses.find(c => c.id === courseId);
+                            if (!course) return;
+                            const reservations = course.reservations || [];
+                            const idx = reservations.findIndex(r => r.placeIndex === placeIndex && r.email === session.email);
+                            if (idx !== -1) {
+                                reservations.splice(idx, 1);
+                                course.reservations = reservations;
+                                saveCourses(courses);
+                                showToast('🗑️ Réservation annulée');
+                                renderCourses(session);
+                            }
+                        } else {
+                            showToast('ℹ️ Cette place est réservée par un autre passager', false);
+                        }
                     }
                 }
             }
@@ -717,7 +810,6 @@
                     saveCourses(courses);
                     showToast('🗑️ Place libérée');
                     tooltip.style.display = 'none';
-                    // Re-rendre
                     const session = getSession();
                     if (session) renderCourses(session);
                 } else {
@@ -725,19 +817,44 @@
                 }
             }
 
-            // --- Clic en dehors du tooltip pour le fermer ---
-            document.addEventListener('click', function(e) {
-                if (!e.target.closest('.tooltip-reservation') && !e.target.closest('.seat.reserved')) {
-                    tooltip.style.display = 'none';
+            // --- Gestion des boutons admin ---
+            function toggleAdminList(listElement) {
+                if (listElement.style.display === 'block') {
+                    listElement.style.display = 'none';
+                } else {
+                    // Cacher les autres listes
+                    adminChauffeursList.style.display = 'none';
+                    adminPassagersList.style.display = 'none';
+                    listElement.style.display = 'block';
                 }
+            }
+
+            btnAdminChauffeurs.addEventListener('click', () => {
+                renderAdminLists(); // rafraîchir
+                toggleAdminList(adminChauffeursList);
+            });
+            btnAdminPassagers.addEventListener('click', () => {
+                renderAdminLists();
+                toggleAdminList(adminPassagersList);
             });
 
-            // --- Connexion / Déconnexion ---
+            // --- Connexion (avec admin) ---
             function handleLogin() {
                 const email = loginEmail.value.trim();
                 const password = loginPassword.value.trim();
                 if (!email || !password) { showToast('⚠️ Remplissez tous les champs', true); return; }
 
+                // Vérifier admin en premier
+                if (email === 'admin@gmail.com' && password === 'admin123') {
+                    const adminUser = { nom: 'Admin', email: 'admin@gmail.com', role: 'admin' };
+                    showToast('✅ Bienvenue Admin');
+                    setSession(adminUser);
+                    closeModalConnexion();
+                    showMainInterface(adminUser);
+                    return;
+                }
+
+                // Sinon, chercher dans chauffeurs/passagers
                 const chauffeurs = getChauffeurs();
                 const passagers = getPassagers();
                 let foundUser = null;
@@ -771,7 +888,7 @@
                 tooltip.style.display = 'none';
             }
 
-            // --- Inscription ---
+            // --- Inscription (inchangée) ---
             function handleInscription() {
                 const role = roleSelect.value;
                 const nom = nomInput.value.trim();
@@ -816,7 +933,7 @@
                 closeModalInscription();
             }
 
-            // --- Création course ---
+            // --- Création course (inchangée) ---
             function handleCreateCourse() {
                 const depart = courseDepart.value.trim();
                 const arrivee = courseArrivee.value.trim();
@@ -842,7 +959,7 @@
                     heure,
                     prix,
                     places,
-                    reservations: [], // initialement vide
+                    reservations: [],
                     dateCreation: new Date().toISOString()
                 };
 
@@ -881,6 +998,11 @@
             function checkSession() {
                 const session = getSession();
                 if (session) {
+                    // Vérifier si admin
+                    if (session.role === 'admin') {
+                        showMainInterface(session);
+                        return;
+                    }
                     const allUsers = [...getChauffeurs(), ...getPassagers()];
                     const exists = allUsers.some(u => u.email === session.email);
                     if (exists) {
@@ -930,10 +1052,10 @@
                 el.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleCreateCourse(); });
             });
 
-            // Clic sur les places (délégation)
+            // Clic sur les places
             coursesList.addEventListener('click', handleSeatClick);
 
-            // Bouton supprimer réservation
+            // Tooltip
             btnSupprimerResa.addEventListener('click', handleSupprimerResa);
 
             // --- Initialisation ---
