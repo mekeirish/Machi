@@ -3,11 +3,10 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes" />
-    <title>Machi – Accueil</title>
+    <title>Machi – Chauffeur</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz@14..32&display=swap" rel="stylesheet" />
     <style>
-        /* --- Reset & fond uni --- */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Inter', sans-serif;
@@ -19,151 +18,157 @@
             position: relative;
         }
 
-        /* --- Carte glass (accueil) --- */
-        .glass-card {
-            background: rgba(20, 25, 45, 0.6);
-            backdrop-filter: blur(12px) saturate(160%);
-            -webkit-backdrop-filter: blur(12px) saturate(160%);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 2.5rem;
-            padding: 2.5rem 2rem;
-            width: 100%;
-            max-width: 440px;
-            transition: opacity 0.3s ease;
-        }
-
-        /* --- Interface principale (dashboard) --- */
-        #mainInterface {
-            display: none;
-            width: 100%;
-            max-width: 800px;
-            min-height: 70vh;
+        /* --- Cartes glass --- */
+        .glass-card, #mainInterface {
             background: rgba(20, 25, 45, 0.6);
             backdrop-filter: blur(12px) saturate(160%);
             -webkit-backdrop-filter: blur(12px) saturate(160%);
             border: 1px solid rgba(255, 255, 255, 0.08);
             border-radius: 2.5rem;
             padding: 2rem;
+            width: 100%;
+            transition: opacity 0.3s ease;
+        }
+        #mainInterface {
+            display: none;
+            max-width: 1000px;
+            min-height: 60vh;
             position: relative;
         }
-        #mainInterface.active {
-            display: block;
-        }
+        #mainInterface.active { display: block; }
 
-        /* --- Bouton déconnexion (top-right) --- */
-        .btn-logout {
-            position: absolute;
-            top: 1.2rem;
-            right: 1.5rem;
-            background: rgba(255, 70, 70, 0.12);
-            border: 1px solid rgba(255, 70, 70, 0.2);
-            border-radius: 40px;
-            padding: 0.4rem 1.2rem;
-            color: #ffb0b0;
-            font-size: 0.85rem;
-            font-weight: 500;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-        .btn-logout:hover {
-            background: rgba(255, 70, 70, 0.25);
-        }
-
-        /* --- Boutons plats (accueil) --- */
+        /* --- Boutons --- */
         .btn-led {
             background: #1e2a4a;
             border: 1px solid rgba(255, 255, 255, 0.06);
             border-radius: 60px;
-            padding: 0.9rem 1.8rem;
+            padding: 0.6rem 1.5rem;
             font-weight: 600;
-            font-size: 1.1rem;
+            font-size: 0.95rem;
             color: #d6eaff;
             cursor: pointer;
             transition: background 0.2s, color 0.2s;
-            flex: 1;
             text-align: center;
+            display: inline-block;
         }
-        .btn-led:hover {
-            background: #2b3b66;
-            color: #ffffff;
-        }
-        .btn-led:active {
-            background: #16203a;
-        }
+        .btn-led:hover { background: #2b3b66; color: #fff; }
+        .btn-led:active { background: #16203a; }
 
-        /* --- Modale (inscription / connexion) --- */
+        .btn-logout {
+            background: rgba(255,70,70,0.12);
+            border: 1px solid rgba(255,70,70,0.2);
+            border-radius: 40px;
+            padding: 0.4rem 1.2rem;
+            color: #ffb0b0;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: background 0.2s;
+            position: absolute;
+            top: 1.2rem;
+            right: 1.5rem;
+        }
+        .btn-logout:hover { background: rgba(255,70,70,0.25); }
+
+        .btn-create {
+            position: absolute;
+            top: 1.2rem;
+            right: 7.5rem; /* à côté du logout */
+            background: rgba(0,180,170,0.12);
+            border: 1px solid rgba(0,180,170,0.2);
+            border-radius: 40px;
+            padding: 0.4rem 1.2rem;
+            color: #a0f0e8;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn-create:hover { background: rgba(0,180,170,0.25); }
+
+        /* --- Modales --- */
         .modal-overlay {
             display: none;
             position: fixed;
             inset: 0;
-            background: rgba(0, 0, 0, 0.6);
+            background: rgba(0,0,0,0.6);
             backdrop-filter: blur(4px);
-            -webkit-backdrop-filter: blur(4px);
             z-index: 50;
             align-items: center;
             justify-content: center;
         }
-        .modal-overlay.active {
-            display: flex;
-        }
+        .modal-overlay.active { display: flex; }
         .modal-content {
-            background: rgba(18, 24, 44, 0.85);
+            background: rgba(18,24,44,0.85);
             backdrop-filter: blur(16px) saturate(180%);
-            -webkit-backdrop-filter: blur(16px) saturate(180%);
-            border: 1px solid rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255,255,255,0.06);
             border-radius: 2rem;
             padding: 2rem 1.8rem;
-            max-width: 400px;
+            max-width: 420px;
             width: 90%;
         }
         .modal-content label {
             color: #b0c8e8;
             font-size: 0.9rem;
             font-weight: 500;
-            letter-spacing: 0.3px;
             margin-top: 0.75rem;
             display: block;
         }
-        .modal-content input,
-        .modal-content select {
+        .modal-content input {
             width: 100%;
             padding: 0.7rem 1rem;
             margin-top: 0.25rem;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
             border-radius: 40px;
             color: #e8f0ff;
             font-size: 1rem;
             outline: none;
             transition: border 0.15s;
         }
-        .modal-content input:focus,
-        .modal-content select:focus {
-            border-color: #4a8cff;
-        }
-        .modal-content input::placeholder {
-            color: #6a7a9a;
-        }
-        .modal-content select option {
-            background: #1a2340;
-        }
+        .modal-content input:focus { border-color: #4a8cff; }
+        .modal-content input::placeholder { color: #6a7a9a; }
 
-        .btn-validate {
-            background: #00807a;
-            border-color: #00a39a;
-            color: #ffffff;
-        }
-        .btn-validate:hover {
-            background: #00a39a;
-        }
+        .btn-validate { background: #00807a; border-color: #00a39a; color: #fff; }
+        .btn-validate:hover { background: #00a39a; }
+        .btn-cancel { background: rgba(255,70,70,0.12); border-color: rgba(255,70,70,0.2); color: #ffb0b0; }
+        .btn-cancel:hover { background: rgba(255,70,70,0.22); }
 
-        .btn-cancel {
-            background: rgba(255, 70, 70, 0.12);
-            border-color: rgba(255, 70, 70, 0.2);
-            color: #ffb0b0;
+        /* --- Liste des courses (grille) --- */
+        .courses-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 1rem;
+            margin-top: 1.5rem;
         }
-        .btn-cancel:hover {
-            background: rgba(255, 70, 70, 0.22);
+        .course-card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 1.2rem;
+            padding: 0.8rem;
+            text-align: center;
+            backdrop-filter: blur(4px);
+            transition: background 0.2s;
+        }
+        .course-card:hover { background: rgba(255,255,255,0.06); }
+        .course-card .titre {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: #d6eaff;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .course-card .detail {
+            font-size: 0.75rem;
+            color: #8aa0c8;
+            margin-top: 0.2rem;
+        }
+        .course-card .prix-places {
+            display: flex;
+            justify-content: center;
+            gap: 0.8rem;
+            margin-top: 0.4rem;
+            font-size: 0.8rem;
+            color: #b0c8e8;
         }
 
         /* --- Toast --- */
@@ -172,9 +177,9 @@
             bottom: 2rem;
             left: 50%;
             transform: translateX(-50%);
-            background: rgba(0, 180, 170, 0.15);
+            background: rgba(0,180,170,0.15);
             backdrop-filter: blur(8px);
-            border: 1px solid rgba(0, 255, 200, 0.15);
+            border: 1px solid rgba(0,255,200,0.15);
             padding: 0.8rem 2rem;
             border-radius: 60px;
             color: #c0fff0;
@@ -182,75 +187,68 @@
             display: none;
             z-index: 100;
         }
-        .toast.show {
-            display: block;
-        }
+        .toast.show { display: block; }
 
         /* --- Responsive --- */
+        @media (max-width: 600px) {
+            .btn-create { right: 1rem; top: 4.5rem; } /* décalé sous logout */
+            .btn-logout { top: 1rem; right: 1rem; }
+            .courses-grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
+        }
         @media (max-width: 480px) {
             .glass-card { padding: 1.8rem 1.2rem; }
-            .btn-led { font-size: 1rem; padding: 0.7rem 1.2rem; }
-            #mainInterface { padding: 1.2rem; min-height: 50vh; }
-            .btn-logout { top: 0.8rem; right: 1rem; padding: 0.3rem 1rem; font-size: 0.75rem; }
+            #mainInterface { padding: 1.2rem; }
         }
     </style>
 </head>
 <body>
 
-    <!-- ========== ÉCRAN D'ACCUEIL (connexion / inscription) ========== -->
-    <div id="homeScreen" class="glass-card">
+    <!-- ÉCRAN D'ACCUEIL -->
+    <div id="homeScreen" class="glass-card" style="max-width:440px;">
         <h1 class="text-3xl font-bold text-center text-cyan-200 mb-2">Machi</h1>
         <p class="text-center text-slate-400 text-sm mb-8 tracking-wider">⚡ mobilité en circuit fermé</p>
-
         <div class="flex flex-col sm:flex-row gap-4">
-            <button id="btnInscription" class="btn-led">✨ S’inscrire</button>
+            <button id="btnInscription" class="btn-led">✨ S'inscrire</button>
             <button id="btnConnexion" class="btn-led">🔐 Se connecter</button>
         </div>
-
         <div class="mt-6 text-center text-xs text-slate-500">
             <span id="stats">👤 0 inscrits</span>
         </div>
     </div>
 
-    <!-- ========== INTERFACE PRINCIPALE (connecté) ========== -->
+    <!-- INTERFACE PRINCIPALE (dashboard) -->
     <div id="mainInterface">
         <button id="btnLogout" class="btn-logout">✕ Déconnexion</button>
+        <button id="btnCreateCourse" class="btn-create" style="display:none;">➕ Créer</button>
 
         <div class="mt-2">
-            <h2 id="welcomeMessage" class="text-2xl font-semibold text-cyan-200 mb-2">Bienvenue</h2>
-            <p id="userRoleBadge" class="text-sm text-slate-400 mb-6">Rôle : —</p>
-
-            <!-- Contenu vide pour l'instant (futur dashboard) -->
-            <div class="border-t border-white/5 pt-6 mt-2 text-slate-500 text-center">
-                <p class="text-lg">🚧 Interface principale</p>
-                <p class="text-sm">(les fonctionnalités arrivent bientôt)</p>
+            <h2 id="welcomeMessage" class="text-2xl font-semibold text-cyan-200 mb-1">Bienvenue</h2>
+            <p id="userRoleBadge" class="text-sm text-slate-400 mb-4">Rôle : —</p>
+            <hr class="border-white/5 mb-4" />
+            <div id="coursesContainer">
+                <p class="text-slate-500 text-center text-sm" id="noCoursesMsg">Aucune course pour le moment.</p>
+                <div id="coursesGrid" class="courses-grid"></div>
             </div>
         </div>
     </div>
 
-    <!-- ========== MODALE INSCRIPTION ========== -->
+    <!-- MODALE INSCRIPTION -->
     <div id="modalInscription" class="modal-overlay">
         <div class="modal-content">
             <h2 class="text-2xl font-semibold text-center text-cyan-200 mb-5">Créer un compte</h2>
-
-            <label for="role">Je suis</label>
+            <label>Je suis</label>
             <select id="role" class="mb-1">
                 <option value="passager">🚶 Passager</option>
                 <option value="chauffeur">🚗 Chauffeur</option>
             </select>
-
-            <label for="nom">Nom complet</label>
+            <label>Nom complet</label>
             <input type="text" id="nom" placeholder="ex: Karim Benali" />
-
-            <label for="telephone">Téléphone</label>
+            <label>Téléphone</label>
             <input type="tel" id="telephone" placeholder="0555 12 34 56" />
-
-            <label for="email">Email</label>
+            <label>Email</label>
             <input type="email" id="email" placeholder="ex: farid@gmail.com" />
-
-            <label for="motDePasse">Mot de passe</label>
+            <label>Mot de passe</label>
             <input type="password" id="motDePasse" placeholder="••••••••" />
-
             <div class="flex gap-3 mt-6">
                 <button id="btnValiderInscription" class="btn-led btn-validate flex-1">✔ Valider</button>
                 <button id="btnAnnulerInscription" class="btn-led btn-cancel flex-1">✖ Annuler</button>
@@ -258,20 +256,38 @@
         </div>
     </div>
 
-    <!-- ========== MODALE CONNEXION ========== -->
+    <!-- MODALE CONNEXION -->
     <div id="modalConnexion" class="modal-overlay">
         <div class="modal-content">
             <h2 class="text-2xl font-semibold text-center text-cyan-200 mb-5">🔐 Se connecter</h2>
-
-            <label for="loginEmail">Email</label>
+            <label>Email</label>
             <input type="email" id="loginEmail" placeholder="ex: farid@gmail.com" />
-
-            <label for="loginPassword">Mot de passe</label>
+            <label>Mot de passe</label>
             <input type="password" id="loginPassword" placeholder="••••••••" />
-
             <div class="flex gap-3 mt-6">
                 <button id="btnValiderConnexion" class="btn-led btn-validate flex-1">✔ Se connecter</button>
                 <button id="btnAnnulerConnexion" class="btn-led btn-cancel flex-1">✖ Annuler</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODALE CRÉATION COURSE -->
+    <div id="modalCreateCourse" class="modal-overlay">
+        <div class="modal-content">
+            <h2 class="text-2xl font-semibold text-center text-cyan-200 mb-5">🚗 Nouvelle course</h2>
+            <label>Départ</label>
+            <input type="text" id="courseDepart" placeholder="ex: Alger Centre" />
+            <label>Arrivée</label>
+            <input type="text" id="courseArrivee" placeholder="ex: Aéroport" />
+            <label>Heure de départ</label>
+            <input type="time" id="courseHeure" />
+            <label>Prix (unités)</label>
+            <input type="number" id="coursePrix" placeholder="ex: 150" min="1" />
+            <label>Places disponibles</label>
+            <input type="number" id="coursePlaces" placeholder="ex: 3" min="1" max="7" />
+            <div class="flex gap-3 mt-6">
+                <button id="btnValiderCourse" class="btn-led btn-validate flex-1">✔ Confirmer</button>
+                <button id="btnAnnulerCourse" class="btn-led btn-cancel flex-1">✖ Annuler</button>
             </div>
         </div>
     </div>
@@ -289,12 +305,14 @@
             const welcomeMessage = document.getElementById('welcomeMessage');
             const userRoleBadge = document.getElementById('userRoleBadge');
             const stats = document.getElementById('stats');
+            const coursesGrid = document.getElementById('coursesGrid');
+            const noCoursesMsg = document.getElementById('noCoursesMsg');
 
-            // Boutons écran accueil
+            // Boutons accueil
             const btnInscription = document.getElementById('btnInscription');
             const btnConnexion = document.getElementById('btnConnexion');
 
-            // Modale inscription
+            // Inscription
             const modalInscription = document.getElementById('modalInscription');
             const btnValiderInscription = document.getElementById('btnValiderInscription');
             const btnAnnulerInscription = document.getElementById('btnAnnulerInscription');
@@ -304,15 +322,26 @@
             const emailInput = document.getElementById('email');
             const pwdInput = document.getElementById('motDePasse');
 
-            // Modale connexion
+            // Connexion
             const modalConnexion = document.getElementById('modalConnexion');
             const loginEmail = document.getElementById('loginEmail');
             const loginPassword = document.getElementById('loginPassword');
             const btnValiderConnexion = document.getElementById('btnValiderConnexion');
             const btnAnnulerConnexion = document.getElementById('btnAnnulerConnexion');
 
-            // Déconnexion
+            // Déconnexion et Créer
             const btnLogout = document.getElementById('btnLogout');
+            const btnCreateCourse = document.getElementById('btnCreateCourse');
+
+            // Modale création course
+            const modalCreateCourse = document.getElementById('modalCreateCourse');
+            const courseDepart = document.getElementById('courseDepart');
+            const courseArrivee = document.getElementById('courseArrivee');
+            const courseHeure = document.getElementById('courseHeure');
+            const coursePrix = document.getElementById('coursePrix');
+            const coursePlaces = document.getElementById('coursePlaces');
+            const btnValiderCourse = document.getElementById('btnValiderCourse');
+            const btnAnnulerCourse = document.getElementById('btnAnnulerCourse');
 
             // Toast
             const toast = document.getElementById('toast');
@@ -321,6 +350,7 @@
             const STORAGE_KEY_CHAUFFEURS = 'chauffeurs';
             const STORAGE_KEY_PASSAGERS = 'passagers';
             const STORAGE_KEY_SESSION = 'machi_session';
+            const STORAGE_KEY_COURSES = 'courses';
 
             // --- Fonctions stockage ---
             function getData(key) {
@@ -331,35 +361,21 @@
             function getPassagers() { return getData(STORAGE_KEY_PASSAGERS); }
             function saveChauffeurs(list) { setData(STORAGE_KEY_CHAUFFEURS, list); }
             function savePassagers(list) { setData(STORAGE_KEY_PASSAGERS, list); }
+            function getCourses() { return getData(STORAGE_KEY_COURSES); }
+            function saveCourses(list) { setData(STORAGE_KEY_COURSES, list); }
 
             function getSession() {
                 try { return JSON.parse(localStorage.getItem(STORAGE_KEY_SESSION)); } catch { return null; }
             }
-            function setSession(user) {
-                localStorage.setItem(STORAGE_KEY_SESSION, JSON.stringify(user));
-            }
-            function clearSession() {
-                localStorage.removeItem(STORAGE_KEY_SESSION);
-            }
+            function setSession(user) { localStorage.setItem(STORAGE_KEY_SESSION, JSON.stringify(user)); }
+            function clearSession() { localStorage.removeItem(STORAGE_KEY_SESSION); }
 
-            // --- Amorçage des données de démonstration (Farid & Said) ---
+            // --- Amorçage utilisateurs demo ---
             function seedDefaultUsers() {
                 if (getChauffeurs().length === 0 && getPassagers().length === 0) {
-                    const passagers = [{
-                        nom: "Farid",
-                        telephone: "0000000021",
-                        email: "farid@gmail.com",
-                        motDePasse: "farid123"
-                    }];
-                    const chauffeurs = [{
-                        nom: "Said",
-                        telephone: "1111111111111",
-                        email: "said@gmail.com",
-                        motDePasse: "said123"
-                    }];
-                    savePassagers(passagers);
-                    saveChauffeurs(chauffeurs);
-                    console.log('🌱 Utilisateurs de démonstration : Farid (passager) et Said (chauffeur)');
+                    savePassagers([{ nom: "Farid", telephone: "0000000021", email: "farid@gmail.com", motDePasse: "farid123" }]);
+                    saveChauffeurs([{ nom: "Said", telephone: "1111111111111", email: "said@gmail.com", motDePasse: "said123" }]);
+                    console.log('🌱 Utilisateurs démo créés');
                 }
             }
 
@@ -379,7 +395,7 @@
                 toast._timer = setTimeout(() => toast.classList.remove('show'), 3000);
             }
 
-            // --- Afficher / masquer les écrans ---
+            // --- Affichage des écrans ---
             function showHomeScreen() {
                 homeScreen.style.display = 'block';
                 mainInterface.classList.remove('active');
@@ -390,40 +406,73 @@
             function showMainInterface(user) {
                 homeScreen.style.display = 'none';
                 mainInterface.style.display = 'block';
-                // Petite astuce pour forcer l'affichage après display:block
                 requestAnimationFrame(() => mainInterface.classList.add('active'));
 
-                // Mettre à jour le message de bienvenue
                 const roleFr = user.role === 'chauffeur' ? 'Chauffeur' : 'Passager';
                 welcomeMessage.textContent = `👋 Bonjour ${user.nom}`;
                 userRoleBadge.textContent = `Rôle : ${roleFr}`;
+
+                // Afficher le bouton "Créer" seulement pour les chauffeurs
+                if (user.role === 'chauffeur') {
+                    btnCreateCourse.style.display = 'inline-block';
+                } else {
+                    btnCreateCourse.style.display = 'none';
+                }
+
+                // Charger les courses
+                renderCourses(user);
+            }
+
+            // --- Affichage des courses ---
+            function renderCourses(user) {
+                const allCourses = getCourses();
+                // Filtrer : pour un chauffeur, ses propres courses ; pour un passager, toutes ? On affiche toutes pour l'instant.
+                // Mais on va afficher toutes les courses pour tout le monde (plus tard on filtrera)
+                const coursesToShow = user.role === 'chauffeur' ?
+                    allCourses.filter(c => c.chauffeurEmail === user.email) :
+                    allCourses; // pour passager, toutes les courses disponibles
+
+                coursesGrid.innerHTML = '';
+                if (coursesToShow.length === 0) {
+                    noCoursesMsg.style.display = 'block';
+                    coursesGrid.style.display = 'none';
+                    return;
+                }
+                noCoursesMsg.style.display = 'none';
+                coursesGrid.style.display = 'grid';
+
+                coursesToShow.forEach(c => {
+                    const card = document.createElement('div');
+                    card.className = 'course-card';
+                    card.innerHTML = `
+                        <div class="titre">${c.depart} → ${c.arrivee}</div>
+                        <div class="detail">🕐 ${c.heure}</div>
+                        <div class="prix-places">
+                            <span>💰 ${c.prix}</span>
+                            <span>👥 ${c.places}</span>
+                        </div>
+                    `;
+                    coursesGrid.appendChild(card);
+                });
             }
 
             // --- Connexion ---
             function handleLogin() {
                 const email = loginEmail.value.trim();
                 const password = loginPassword.value.trim();
+                if (!email || !password) { showToast('⚠️ Remplissez tous les champs', true); return; }
 
-                if (!email || !password) {
-                    showToast('⚠️ Veuillez remplir tous les champs', true);
-                    return;
-                }
-
-                // Chercher dans les deux listes
                 const chauffeurs = getChauffeurs();
                 const passagers = getPassagers();
-
                 let foundUser = null;
                 let role = '';
 
-                // Chercher parmi les chauffeurs
                 for (let u of chauffeurs) {
                     if (u.email === email && u.motDePasse === password) {
                         foundUser = { ...u, role: 'chauffeur' };
                         break;
                     }
                 }
-                // Chercher parmi les passagers
                 if (!foundUser) {
                     for (let u of passagers) {
                         if (u.email === email && u.motDePasse === password) {
@@ -432,14 +481,9 @@
                         }
                     }
                 }
+                if (!foundUser) { showToast('❌ Email ou mot de passe incorrect', true); return; }
 
-                if (!foundUser) {
-                    showToast('❌ Email ou mot de passe incorrect', true);
-                    return;
-                }
-
-                // Succès
-                showToast(`✅ Bienvenue ${foundUser.nom} !`);
+                showToast(`✅ Bienvenue ${foundUser.nom}`);
                 setSession(foundUser);
                 closeModalConnexion();
                 showMainInterface(foundUser);
@@ -449,38 +493,16 @@
             function logout() {
                 clearSession();
                 showHomeScreen();
-                showToast('🔓 Vous êtes déconnecté');
+                showToast('🔓 Déconnecté');
             }
 
-            // --- Modales : Inscription ---
-            function openModalInscription() {
-                modalInscription.classList.add('active');
-                nomInput.value = '';
-                telInput.value = '';
-                emailInput.value = '';
-                pwdInput.value = '';
-                roleSelect.value = 'passager';
-                nomInput.focus();
-            }
-            function closeModalInscription() { modalInscription.classList.remove('active'); }
-
-            // --- Modales : Connexion ---
-            function openModalConnexion() {
-                modalConnexion.classList.add('active');
-                loginEmail.value = '';
-                loginPassword.value = '';
-                loginEmail.focus();
-            }
-            function closeModalConnexion() { modalConnexion.classList.remove('active'); }
-
-            // --- Validation inscription (avec email & mot de passe) ---
+            // --- Inscription ---
             function handleInscription() {
                 const role = roleSelect.value;
                 const nom = nomInput.value.trim();
                 const tel = telInput.value.trim();
                 const email = emailInput.value.trim();
                 const motDePasse = pwdInput.value.trim();
-
                 if (!nom || !tel || !email || !motDePasse) {
                     showToast('⚠️ Tous les champs sont obligatoires', true);
                     return;
@@ -497,22 +519,13 @@
                     showToast('🔒 Mot de passe : au moins 4 caractères', true);
                     return;
                 }
-
-                // Vérifier doublon (tous rôles confondus)
                 const allUsers = [...getChauffeurs(), ...getPassagers()];
                 if (allUsers.some(u => u.email === email)) {
                     showToast('❌ Cet email est déjà utilisé', true);
                     return;
                 }
 
-                const utilisateur = {
-                    nom: nom,
-                    telephone: tel,
-                    email: email,
-                    motDePasse: motDePasse,
-                    dateInscription: new Date().toISOString()
-                };
-
+                const utilisateur = { nom, telephone: tel, email, motDePasse, dateInscription: new Date().toISOString() };
                 if (role === 'chauffeur') {
                     const list = getChauffeurs();
                     list.push(utilisateur);
@@ -524,31 +537,90 @@
                     savePassagers(list);
                     showToast(`🚶 Passager « ${nom} » enregistré !`);
                 }
-
                 updateStats();
                 closeModalInscription();
-                console.log('📦 Données :', { chauffeurs: getChauffeurs(), passagers: getPassagers() });
             }
 
-            // --- Vérification de session au chargement ---
+            // --- Création d'une course ---
+            function handleCreateCourse() {
+                const depart = courseDepart.value.trim();
+                const arrivee = courseArrivee.value.trim();
+                const heure = courseHeure.value;
+                const prix = parseInt(coursePrix.value);
+                const places = parseInt(coursePlaces.value);
+
+                if (!depart || !arrivee || !heure || isNaN(prix) || isNaN(places)) {
+                    showToast('⚠️ Tous les champs sont requis', true);
+                    return;
+                }
+                if (prix < 1) { showToast('💰 Prix invalide', true); return; }
+                if (places < 1 || places > 7) { showToast('👥 Places entre 1 et 7', true); return; }
+
+                const session = getSession();
+                if (!session) { showToast('❌ Vous devez être connecté', true); return; }
+
+                const nouvelleCourse = {
+                    id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+                    chauffeurEmail: session.email,
+                    depart,
+                    arrivee,
+                    heure,
+                    prix,
+                    places,
+                    dateCreation: new Date().toISOString()
+                };
+
+                const courses = getCourses();
+                courses.push(nouvelleCourse);
+                saveCourses(courses);
+                showToast(`✅ Course créée : ${depart} → ${arrivee}`);
+                closeModalCreateCourse();
+                // Rafraîchir l'affichage
+                renderCourses(session);
+            }
+
+            // --- Modales : Inscription ---
+            function openModalInscription() {
+                modalInscription.classList.add('active');
+                nomInput.value = ''; telInput.value = ''; emailInput.value = ''; pwdInput.value = '';
+                roleSelect.value = 'passager';
+                nomInput.focus();
+            }
+            function closeModalInscription() { modalInscription.classList.remove('active'); }
+
+            // --- Modales : Connexion ---
+            function openModalConnexion() {
+                modalConnexion.classList.add('active');
+                loginEmail.value = ''; loginPassword.value = '';
+                loginEmail.focus();
+            }
+            function closeModalConnexion() { modalConnexion.classList.remove('active'); }
+
+            // --- Modales : Création course ---
+            function openModalCreateCourse() {
+                modalCreateCourse.classList.add('active');
+                courseDepart.value = ''; courseArrivee.value = ''; courseHeure.value = ''; coursePrix.value = ''; coursePlaces.value = '';
+                courseDepart.focus();
+            }
+            function closeModalCreateCourse() { modalCreateCourse.classList.remove('active'); }
+
+            // --- Vérification session au chargement ---
             function checkSession() {
                 const session = getSession();
                 if (session) {
-                    // Vérifier que l'utilisateur existe toujours (au cas où)
                     const allUsers = [...getChauffeurs(), ...getPassagers()];
                     const exists = allUsers.some(u => u.email === session.email);
                     if (exists) {
                         showMainInterface(session);
                         return;
                     } else {
-                        clearSession(); // nettoyer session obsolète
+                        clearSession();
                     }
                 }
                 showHomeScreen();
             }
 
             // --- Événements ---
-
             // Accueil
             btnInscription.addEventListener('click', openModalInscription);
             btnConnexion.addEventListener('click', openModalConnexion);
@@ -578,9 +650,21 @@
             // Déconnexion
             btnLogout.addEventListener('click', logout);
 
+            // Créer course
+            btnCreateCourse.addEventListener('click', openModalCreateCourse);
+            btnValiderCourse.addEventListener('click', handleCreateCourse);
+            btnAnnulerCourse.addEventListener('click', closeModalCreateCourse);
+            modalCreateCourse.addEventListener('click', (e) => { if (e.target === modalCreateCourse) closeModalCreateCourse(); });
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && modalCreateCourse.classList.contains('active')) closeModalCreateCourse();
+            });
+            [courseDepart, courseArrivee, courseHeure, coursePrix, coursePlaces].forEach(el => {
+                el.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleCreateCourse(); });
+            });
+
             // --- Initialisation ---
             seedDefaultUsers();
-            checkSession(); // Affiche le bon écran selon la session
+            checkSession();
         })();
     </script>
 
