@@ -6,7 +6,14 @@
     <title>Machi – Mobile</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz@14..32&display=swap" rel="stylesheet" />
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
     <style>
+        /* --- Identique à la version précédente (aucun changement CSS) --- */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Inter', sans-serif;
@@ -17,7 +24,6 @@
             justify-content: center;
             padding: 1rem;
         }
-
         .glass-card, #mainInterface {
             background: rgba(20, 25, 45, 0.6);
             backdrop-filter: blur(12px) saturate(160%);
@@ -37,7 +43,6 @@
             padding-bottom: 5rem;
         }
         #mainInterface.active { display: block; }
-
         .btn-led {
             background: #1e2a4a;
             border: 1px solid rgba(255, 255, 255, 0.06);
@@ -53,7 +58,6 @@
         }
         .btn-led:hover { background: #2b3b66; color: #fff; }
         .btn-led:active { background: #16203a; }
-
         .header-actions {
             display: flex;
             justify-content: space-between;
@@ -83,8 +87,6 @@
         }
         .header-actions .btn-logout:hover { background: rgba(255,70,70,0.2); }
         .header-actions .btn-create:hover { background: rgba(0,180,170,0.2); }
-
-        /* --- Modales --- */
         .modal-overlay {
             display: none;
             position: fixed;
@@ -138,13 +140,10 @@
             background: rgba(255,255,255,0.03);
             border: 1px dashed rgba(255,255,255,0.1);
         }
-
         .btn-validate { background: #00807a; border-color: #00a39a; color: #fff; }
         .btn-validate:hover { background: #00a39a; }
         .btn-cancel { background: rgba(255,70,70,0.12); border-color: rgba(255,70,70,0.2); color: #ffb0b0; }
         .btn-cancel:hover { background: rgba(255,70,70,0.22); }
-
-        /* --- Liste des trajets --- */
         .courses-list {
             display: flex;
             flex-direction: column;
@@ -162,7 +161,6 @@
             position: relative;
         }
         .course-card:hover { background: rgba(255,255,255,0.06); }
-
         .course-info {
             display: flex;
             flex-wrap: wrap;
@@ -190,16 +188,12 @@
             white-space: nowrap;
             font-weight: 500;
         }
-
-        /* --- Rangée carreaux + photo --- */
         .course-row {
             display: flex;
             align-items: stretch;
             gap: 0.8rem;
             margin-top: 0.3rem;
         }
-
-        /* --- Grille 2x4 pour les carreaux --- */
         .seat-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
@@ -245,11 +239,9 @@
             opacity: 0.25;
             cursor: default;
         }
-
-        /* --- Photo de la voiture (format 3:2 paysage) --- */
         .car-photo {
-            width: 80px;           /* largeur fixe, ajustable */
-            aspect-ratio: 3 / 2;   /* format 3:2 (largeur 3, hauteur 2) */
+            width: 80px;
+            aspect-ratio: 3 / 2;
             border-radius: 12px;
             overflow: hidden;
             flex-shrink: 0;
@@ -268,11 +260,7 @@
             object-fit: cover;
             display: block;
         }
-        .car-photo.default {
-            font-size: 2.2rem;
-        }
-
-        /* --- Tooltip --- */
+        .car-photo.default { font-size: 2.2rem; }
         .tooltip-reservation {
             position: fixed;
             background: rgba(18,24,44,0.95);
@@ -306,8 +294,6 @@
             transition: background 0.2s;
         }
         .tooltip-reservation .btn-supprimer:hover { background: rgba(255,70,70,0.4); }
-
-        /* --- Admin panel --- */
         .admin-panel { margin-top: 1rem; }
         .admin-panel .btn-admin {
             background: #1e2a4a;
@@ -324,7 +310,6 @@
         }
         .admin-panel .btn-admin:hover { background: #2b3b66; }
         .admin-panel .btn-admin.active { background: #2b3b66; border-color: #4a8cff; }
-
         .admin-list {
             background: rgba(255,255,255,0.03);
             border: 1px solid rgba(255,255,255,0.06);
@@ -347,8 +332,6 @@
         .admin-list .item:hover { background: rgba(255,255,255,0.05); }
         .admin-list .item:last-child { border-bottom: none; }
         .admin-list .item .email { color: #8aa0c8; font-size: 0.75rem; }
-
-        /* --- Toast --- */
         .toast {
             position: fixed;
             bottom: 2rem;
@@ -368,10 +351,17 @@
             text-align: center;
         }
         .toast.show { display: block; }
-
         #homeScreen .btn-led { flex: 1; text-align: center; }
-
-        /* --- Responsive --- */
+        .spinner {
+            display: inline-block;
+            width: 1rem;
+            height: 1rem;
+            border: 2px solid rgba(255,255,255,0.1);
+            border-top-color: #00b8b0;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
         @media (max-width: 480px) {
             body { padding: 0.5rem; }
             .glass-card, #mainInterface { padding: 1rem 0.8rem; border-radius: 1.5rem; }
@@ -418,13 +408,10 @@
         <hr class="border-white/5 my-3" />
 
         <div id="mainContent">
-            <!-- Courses -->
             <div id="coursesContainer">
                 <p class="text-slate-500 text-center text-sm" id="noCoursesMsg">Aucune course pour le moment.</p>
                 <div id="coursesList" class="courses-list"></div>
             </div>
-
-            <!-- Admin Panel -->
             <div id="adminPanel" class="admin-panel" style="display:none;">
                 <button id="btnAdminChauffeurs" class="btn-admin">🚗 Chauffeurs</button>
                 <div id="adminChauffeursList" class="admin-list" style="display:none;"></div>
@@ -434,7 +421,7 @@
         </div>
     </div>
 
-    <!-- MODALE ADMIN : attribuer photo -->
+    <!-- MODALE ADMIN PHOTO -->
     <div id="modalAdminPhoto" class="modal-overlay">
         <div class="modal-content">
             <h2 class="text-xl font-semibold text-center text-cyan-200 mb-4">📸 Photo de la voiture</h2>
@@ -457,7 +444,7 @@
         <button class="btn-supprimer" id="btnSupprimerResa">✕</button>
     </div>
 
-    <!-- MODALES (inscription / connexion / création course) -->
+    <!-- MODALES -->
     <div id="modalInscription" class="modal-overlay">
         <div class="modal-content">
             <h2 class="text-xl font-semibold text-center text-cyan-200 mb-4">Créer un compte</h2>
@@ -518,169 +505,225 @@
     <div id="toast" class="toast"></div>
 
     <script>
-        (function() {
-            "use strict";
+        // ============================================================
+        // 1. INITIALISATION FIREBASE
+        // ============================================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyACgeZXog1KZGU29HpjM4qpKTBt54KbJFg",
+            authDomain: "machi-51024.firebaseapp.com",
+            projectId: "machi-51024",
+            storageBucket: "machi-51024.firebasestorage.app",
+            messagingSenderId: "984764801380",
+            appId: "1:984764801380:web:c082a0988bba3f899fda71",
+            measurementId: "G-EDZXP8QF9Q"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
 
-            // --- DOM ---
-            const homeScreen = document.getElementById('homeScreen');
-            const mainInterface = document.getElementById('mainInterface');
-            const welcomeMessage = document.getElementById('welcomeMessage');
-            const userRoleBadge = document.getElementById('userRoleBadge');
-            const stats = document.getElementById('stats');
-            const coursesList = document.getElementById('coursesList');
-            const noCoursesMsg = document.getElementById('noCoursesMsg');
-            const coursesContainer = document.getElementById('coursesContainer');
-            const adminPanel = document.getElementById('adminPanel');
-            const btnAdminChauffeurs = document.getElementById('btnAdminChauffeurs');
-            const btnAdminPassagers = document.getElementById('btnAdminPassagers');
-            const adminChauffeursList = document.getElementById('adminChauffeursList');
-            const adminPassagersList = document.getElementById('adminPassagersList');
+        // ============================================================
+        // 2. DOM & ÉLÉMENTS
+        // ============================================================
+        const homeScreen = document.getElementById('homeScreen');
+        const mainInterface = document.getElementById('mainInterface');
+        const welcomeMessage = document.getElementById('welcomeMessage');
+        const userRoleBadge = document.getElementById('userRoleBadge');
+        const stats = document.getElementById('stats');
+        const coursesList = document.getElementById('coursesList');
+        const noCoursesMsg = document.getElementById('noCoursesMsg');
+        const coursesContainer = document.getElementById('coursesContainer');
+        const adminPanel = document.getElementById('adminPanel');
+        const btnAdminChauffeurs = document.getElementById('btnAdminChauffeurs');
+        const btnAdminPassagers = document.getElementById('btnAdminPassagers');
+        const adminChauffeursList = document.getElementById('adminChauffeursList');
+        const adminPassagersList = document.getElementById('adminPassagersList');
 
-            const btnInscription = document.getElementById('btnInscription');
-            const btnConnexion = document.getElementById('btnConnexion');
+        const btnInscription = document.getElementById('btnInscription');
+        const btnConnexion = document.getElementById('btnConnexion');
+        const btnLogout = document.getElementById('btnLogout');
+        const btnCreateCourse = document.getElementById('btnCreateCourse');
 
-            const modalInscription = document.getElementById('modalInscription');
-            const btnValiderInscription = document.getElementById('btnValiderInscription');
-            const btnAnnulerInscription = document.getElementById('btnAnnulerInscription');
-            const roleSelect = document.getElementById('role');
-            const nomInput = document.getElementById('nom');
-            const telInput = document.getElementById('telephone');
-            const emailInput = document.getElementById('email');
-            const pwdInput = document.getElementById('motDePasse');
+        // Modales
+        const modalInscription = document.getElementById('modalInscription');
+        const btnValiderInscription = document.getElementById('btnValiderInscription');
+        const btnAnnulerInscription = document.getElementById('btnAnnulerInscription');
+        const roleSelect = document.getElementById('role');
+        const nomInput = document.getElementById('nom');
+        const telInput = document.getElementById('telephone');
+        const emailInput = document.getElementById('email');
+        const pwdInput = document.getElementById('motDePasse');
 
-            const modalConnexion = document.getElementById('modalConnexion');
-            const loginEmail = document.getElementById('loginEmail');
-            const loginPassword = document.getElementById('loginPassword');
-            const btnValiderConnexion = document.getElementById('btnValiderConnexion');
-            const btnAnnulerConnexion = document.getElementById('btnAnnulerConnexion');
+        const modalConnexion = document.getElementById('modalConnexion');
+        const loginEmail = document.getElementById('loginEmail');
+        const loginPassword = document.getElementById('loginPassword');
+        const btnValiderConnexion = document.getElementById('btnValiderConnexion');
+        const btnAnnulerConnexion = document.getElementById('btnAnnulerConnexion');
 
-            const btnLogout = document.getElementById('btnLogout');
-            const btnCreateCourse = document.getElementById('btnCreateCourse');
+        const modalCreateCourse = document.getElementById('modalCreateCourse');
+        const courseDepart = document.getElementById('courseDepart');
+        const courseArrivee = document.getElementById('courseArrivee');
+        const courseHeure = document.getElementById('courseHeure');
+        const coursePrix = document.getElementById('coursePrix');
+        const coursePlaces = document.getElementById('coursePlaces');
+        const btnValiderCourse = document.getElementById('btnValiderCourse');
+        const btnAnnulerCourse = document.getElementById('btnAnnulerCourse');
 
-            const modalCreateCourse = document.getElementById('modalCreateCourse');
-            const courseDepart = document.getElementById('courseDepart');
-            const courseArrivee = document.getElementById('courseArrivee');
-            const courseHeure = document.getElementById('courseHeure');
-            const coursePrix = document.getElementById('coursePrix');
-            const coursePlaces = document.getElementById('coursePlaces');
-            const btnValiderCourse = document.getElementById('btnValiderCourse');
-            const btnAnnulerCourse = document.getElementById('btnAnnulerCourse');
+        // Admin photo
+        const modalAdminPhoto = document.getElementById('modalAdminPhoto');
+        const adminPhotoChauffeurNom = document.getElementById('adminPhotoChauffeurNom');
+        const adminPhotoPreview = document.getElementById('adminPhotoPreview');
+        const adminPhotoInput = document.getElementById('adminPhotoInput');
+        const btnAdminPhotoValider = document.getElementById('btnAdminPhotoValider');
+        const btnAdminPhotoAnnuler = document.getElementById('btnAdminPhotoAnnuler');
 
-            // Admin photo
-            const modalAdminPhoto = document.getElementById('modalAdminPhoto');
-            const adminPhotoChauffeurNom = document.getElementById('adminPhotoChauffeurNom');
-            const adminPhotoPreview = document.getElementById('adminPhotoPreview');
-            const adminPhotoInput = document.getElementById('adminPhotoInput');
-            const btnAdminPhotoValider = document.getElementById('btnAdminPhotoValider');
-            const btnAdminPhotoAnnuler = document.getElementById('btnAdminPhotoAnnuler');
+        const tooltip = document.getElementById('tooltipReservation');
+        const btnSupprimerResa = document.getElementById('btnSupprimerResa');
+        const toast = document.getElementById('toast');
 
-            const tooltip = document.getElementById('tooltipReservation');
-            const btnSupprimerResa = document.getElementById('btnSupprimerResa');
-            const toast = document.getElementById('toast');
+        let tooltipCourseId = null;
+        let tooltipPlaceIndex = null;
+        let adminTargetChauffeurEmail = null;
+        let adminTempPhotoData = null;
+        let currentUser = null; // utilisateur Firestore (avec role)
 
-            let tooltipCourseId = null;
-            let tooltipPlaceIndex = null;
-            let adminTargetChauffeurEmail = null;
-            let adminTempPhotoData = null;
+        // Clé localStorage pour les photos (temporaire)
+        const STORAGE_KEY_PHOTOS = 'chauffeur_photos';
 
-            // --- Clés ---
-            const STORAGE_KEY_CHAUFFEURS = 'chauffeurs';
-            const STORAGE_KEY_PASSAGERS = 'passagers';
-            const STORAGE_KEY_SESSION = 'machi_session';
-            const STORAGE_KEY_COURSES = 'courses';
-            const STORAGE_KEY_PHOTOS = 'chauffeur_photos'; // { email: base64 }
+        // ============================================================
+        // 3. FONCTIONS UTILITAIRES
+        // ============================================================
+        function getPhotos() {
+            try { return JSON.parse(localStorage.getItem(STORAGE_KEY_PHOTOS)) || {}; } catch { return {}; }
+        }
+        function savePhotos(photos) {
+            localStorage.setItem(STORAGE_KEY_PHOTOS, JSON.stringify(photos));
+        }
 
-            // --- Stockage ---
-            function getData(key) {
-                try { return JSON.parse(localStorage.getItem(key)) || []; } catch { return []; }
-            }
-            function setData(key, data) { localStorage.setItem(key, JSON.stringify(data)); }
-            function getChauffeurs() { return getData(STORAGE_KEY_CHAUFFEURS); }
-            function getPassagers() { return getData(STORAGE_KEY_PASSAGERS); }
-            function saveChauffeurs(list) { setData(STORAGE_KEY_CHAUFFEURS, list); }
-            function savePassagers(list) { setData(STORAGE_KEY_PASSAGERS, list); }
-            function getCourses() { return getData(STORAGE_KEY_COURSES); }
-            function saveCourses(list) { setData(STORAGE_KEY_COURSES, list); }
-            function getPhotos() { return getData(STORAGE_KEY_PHOTOS); }
-            function savePhotos(photos) { setData(STORAGE_KEY_PHOTOS, photos); }
+        function showToast(message, isError = false) {
+            toast.textContent = message;
+            toast.style.borderColor = isError ? 'rgba(255,100,100,0.2)' : 'rgba(0,255,200,0.15)';
+            toast.style.color = isError ? '#ffb0b0' : '#c0fff0';
+            toast.classList.add('show');
+            clearTimeout(toast._timer);
+            toast._timer = setTimeout(() => toast.classList.remove('show'), 3000);
+        }
 
-            function getSession() {
-                try { return JSON.parse(localStorage.getItem(STORAGE_KEY_SESSION)); } catch { return null; }
-            }
-            function setSession(user) { localStorage.setItem(STORAGE_KEY_SESSION, JSON.stringify(user)); }
-            function clearSession() { localStorage.removeItem(STORAGE_KEY_SESSION); }
+        function showLoader(btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span>';
+        }
+        function hideLoader(btn, originalText) {
+            btn.disabled = false;
+            btn.textContent = originalText;
+        }
 
-            // --- Utilisateurs démo ---
-            function seedDefaultUsers() {
-                if (getChauffeurs().length === 0 && getPassagers().length === 0) {
-                    savePassagers([{ nom: "Farid", telephone: "0000000021", email: "farid@gmail.com", motDePasse: "farid123" }]);
-                    saveChauffeurs([{ nom: "Said", telephone: "1111111111111", email: "said@gmail.com", motDePasse: "said123" }]);
-                }
-            }
+        // ============================================================
+        // 4. AFFICHAGE (HOME / MAIN)
+        // ============================================================
+        function showHomeScreen() {
+            homeScreen.style.display = 'block';
+            mainInterface.classList.remove('active');
+            mainInterface.style.display = 'none';
+            updateStats();
+            tooltip.style.display = 'none';
+        }
 
-            // --- Mise à jour compteur ---
-            function updateStats() {
-                const nb = getChauffeurs().length + getPassagers().length;
-                stats.textContent = `👤 ${nb} inscrit${nb > 1 ? 's' : ''}`;
-            }
+        function showMainInterface(user) {
+            homeScreen.style.display = 'none';
+            mainInterface.style.display = 'block';
+            requestAnimationFrame(() => mainInterface.classList.add('active'));
 
-            // --- Toast ---
-            function showToast(message, isError = false) {
-                toast.textContent = message;
-                toast.style.borderColor = isError ? 'rgba(255,100,100,0.2)' : 'rgba(0,255,200,0.15)';
-                toast.style.color = isError ? '#ffb0b0' : '#c0fff0';
-                toast.classList.add('show');
-                clearTimeout(toast._timer);
-                toast._timer = setTimeout(() => toast.classList.remove('show'), 3000);
-            }
+            const roleFr = user.role === 'admin' ? 'Admin' : (user.role === 'chauffeur' ? 'Chauffeur' : 'Passager');
+            welcomeMessage.textContent = `👋 Bonjour ${user.nom || 'Admin'}`;
+            userRoleBadge.textContent = `Rôle : ${roleFr}`;
 
-            // --- Affichage ---
-            function showHomeScreen() {
-                homeScreen.style.display = 'block';
-                mainInterface.classList.remove('active');
-                mainInterface.style.display = 'none';
-                updateStats();
-                tooltip.style.display = 'none';
-            }
+            btnCreateCourse.style.display = 'none';
 
-            function showMainInterface(user) {
-                homeScreen.style.display = 'none';
-                mainInterface.style.display = 'block';
-                requestAnimationFrame(() => mainInterface.classList.add('active'));
-
-                const roleFr = user.role === 'admin' ? 'Admin' : (user.role === 'chauffeur' ? 'Chauffeur' : 'Passager');
-                welcomeMessage.textContent = `👋 Bonjour ${user.nom || 'Admin'}`;
-                userRoleBadge.textContent = `Rôle : ${roleFr}`;
-
-                btnCreateCourse.style.display = 'none';
-
-                if (user.role === 'admin') {
-                    coursesContainer.style.display = 'none';
-                    adminPanel.style.display = 'block';
-                    renderAdminLists();
-                } else {
-                    coursesContainer.style.display = 'block';
-                    adminPanel.style.display = 'none';
-                    if (user.role === 'chauffeur') {
-                        btnCreateCourse.style.display = 'inline-block';
-                    }
-                    renderCourses(user);
-                }
-            }
-
-            // --- Rendu des courses avec 8 carreaux (2x4) + photo corrigé ---
-            function renderCourses(user) {
-                const allCourses = getCourses();
-                const photos = getPhotos();
-                let coursesToShow = [];
+            if (user.role === 'admin') {
+                coursesContainer.style.display = 'none';
+                adminPanel.style.display = 'block';
+                renderAdminLists();
+            } else {
+                coursesContainer.style.display = 'block';
+                adminPanel.style.display = 'none';
                 if (user.role === 'chauffeur') {
-                    coursesToShow = allCourses.filter(c => c.chauffeurEmail === user.email);
+                    btnCreateCourse.style.display = 'inline-block';
+                }
+                renderCourses(user);
+            }
+        }
+
+        // ============================================================
+        // 5. FONCTIONS FIRESTORE (CRUD)
+        // ============================================================
+
+        // --- Lire tous les utilisateurs ---
+        async function fetchUsers() {
+            const snapshot = await db.collection('users').get();
+            const users = [];
+            snapshot.forEach(doc => users.push(doc.data()));
+            return users;
+        }
+
+        // --- Lire tous les trajets ---
+        async function fetchRides() {
+            const snapshot = await db.collection('rides').get();
+            const rides = [];
+            snapshot.forEach(doc => rides.push({ id: doc.id, ...doc.data() }));
+            return rides;
+        }
+
+        // --- Créer un utilisateur ---
+        async function createUser(userData) {
+            await db.collection('users').doc(userData.email).set(userData);
+        }
+
+        // --- Créer un trajet ---
+        async function createRide(rideData) {
+            const docRef = await db.collection('rides').add(rideData);
+            return docRef.id;
+        }
+
+        // --- Mettre à jour un trajet (réservations) ---
+        async function updateRide(rideId, rideData) {
+            await db.collection('rides').doc(rideId).update(rideData);
+        }
+
+        // --- Compter les utilisateurs ---
+        async function countUsers() {
+            const snapshot = await db.collection('users').get();
+            return snapshot.size;
+        }
+
+        // ============================================================
+        // 6. MISE À JOUR DU COMPTEUR
+        // ============================================================
+        async function updateStats() {
+            try {
+                const count = await countUsers();
+                stats.textContent = `👤 ${count} inscrit${count > 1 ? 's' : ''}`;
+            } catch {
+                stats.textContent = '👤 0 inscrits';
+            }
+        }
+
+        // ============================================================
+        // 7. RENDU DES COURSES
+        // ============================================================
+        async function renderCourses(user) {
+            try {
+                const allRides = await fetchRides();
+                const photos = getPhotos();
+
+                let ridesToShow = [];
+                if (user.role === 'chauffeur') {
+                    ridesToShow = allRides.filter(r => r.chauffeurEmail === user.email);
                 } else {
-                    coursesToShow = allCourses;
+                    ridesToShow = allRides;
                 }
 
                 coursesList.innerHTML = '';
-                if (coursesToShow.length === 0) {
+                if (ridesToShow.length === 0) {
                     noCoursesMsg.style.display = 'block';
                     coursesList.style.display = 'none';
                     return;
@@ -688,14 +731,14 @@
                 noCoursesMsg.style.display = 'none';
                 coursesList.style.display = 'flex';
 
-                coursesToShow.forEach(course => {
+                ridesToShow.forEach(course => {
                     const photoData = photos[course.chauffeurEmail] || null;
 
                     const card = document.createElement('div');
                     card.className = 'course-card';
                     card.dataset.courseId = course.id;
 
-                    // Ligne d'info
+                    // Info
                     const info = document.createElement('div');
                     info.className = 'course-info';
                     const titre = document.createElement('span');
@@ -712,11 +755,10 @@
                     info.appendChild(prix);
                     card.appendChild(info);
 
-                    // Rangée : carreaux + photo
+                    // Rangée carreaux + photo
                     const row = document.createElement('div');
                     row.className = 'course-row';
 
-                    // Grille 2x4
                     const seatGrid = document.createElement('div');
                     seatGrid.className = 'seat-grid';
 
@@ -767,7 +809,7 @@
                     }
                     row.appendChild(seatGrid);
 
-                    // --- PHOTO DE LA VOITURE (format 3:2) ---
+                    // Photo
                     const photoContainer = document.createElement('div');
                     photoContainer.className = 'car-photo' + (photoData ? '' : ' default');
                     if (photoData) {
@@ -783,11 +825,21 @@
                     card.appendChild(row);
                     coursesList.appendChild(card);
                 });
+            } catch (error) {
+                showToast('❌ Erreur chargement des courses', true);
+                console.error('renderCourses error:', error);
             }
+        }
 
-            // --- Panneau admin ---
-            function renderAdminLists() {
-                const chauffeurs = getChauffeurs();
+        // ============================================================
+        // 8. PANEL ADMIN
+        // ============================================================
+        async function renderAdminLists() {
+            try {
+                const users = await fetchUsers();
+                const chauffeurs = users.filter(u => u.role === 'chauffeur');
+                const passagers = users.filter(u => u.role === 'passager');
+
                 adminChauffeursList.innerHTML = '';
                 if (chauffeurs.length === 0) {
                     adminChauffeursList.innerHTML = '<div class="item">Aucun chauffeur</div>';
@@ -801,7 +853,6 @@
                     });
                 }
 
-                const passagers = getPassagers();
                 adminPassagersList.innerHTML = '';
                 if (passagers.length === 0) {
                     adminPassagersList.innerHTML = '<div class="item">Aucun passager</div>';
@@ -813,282 +864,334 @@
                         adminPassagersList.appendChild(div);
                     });
                 }
+            } catch (error) {
+                showToast('❌ Erreur chargement des utilisateurs', true);
+                console.error('renderAdminLists error:', error);
             }
+        }
 
-            // --- Admin : modale photo ---
-            function openAdminPhotoModal(chauffeur) {
-                adminTargetChauffeurEmail = chauffeur.email;
-                adminPhotoChauffeurNom.textContent = `Chauffeur : ${chauffeur.nom} (${chauffeur.email})`;
-                adminPhotoPreview.style.display = 'none';
-                adminPhotoPreview.src = '';
-                adminTempPhotoData = null;
-                adminPhotoInput.value = '';
-                modalAdminPhoto.classList.add('active');
+        // ============================================================
+        // 9. ADMIN PHOTO
+        // ============================================================
+        function openAdminPhotoModal(chauffeur) {
+            adminTargetChauffeurEmail = chauffeur.email;
+            adminPhotoChauffeurNom.textContent = `Chauffeur : ${chauffeur.nom} (${chauffeur.email})`;
+            adminPhotoPreview.style.display = 'none';
+            adminPhotoPreview.src = '';
+            adminTempPhotoData = null;
+            adminPhotoInput.value = '';
+            modalAdminPhoto.classList.add('active');
+        }
+
+        function closeAdminPhotoModal() {
+            modalAdminPhoto.classList.remove('active');
+            adminTargetChauffeurEmail = null;
+            adminTempPhotoData = null;
+        }
+
+        adminPhotoInput.addEventListener('change', function(e) {
+            const file = this.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(ev) {
+                adminTempPhotoData = ev.target.result;
+                adminPhotoPreview.src = ev.target.result;
+                adminPhotoPreview.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+        });
+
+        function saveChauffeurPhoto() {
+            if (!adminTargetChauffeurEmail) return;
+            if (!adminTempPhotoData) {
+                showToast('⚠️ Veuillez choisir une photo', true);
+                return;
             }
-
-            function closeAdminPhotoModal() {
-                modalAdminPhoto.classList.remove('active');
-                adminTargetChauffeurEmail = null;
-                adminTempPhotoData = null;
+            const photos = getPhotos();
+            photos[adminTargetChauffeurEmail] = adminTempPhotoData;
+            savePhotos(photos);
+            showToast('✅ Photo enregistrée !');
+            closeAdminPhotoModal();
+            if (currentUser && currentUser.role === 'admin') {
+                renderAdminLists();
+            } else if (currentUser) {
+                renderCourses(currentUser);
             }
+        }
 
-            adminPhotoInput.addEventListener('change', function(e) {
-                const file = this.files[0];
-                if (!file) return;
-                const reader = new FileReader();
-                reader.onload = function(ev) {
-                    adminTempPhotoData = ev.target.result;
-                    adminPhotoPreview.src = ev.target.result;
-                    adminPhotoPreview.style.display = 'block';
-                };
-                reader.readAsDataURL(file);
-            });
+        btnAdminPhotoValider.addEventListener('click', saveChauffeurPhoto);
+        btnAdminPhotoAnnuler.addEventListener('click', closeAdminPhotoModal);
+        modalAdminPhoto.addEventListener('click', (e) => {
+            if (e.target === modalAdminPhoto) closeAdminPhotoModal();
+        });
 
-            function saveChauffeurPhoto() {
-                if (!adminTargetChauffeurEmail) return;
-                if (!adminTempPhotoData) {
-                    showToast('⚠️ Veuillez choisir une photo', true);
-                    return;
-                }
-                const photos = getPhotos();
-                photos[adminTargetChauffeurEmail] = adminTempPhotoData;
-                savePhotos(photos);
-                showToast('✅ Photo enregistrée !');
-                closeAdminPhotoModal();
-                const session = getSession();
-                if (session && session.role === 'admin') {
-                    renderAdminLists();
-                } else if (session) {
-                    renderCourses(session);
-                }
-            }
+        // ============================================================
+        // 10. GESTION DES CLICS SUR LES PLACES
+        // ============================================================
+        async function handleSeatClick(e) {
+            const seat = e.target.closest('.seat');
+            if (!seat) return;
+            const status = seat.dataset.status;
+            const courseId = seat.dataset.courseId;
+            const placeIndex = parseInt(seat.dataset.placeIndex);
+            if (!currentUser) return;
+            if (currentUser.role === 'admin') return;
 
-            btnAdminPhotoValider.addEventListener('click', saveChauffeurPhoto);
-            btnAdminPhotoAnnuler.addEventListener('click', closeAdminPhotoModal);
-            modalAdminPhoto.addEventListener('click', (e) => {
-                if (e.target === modalAdminPhoto) closeAdminPhotoModal();
-            });
-
-            // --- Gestion des clics sur les places ---
-            function handleSeatClick(e) {
-                const seat = e.target.closest('.seat');
-                if (!seat) return;
-                const status = seat.dataset.status;
-                const courseId = seat.dataset.courseId;
-                const placeIndex = parseInt(seat.dataset.placeIndex);
-                const session = getSession();
-                if (!session) return;
-                if (session.role === 'admin') return;
-
-                if (session.role === 'chauffeur') {
-                    if (status === 'reserved') {
-                        const nom = seat.dataset.reservedNom;
-                        if (nom) {
-                            tooltipCourseId = courseId;
-                            tooltipPlaceIndex = placeIndex;
-                            const rect = seat.getBoundingClientRect();
-                            tooltip.style.left = (rect.left + rect.width / 2 - 75) + 'px';
-                            tooltip.style.top = (rect.top - 10) + 'px';
-                            tooltip.style.display = 'flex';
-                            tooltip.querySelector('.nom').textContent = `👤 ${nom}`;
-                        } else {
-                            tooltip.style.display = 'none';
-                        }
+            if (currentUser.role === 'chauffeur') {
+                if (status === 'reserved') {
+                    const nom = seat.dataset.reservedNom;
+                    if (nom) {
+                        tooltipCourseId = courseId;
+                        tooltipPlaceIndex = placeIndex;
+                        const rect = seat.getBoundingClientRect();
+                        tooltip.style.left = (rect.left + rect.width / 2 - 75) + 'px';
+                        tooltip.style.top = (rect.top - 10) + 'px';
+                        tooltip.style.display = 'flex';
+                        tooltip.querySelector('.nom').textContent = `👤 ${nom}`;
                     } else {
                         tooltip.style.display = 'none';
                     }
-                } else if (session.role === 'passager') {
-                    if (status === 'available') {
-                        const courses = getCourses();
-                        const course = courses.find(c => c.id === courseId);
+                } else {
+                    tooltip.style.display = 'none';
+                }
+            } else if (currentUser.role === 'passager') {
+                if (status === 'available') {
+                    try {
+                        const allRides = await fetchRides();
+                        const course = allRides.find(r => r.id === courseId);
                         if (!course) return;
                         const reservations = course.reservations || [];
-                        const dejaReserve = reservations.some(r => r.email === session.email);
+                        const dejaReserve = reservations.some(r => r.email === currentUser.email);
                         if (dejaReserve) {
                             showToast('❌ Vous avez déjà réservé une place dans ce trajet', true);
                             return;
                         }
-                        reservations.push({ email: session.email, nom: session.nom, placeIndex });
-                        course.reservations = reservations;
-                        saveCourses(courses);
-                        showToast(`✅ Place réservée pour ${session.nom}`);
-                        renderCourses(session);
-                    } else if (status === 'reserved') {
-                        const reservedEmail = seat.dataset.reservedEmail;
-                        if (reservedEmail === session.email) {
-                            const courses = getCourses();
-                            const course = courses.find(c => c.id === courseId);
+                        reservations.push({ email: currentUser.email, nom: currentUser.nom, placeIndex });
+                        await updateRide(courseId, { reservations });
+                        showToast(`✅ Place réservée pour ${currentUser.nom}`);
+                        await renderCourses(currentUser);
+                    } catch (error) {
+                        showToast('❌ Erreur lors de la réservation', true);
+                        console.error('Reservation error:', error);
+                    }
+                } else if (status === 'reserved') {
+                    const reservedEmail = seat.dataset.reservedEmail;
+                    if (reservedEmail === currentUser.email) {
+                        try {
+                            const allRides = await fetchRides();
+                            const course = allRides.find(r => r.id === courseId);
                             if (!course) return;
                             const reservations = course.reservations || [];
-                            const idx = reservations.findIndex(r => r.placeIndex === placeIndex && r.email === session.email);
+                            const idx = reservations.findIndex(r => r.placeIndex === placeIndex && r.email === currentUser.email);
                             if (idx !== -1) {
                                 reservations.splice(idx, 1);
-                                course.reservations = reservations;
-                                saveCourses(courses);
+                                await updateRide(courseId, { reservations });
                                 showToast('🗑️ Réservation annulée');
-                                renderCourses(session);
+                                await renderCourses(currentUser);
                             }
-                        } else {
-                            showToast('ℹ️ Cette place est réservée par un autre passager', false);
+                        } catch (error) {
+                            showToast('❌ Erreur lors de l\'annulation', true);
+                            console.error('Cancel reservation error:', error);
                         }
+                    } else {
+                        showToast('ℹ️ Cette place est réservée par un autre passager', false);
                     }
                 }
             }
+        }
 
-            // --- Supprimer réservation (chauffeur) ---
-            function handleSupprimerResa() {
-                if (!tooltipCourseId || tooltipPlaceIndex === null) return;
-                const courses = getCourses();
-                const course = courses.find(c => c.id === tooltipCourseId);
+        // ============================================================
+        // 11. SUPPRIMER RÉSERVATION (CHAUFFEUR)
+        // ============================================================
+        async function handleSupprimerResa() {
+            if (!tooltipCourseId || tooltipPlaceIndex === null) return;
+            try {
+                const allRides = await fetchRides();
+                const course = allRides.find(r => r.id === tooltipCourseId);
                 if (!course) return;
                 const reservations = course.reservations || [];
                 const idx = reservations.findIndex(r => r.placeIndex === tooltipPlaceIndex);
                 if (idx !== -1) {
                     reservations.splice(idx, 1);
-                    course.reservations = reservations;
-                    saveCourses(courses);
+                    await updateRide(tooltipCourseId, { reservations });
                     showToast('🗑️ Place libérée');
                     tooltip.style.display = 'none';
-                    const session = getSession();
-                    if (session) renderCourses(session);
+                    if (currentUser) await renderCourses(currentUser);
                 } else {
                     tooltip.style.display = 'none';
                 }
+            } catch (error) {
+                showToast('❌ Erreur lors de la suppression', true);
+                console.error('Suppression error:', error);
+            }
+        }
+
+        // ============================================================
+        // 12. ADMIN : TOGGLES LISTES
+        // ============================================================
+        function toggleAdminList(listElement) {
+            if (listElement.style.display === 'block') {
+                listElement.style.display = 'none';
+            } else {
+                adminChauffeursList.style.display = 'none';
+                adminPassagersList.style.display = 'none';
+                listElement.style.display = 'block';
+            }
+        }
+
+        btnAdminChauffeurs.addEventListener('click', () => {
+            renderAdminLists();
+            toggleAdminList(adminChauffeursList);
+        });
+        btnAdminPassagers.addEventListener('click', () => {
+            renderAdminLists();
+            toggleAdminList(adminPassagersList);
+        });
+
+        // ============================================================
+        // 13. INSCRIPTION (Firebase Auth + Firestore)
+        // ============================================================
+        async function handleInscription() {
+            const role = roleSelect.value;
+            const nom = nomInput.value.trim();
+            const tel = telInput.value.trim();
+            const email = emailInput.value.trim();
+            const motDePasse = pwdInput.value.trim();
+
+            if (!nom || !tel || !email || !motDePasse) {
+                showToast('⚠️ Tous les champs sont obligatoires', true);
+                return;
+            }
+            if (!/^\d[\d\s]{7,}$/.test(tel.replace(/\s/g, ''))) {
+                showToast('📞 Téléphone invalide (8+ chiffres)', true);
+                return;
+            }
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                showToast('✉️ Email invalide', true);
+                return;
+            }
+            if (motDePasse.length < 4) {
+                showToast('🔒 Mot de passe : au moins 4 caractères', true);
+                return;
             }
 
-            // --- Admin : toggles listes ---
-            function toggleAdminList(listElement) {
-                if (listElement.style.display === 'block') {
-                    listElement.style.display = 'none';
-                } else {
-                    adminChauffeursList.style.display = 'none';
-                    adminPassagersList.style.display = 'none';
-                    listElement.style.display = 'block';
-                }
-            }
+            const btn = btnValiderInscription;
+            const originalText = btn.textContent;
+            showLoader(btn);
 
-            btnAdminChauffeurs.addEventListener('click', () => {
-                renderAdminLists();
-                toggleAdminList(adminChauffeursList);
-            });
-            btnAdminPassagers.addEventListener('click', () => {
-                renderAdminLists();
-                toggleAdminList(adminPassagersList);
-            });
-
-            // --- Connexion (avec admin) ---
-            function handleLogin() {
-                const email = loginEmail.value.trim();
-                const password = loginPassword.value.trim();
-                if (!email || !password) { showToast('⚠️ Remplissez tous les champs', true); return; }
-
-                if (email === 'admin@gmail.com' && password === 'admin123') {
-                    const adminUser = { nom: 'Admin', email: 'admin@gmail.com', role: 'admin' };
-                    showToast('✅ Bienvenue Admin');
-                    setSession(adminUser);
-                    closeModalConnexion();
-                    showMainInterface(adminUser);
+            try {
+                // Vérifier si l'email existe déjà dans Firestore
+                const existing = await db.collection('users').doc(email).get();
+                if (existing.exists) {
+                    showToast('❌ Cet email est déjà utilisé', true);
+                    hideLoader(btn, originalText);
                     return;
                 }
 
-                const chauffeurs = getChauffeurs();
-                const passagers = getPassagers();
-                let foundUser = null;
-                for (let u of chauffeurs) {
-                    if (u.email === email && u.motDePasse === password) {
-                        foundUser = { ...u, role: 'chauffeur' };
-                        break;
-                    }
-                }
-                if (!foundUser) {
-                    for (let u of passagers) {
-                        if (u.email === email && u.motDePasse === password) {
-                            foundUser = { ...u, role: 'passager' };
-                            break;
-                        }
-                    }
-                }
-                if (!foundUser) { showToast('❌ Email ou mot de passe incorrect', true); return; }
+                // Créer l'utilisateur Firebase Auth
+                const userCredential = await auth.createUserWithEmailAndPassword(email, motDePasse);
+                // Enregistrer dans Firestore
+                const userData = {
+                    nom,
+                    telephone: tel,
+                    email,
+                    role,
+                    dateInscription: new Date().toISOString()
+                };
+                await createUser(userData);
 
-                showToast(`✅ Bienvenue ${foundUser.nom}`);
-                setSession(foundUser);
-                closeModalConnexion();
-                showMainInterface(foundUser);
+                showToast(`✅ Compte ${role} « ${nom} » créé !`);
+                closeModalInscription();
+                // L'utilisateur est automatiquement connecté via onAuthStateChanged
+            } catch (error) {
+                showToast(`❌ Erreur : ${error.message}`, true);
+                console.error('Inscription error:', error);
+            }
+            hideLoader(btn, originalText);
+        }
+
+        // ============================================================
+        // 14. CONNEXION (Firebase Auth)
+        // ============================================================
+        async function handleLogin() {
+            const email = loginEmail.value.trim();
+            const password = loginPassword.value.trim();
+            if (!email || !password) {
+                showToast('⚠️ Remplissez tous les champs', true);
+                return;
             }
 
-            function logout() {
-                clearSession();
+            // Admin en dur
+            if (email === 'admin@gmail.com' && password === 'admin123') {
+                const adminUser = { nom: 'Admin', email: 'admin@gmail.com', role: 'admin' };
+                currentUser = adminUser;
+                showToast('✅ Bienvenue Admin');
+                closeModalConnexion();
+                showMainInterface(adminUser);
+                return;
+            }
+
+            const btn = btnValiderConnexion;
+            const originalText = btn.textContent;
+            showLoader(btn);
+
+            try {
+                await auth.signInWithEmailAndPassword(email, password);
+                // L'utilisateur est automatiquement géré par onAuthStateChanged
+                closeModalConnexion();
+                showToast('✅ Connexion réussie');
+            } catch (error) {
+                showToast(`❌ ${error.message}`, true);
+                console.error('Login error:', error);
+            }
+            hideLoader(btn, originalText);
+        }
+
+        // ============================================================
+        // 15. DÉCONNEXION
+        // ============================================================
+        async function logout() {
+            try {
+                await auth.signOut();
+                currentUser = null;
                 showHomeScreen();
                 showToast('🔓 Déconnecté');
                 tooltip.style.display = 'none';
+            } catch (error) {
+                showToast('❌ Erreur déconnexion', true);
+                console.error('Logout error:', error);
+            }
+        }
+
+        // ============================================================
+        // 16. CRÉATION D'UNE COURSE
+        // ============================================================
+        async function handleCreateCourse() {
+            const depart = courseDepart.value.trim();
+            const arrivee = courseArrivee.value.trim();
+            const heure = courseHeure.value;
+            const prix = parseInt(coursePrix.value);
+            const places = parseInt(coursePlaces.value);
+
+            if (!depart || !arrivee || !heure || isNaN(prix) || isNaN(places)) {
+                showToast('⚠️ Tous les champs sont requis', true);
+                return;
+            }
+            if (prix < 1) { showToast('💰 Prix invalide', true); return; }
+            if (places < 1 || places > 7) { showToast('👥 Places entre 1 et 7', true); return; }
+
+            if (!currentUser) {
+                showToast('❌ Vous devez être connecté', true);
+                return;
             }
 
-            // --- Inscription ---
-            function handleInscription() {
-                const role = roleSelect.value;
-                const nom = nomInput.value.trim();
-                const tel = telInput.value.trim();
-                const email = emailInput.value.trim();
-                const motDePasse = pwdInput.value.trim();
-                if (!nom || !tel || !email || !motDePasse) {
-                    showToast('⚠️ Tous les champs sont obligatoires', true);
-                    return;
-                }
-                if (!/^\d[\d\s]{7,}$/.test(tel.replace(/\s/g, ''))) {
-                    showToast('📞 Téléphone invalide (8+ chiffres)', true);
-                    return;
-                }
-                if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-                    showToast('✉️ Email invalide', true);
-                    return;
-                }
-                if (motDePasse.length < 4) {
-                    showToast('🔒 Mot de passe : au moins 4 caractères', true);
-                    return;
-                }
-                const allUsers = [...getChauffeurs(), ...getPassagers()];
-                if (allUsers.some(u => u.email === email)) {
-                    showToast('❌ Cet email est déjà utilisé', true);
-                    return;
-                }
+            const btn = btnValiderCourse;
+            const originalText = btn.textContent;
+            showLoader(btn);
 
-                const utilisateur = { nom, telephone: tel, email, motDePasse, dateInscription: new Date().toISOString() };
-                if (role === 'chauffeur') {
-                    const list = getChauffeurs();
-                    list.push(utilisateur);
-                    saveChauffeurs(list);
-                    showToast(`🚗 Chauffeur « ${nom} » enregistré !`);
-                } else {
-                    const list = getPassagers();
-                    list.push(utilisateur);
-                    savePassagers(list);
-                    showToast(`🚶 Passager « ${nom} » enregistré !`);
-                }
-                updateStats();
-                closeModalInscription();
-            }
-
-            // --- Création course (max 7 places passagers) ---
-            function handleCreateCourse() {
-                const depart = courseDepart.value.trim();
-                const arrivee = courseArrivee.value.trim();
-                const heure = courseHeure.value;
-                const prix = parseInt(coursePrix.value);
-                const places = parseInt(coursePlaces.value);
-
-                if (!depart || !arrivee || !heure || isNaN(prix) || isNaN(places)) {
-                    showToast('⚠️ Tous les champs sont requis', true);
-                    return;
-                }
-                if (prix < 1) { showToast('💰 Prix invalide', true); return; }
-                if (places < 1 || places > 7) { showToast('👥 Places entre 1 et 7', true); return; }
-
-                const session = getSession();
-                if (!session) { showToast('❌ Vous devez être connecté', true); return; }
-
+            try {
                 const nouvelleCourse = {
-                    id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
-                    chauffeurEmail: session.email,
+                    chauffeurEmail: currentUser.email,
                     depart,
                     arrivee,
                     heure,
@@ -1097,106 +1200,121 @@
                     reservations: [],
                     dateCreation: new Date().toISOString()
                 };
-
-                const courses = getCourses();
-                courses.push(nouvelleCourse);
-                saveCourses(courses);
+                await createRide(nouvelleCourse);
                 showToast(`✅ Course créée : ${depart} → ${arrivee}`);
                 closeModalCreateCourse();
-                renderCourses(session);
+                await renderCourses(currentUser);
+            } catch (error) {
+                showToast(`❌ Erreur : ${error.message}`, true);
+                console.error('Create course error:', error);
             }
+            hideLoader(btn, originalText);
+        }
 
-            // --- Modales ---
-            function openModalInscription() {
-                modalInscription.classList.add('active');
-                nomInput.value = ''; telInput.value = ''; emailInput.value = ''; pwdInput.value = '';
-                roleSelect.value = 'passager';
-                nomInput.focus();
-            }
-            function closeModalInscription() { modalInscription.classList.remove('active'); }
-
-            function openModalConnexion() {
-                modalConnexion.classList.add('active');
-                loginEmail.value = ''; loginPassword.value = '';
-                loginEmail.focus();
-            }
-            function closeModalConnexion() { modalConnexion.classList.remove('active'); }
-
-            function openModalCreateCourse() {
-                modalCreateCourse.classList.add('active');
-                courseDepart.value = ''; courseArrivee.value = ''; courseHeure.value = ''; coursePrix.value = ''; coursePlaces.value = '';
-                courseDepart.focus();
-            }
-            function closeModalCreateCourse() { modalCreateCourse.classList.remove('active'); }
-
-            // --- Session au chargement ---
-            function checkSession() {
-                const session = getSession();
-                if (session) {
-                    if (session.role === 'admin') {
-                        showMainInterface(session);
-                        return;
+        // ============================================================
+        // 17. GESTION DE LA SESSION (onAuthStateChanged)
+        // ============================================================
+        auth.onAuthStateChanged(async (firebaseUser) => {
+            if (firebaseUser) {
+                // L'utilisateur Firebase est connecté
+                try {
+                    const doc = await db.collection('users').doc(firebaseUser.email).get();
+                    if (doc.exists) {
+                        const userData = doc.data();
+                        currentUser = { ...userData, email: firebaseUser.email };
+                        // Vérifier si l'utilisateur n'a pas été supprimé
+                        if (currentUser) {
+                            showMainInterface(currentUser);
+                            return;
+                        }
                     }
-                    const allUsers = [...getChauffeurs(), ...getPassagers()];
-                    const exists = allUsers.some(u => u.email === session.email);
-                    if (exists) {
-                        showMainInterface(session);
-                        return;
-                    } else {
-                        clearSession();
-                    }
+                } catch (error) {
+                    console.error('Erreur récupération utilisateur:', error);
                 }
+                // Si on arrive ici, l'utilisateur n'existe pas dans Firestore
+                await auth.signOut();
+                currentUser = null;
+                showHomeScreen();
+                showToast('❌ Utilisateur introuvable', true);
+            } else {
+                // Déconnecté
+                currentUser = null;
                 showHomeScreen();
             }
+        });
 
-            // --- Événements ---
-            btnInscription.addEventListener('click', openModalInscription);
-            btnConnexion.addEventListener('click', openModalConnexion);
+        // ============================================================
+        // 18. ÉVÉNEMENTS
+        // ============================================================
 
-            btnValiderInscription.addEventListener('click', handleInscription);
-            btnAnnulerInscription.addEventListener('click', closeModalInscription);
-            modalInscription.addEventListener('click', (e) => { if (e.target === modalInscription) closeModalInscription(); });
-            document.addEventListener('keydown', (e) => {
-                if (e.key === 'Escape' && modalInscription.classList.contains('active')) closeModalInscription();
-            });
-            [nomInput, telInput, emailInput, pwdInput, roleSelect].forEach(el => {
-                el.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleInscription(); });
-            });
+        // Inscription
+        btnInscription.addEventListener('click', () => {
+            modalInscription.classList.add('active');
+            nomInput.value = ''; telInput.value = ''; emailInput.value = ''; pwdInput.value = '';
+            roleSelect.value = 'passager';
+            nomInput.focus();
+        });
+        btnAnnulerInscription.addEventListener('click', () => modalInscription.classList.remove('active'));
+        modalInscription.addEventListener('click', (e) => { if (e.target === modalInscription) modalInscription.classList.remove('active'); });
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && modalInscription.classList.contains('active')) modalInscription.classList.remove('active');
+        });
+        [nomInput, telInput, emailInput, pwdInput, roleSelect].forEach(el => {
+            el.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleInscription(); });
+        });
+        btnValiderInscription.addEventListener('click', handleInscription);
 
-            btnValiderConnexion.addEventListener('click', handleLogin);
-            btnAnnulerConnexion.addEventListener('click', closeModalConnexion);
-            modalConnexion.addEventListener('click', (e) => { if (e.target === modalConnexion) closeModalConnexion(); });
-            document.addEventListener('keydown', (e) => {
-                if (e.key === 'Escape' && modalConnexion.classList.contains('active')) closeModalConnexion();
-            });
-            [loginEmail, loginPassword].forEach(el => {
-                el.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleLogin(); });
-            });
+        // Connexion
+        btnConnexion.addEventListener('click', () => {
+            modalConnexion.classList.add('active');
+            loginEmail.value = ''; loginPassword.value = '';
+            loginEmail.focus();
+        });
+        btnAnnulerConnexion.addEventListener('click', () => modalConnexion.classList.remove('active'));
+        modalConnexion.addEventListener('click', (e) => { if (e.target === modalConnexion) modalConnexion.classList.remove('active'); });
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && modalConnexion.classList.contains('active')) modalConnexion.classList.remove('active');
+        });
+        [loginEmail, loginPassword].forEach(el => {
+            el.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleLogin(); });
+        });
+        btnValiderConnexion.addEventListener('click', handleLogin);
 
-            btnLogout.addEventListener('click', logout);
+        // Déconnexion
+        btnLogout.addEventListener('click', logout);
 
-            btnCreateCourse.addEventListener('click', openModalCreateCourse);
-            btnValiderCourse.addEventListener('click', handleCreateCourse);
-            btnAnnulerCourse.addEventListener('click', closeModalCreateCourse);
-            modalCreateCourse.addEventListener('click', (e) => { if (e.target === modalCreateCourse) closeModalCreateCourse(); });
-            document.addEventListener('keydown', (e) => {
-                if (e.key === 'Escape' && modalCreateCourse.classList.contains('active')) closeModalCreateCourse();
-            });
-            [courseDepart, courseArrivee, courseHeure, coursePrix, coursePlaces].forEach(el => {
-                el.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleCreateCourse(); });
-            });
+        // Créer course
+        btnCreateCourse.addEventListener('click', () => {
+            modalCreateCourse.classList.add('active');
+            courseDepart.value = ''; courseArrivee.value = ''; courseHeure.value = ''; coursePrix.value = ''; coursePlaces.value = '';
+            courseDepart.focus();
+        });
+        btnAnnulerCourse.addEventListener('click', () => modalCreateCourse.classList.remove('active'));
+        modalCreateCourse.addEventListener('click', (e) => { if (e.target === modalCreateCourse) modalCreateCourse.classList.remove('active'); });
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && modalCreateCourse.classList.contains('active')) modalCreateCourse.classList.remove('active');
+        });
+        [courseDepart, courseArrivee, courseHeure, coursePrix, coursePlaces].forEach(el => {
+            el.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleCreateCourse(); });
+        });
+        btnValiderCourse.addEventListener('click', handleCreateCourse);
 
-            // Clic sur les places
-            coursesList.addEventListener('click', handleSeatClick);
+        // Clic sur les places
+        coursesList.addEventListener('click', handleSeatClick);
 
-            // Tooltip
-            btnSupprimerResa.addEventListener('click', handleSupprimerResa);
+        // Tooltip
+        btnSupprimerResa.addEventListener('click', handleSupprimerResa);
 
-            // --- Initialisation ---
-            seedDefaultUsers();
-            checkSession();
-        })();
+        // ============================================================
+        // 19. INITIALISATION
+        // ============================================================
+        // Au démarrage, on laisse onAuthStateChanged gérer l'affichage
+        // On met à jour les stats périodiquement
+        setInterval(updateStats, 30000); // toutes les 30s
+
+        // Petite amorce : si pas de données, on crée des utilisateurs de démonstration
+        // (optionnel, on peut le faire manuellement dans Firestore)
+        console.log('✅ Firebase intégré avec succès !');
     </script>
-
 </body>
 </html>
