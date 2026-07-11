@@ -6,13 +6,12 @@
     <title>Machi – Admin</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz@14..32&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css" />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
     <style>
+        /* ===== STYLES (inchangés) ===== */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Inter', sans-serif;
@@ -168,6 +167,7 @@
         .admin-list .item:last-child { border-bottom: none; }
         .admin-list .item .email { color: #8aa0c8; font-size: 0.65rem; }
 
+        /* Le conteneur du cropper sera masqué tant que Cropper n'est pas chargé */
         .crop-container { width: 100%; margin: 0.3rem 0; display: none; min-height: 150px; }
         .crop-container img { max-width: 100%; display: block; }
 
@@ -207,6 +207,19 @@
             .modal-content { padding: 1rem 0.6rem; }
             .header-actions .btn-logout { font-size: 0.6rem; padding: 0.15rem 0.5rem; }
         }
+
+        /* Indicateur de chargement Cropper */
+        .cropper-loader {
+            display: none;
+            text-align: center;
+            padding: 1rem;
+            color: #8aa0c8;
+            font-size: 0.8rem;
+        }
+        .cropper-loader .spinner {
+            width: 1.2rem;
+            height: 1.2rem;
+        }
     </style>
 </head>
 <body>
@@ -243,9 +256,11 @@
                 <label class="text-xs">Photo de la voiture (3:2)</label>
                 <input type="file" id="adminEditCarPhotoInput" accept="image/*" />
                 <div id="adminEditCarCropContainer" class="crop-container"><img id="adminEditCarCropImage" src="#" alt="Rogner" /></div>
+                <div id="cropperLoaderCar" class="cropper-loader"><span class="spinner"></span> Chargement de l'éditeur…</div>
                 <label class="text-xs mt-2">Photo de profil (1:1)</label>
                 <input type="file" id="adminEditProfilePhotoInput" accept="image/*" />
                 <div id="adminEditProfileCropContainer" class="crop-container"><img id="adminEditProfileCropImage" src="#" alt="Rogner" /></div>
+                <div id="cropperLoaderProfile" class="cropper-loader"><span class="spinner"></span> Chargement de l'éditeur…</div>
             </div>
             <div class="flex gap-2 mt-4">
                 <button id="btnAdminEditSave" class="btn-led btn-validate flex-1">💾 Enregistrer</button>
@@ -292,6 +307,52 @@
         db.enablePersistence().catch(()=>{});
 
         // ========================================================================
+        // LAZY LOADING DE CROPPER.JS
+        // ========================================================================
+        let cropperLoaded = false;
+        let cropperLoading = false;
+        let cropperLoadCallbacks = [];
+
+        function loadCropper() {
+            return new Promise((resolve, reject) => {
+                // Si déjà chargé, résoudre immédiatement
+                if (cropperLoaded) {
+                    resolve();
+                    return;
+                }
+                // Si en cours de chargement, mettre en attente
+                if (cropperLoading) {
+                    cropperLoadCallbacks.push(resolve);
+                    return;
+                }
+                cropperLoading = true;
+
+                // 1. Charger le CSS
+                const link = document.createElement('link');
+                link.rel = 'stylesheet';
+                link.href = 'https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css';
+                document.head.appendChild(link);
+
+                // 2. Charger le JS
+                const script = document.createElement('script');
+                script.src = 'https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js';
+                script.onload = () => {
+                    cropperLoaded = true;
+                    cropperLoading = false;
+                    resolve();
+                    // Résoudre toutes les promesses en attente
+                    cropperLoadCallbacks.forEach(cb => cb());
+                    cropperLoadCallbacks = [];
+                };
+                script.onerror = () => {
+                    cropperLoading = false;
+                    reject(new Error('Impossible de charger Cropper.js'));
+                };
+                document.body.appendChild(script);
+            });
+        }
+
+        // ========================================================================
         // DOM REFERENCES
         // ========================================================================
         const $ = id => document.getElementById(id);
@@ -326,7 +387,9 @@
             adminSpotLon = $('adminSpotLon'),
             btnAdminSpotAdd = $('btnAdminSpotAdd'),
             btnGetLocation = $('btnGetLocation'),
-            toast = $('toast');
+            toast = $('toast'),
+            cropperLoaderCar = $('cropperLoaderCar'),
+            cropperLoaderProfile = $('cropperLoaderProfile');
 
         // ========================================================================
         // STATE
@@ -462,9 +525,9 @@
         };
 
         // ========================================================================
-        // ADMIN EDIT MODAL
+        // ADMIN EDIT MODAL (avec lazy loading Cropper)
         // ========================================================================
-        const openAdminEdit = (user) => {
+        const openAdminEdit = async (user) => {
             adminEditTargetEmail = user.email;
             adminEditUserInfo.textContent = `Édition de ${user.nom} (${user.email})`;
             adminEditNom.value = user.nom || '';
@@ -472,48 +535,113 @@
             adminEditEmail.value = user.email || '';
             adminEditRole.value = user.role || '';
             adminEditCredits.value = user.credits !== undefined ? user.credits : 100;
-            if (adminEditCarCropper) { adminEditCarCropper.destroy();
-                adminEditCarCropper = null; }
-            if (adminEditProfileCropper) { adminEditProfileCropper.destroy();
-                adminEditProfileCropper = null; }
             adminEditCarCropContainer.style.display = 'none';
             adminEditProfileCropContainer.style.display = 'none';
             adminEditCarPhotoInput.value = '';
             adminEditProfilePhotoInput.value = '';
             modalAdminEdit.classList.add('active');
+
+            // Charger Cropper.js en arrière-plan (sans bloquer l'ouverture)
+            try {
+                await loadCropper();
+                // Une fois chargé, on peut activer les croppers quand l'utilisateur choisit un fichier
+            } catch (e) {
+                console.warn('Cropper non disponible:', e);
+                showToast('⚠️ Éditeur d\'image non disponible', true);
+            }
         };
 
-        adminEditCarPhotoInput.addEventListener('change', function(e) {
+        // Gestion des uploads avec lazy loading
+        adminEditCarPhotoInput.addEventListener('change', async function(e) {
             const file = this.files[0];
             if (!file) return;
-            const reader = new FileReader();
-            reader.onload = (ev) => {
-                adminEditCarCropImage.src = ev.target.result;
-                adminEditCarCropContainer.style.display = 'block';
-                if (adminEditCarCropper) adminEditCarCropper.destroy();
-                adminEditCarCropper = new Cropper(adminEditCarCropImage, { aspectRatio: 3 / 2, viewMode: 1, dragMode: 'move',
-                    autoCropArea: 0.8, restore: false, guides: true, center: true, highlight: false,
-                    cropBoxMovable: true, cropBoxResizable: false, toggleDragModeOnDblclick: false,
-                    zoomOnWheel: true, zoomOnTouch: true, wheelZoomRatio: 0.1, minContainerWidth: 200,
-                    minContainerHeight: 150 });
-            };
-            reader.readAsDataURL(file);
+
+            // Afficher le loader
+            cropperLoaderCar.style.display = 'block';
+            this.disabled = true;
+
+            try {
+                // S'assurer que Cropper est chargé
+                await loadCropper();
+                cropperLoaderCar.style.display = 'none';
+                this.disabled = false;
+
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    adminEditCarCropImage.src = ev.target.result;
+                    adminEditCarCropContainer.style.display = 'block';
+                    if (adminEditCarCropper) adminEditCarCropper.destroy();
+                    adminEditCarCropper = new Cropper(adminEditCarCropImage, {
+                        aspectRatio: 3 / 2,
+                        viewMode: 1,
+                        dragMode: 'move',
+                        autoCropArea: 0.8,
+                        restore: false,
+                        guides: true,
+                        center: true,
+                        highlight: false,
+                        cropBoxMovable: true,
+                        cropBoxResizable: false,
+                        toggleDragModeOnDblclick: false,
+                        zoomOnWheel: true,
+                        zoomOnTouch: true,
+                        wheelZoomRatio: 0.1,
+                        minContainerWidth: 200,
+                        minContainerHeight: 150
+                    });
+                };
+                reader.readAsDataURL(file);
+            } catch (err) {
+                cropperLoaderCar.style.display = 'none';
+                this.disabled = false;
+                showToast('❌ Erreur chargement éditeur', true);
+                console.error(err);
+            }
         });
-        adminEditProfilePhotoInput.addEventListener('change', function(e) {
+
+        adminEditProfilePhotoInput.addEventListener('change', async function(e) {
             const file = this.files[0];
             if (!file) return;
-            const reader = new FileReader();
-            reader.onload = (ev) => {
-                adminEditProfileCropImage.src = ev.target.result;
-                adminEditProfileCropContainer.style.display = 'block';
-                if (adminEditProfileCropper) adminEditProfileCropper.destroy();
-                adminEditProfileCropper = new Cropper(adminEditProfileCropImage, { aspectRatio: 1 / 1, viewMode: 1,
-                    dragMode: 'move', autoCropArea: 0.8, restore: false, guides: true, center: true,
-                    highlight: false, cropBoxMovable: true, cropBoxResizable: false, toggleDragModeOnDblclick: false,
-                    zoomOnWheel: true, zoomOnTouch: true, wheelZoomRatio: 0.1, minContainerWidth: 200,
-                    minContainerHeight: 150 });
-            };
-            reader.readAsDataURL(file);
+
+            cropperLoaderProfile.style.display = 'block';
+            this.disabled = true;
+
+            try {
+                await loadCropper();
+                cropperLoaderProfile.style.display = 'none';
+                this.disabled = false;
+
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    adminEditProfileCropImage.src = ev.target.result;
+                    adminEditProfileCropContainer.style.display = 'block';
+                    if (adminEditProfileCropper) adminEditProfileCropper.destroy();
+                    adminEditProfileCropper = new Cropper(adminEditProfileCropImage, {
+                        aspectRatio: 1 / 1,
+                        viewMode: 1,
+                        dragMode: 'move',
+                        autoCropArea: 0.8,
+                        restore: false,
+                        guides: true,
+                        center: true,
+                        highlight: false,
+                        cropBoxMovable: true,
+                        cropBoxResizable: false,
+                        toggleDragModeOnDblclick: false,
+                        zoomOnWheel: true,
+                        zoomOnTouch: true,
+                        wheelZoomRatio: 0.1,
+                        minContainerWidth: 200,
+                        minContainerHeight: 150
+                    });
+                };
+                reader.readAsDataURL(file);
+            } catch (err) {
+                cropperLoaderProfile.style.display = 'none';
+                this.disabled = false;
+                showToast('❌ Erreur chargement éditeur', true);
+                console.error(err);
+            }
         });
 
         const saveAdminEdit = async () => {
@@ -666,6 +794,11 @@
                         adminEditCarCropContainer.style.display = 'none';
                         adminEditProfileCropContainer.style.display = 'none';
                         adminEditTargetEmail = null;
+                        // Cacher les loaders
+                        cropperLoaderCar.style.display = 'none';
+                        cropperLoaderProfile.style.display = 'none';
+                        adminEditCarPhotoInput.disabled = false;
+                        adminEditProfilePhotoInput.disabled = false;
                     }
                     closeModal(modal);
                 }
@@ -686,6 +819,10 @@
                     adminEditCarCropContainer.style.display = 'none';
                     adminEditProfileCropContainer.style.display = 'none';
                     adminEditTargetEmail = null;
+                    cropperLoaderCar.style.display = 'none';
+                    cropperLoaderProfile.style.display = 'none';
+                    adminEditCarPhotoInput.disabled = false;
+                    adminEditProfilePhotoInput.disabled = false;
                 }
                 closeModal(modal);
             }
@@ -703,6 +840,10 @@
                         adminEditCarCropContainer.style.display = 'none';
                         adminEditProfileCropContainer.style.display = 'none';
                         adminEditTargetEmail = null;
+                        cropperLoaderCar.style.display = 'none';
+                        cropperLoaderProfile.style.display = 'none';
+                        adminEditCarPhotoInput.disabled = false;
+                        adminEditProfilePhotoInput.disabled = false;
                     }
                     closeModal(activeModal);
                 }
@@ -771,7 +912,7 @@
         btnAdminEditSave.addEventListener('click', saveAdminEdit);
         btnAdminSpotAdd.addEventListener('click', addSpot);
 
-        console.log('✅ Machi admin ready');
+        console.log('✅ Machi admin ready (lazy loading Cropper)');
     </script>
 </body>
 </html>
