@@ -6,19 +6,13 @@
     <title>Machi – Mobile</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz@14..32&display=swap" rel="stylesheet" />
-
-    <!-- Import Map pour Firebase v10 (modulaire) -->
-    <script type="importmap">
-        {
-            "imports": {
-                "firebase/": "https://cdn.jsdelivr.net/npm/firebase@10.13.1/",
-                "firebase/": "https://cdn.jsdelivr.net/npm/firebase@10.13.1/"
-            }
-        }
-    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
     <style>
-        /* ===== STYLES AVEC OPTIMISATION DU BLUR ===== */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Inter', sans-serif;
@@ -30,26 +24,18 @@
             padding: 0.5rem;
             position: relative;
         }
-        /* Utiliser @supports pour appliquer un blur plus léger si supporté, sinon fallback */
-        @supports (backdrop-filter: blur(8px)) {
-            .glass-card, #mainInterface, .modal-content, .tooltip-reservation, .toast {
-                backdrop-filter: blur(8px) saturate(160%);
-                -webkit-backdrop-filter: blur(8px) saturate(160%);
+
+        /* ===== PERFORMANCE : blur réduit sur les appareils bas de gamme ===== */
+        @supports (backdrop-filter: blur(1px)) {
+            .glass-card, #mainInterface, .modal-content, .toast, .tooltip-reservation {
+                backdrop-filter: blur(8px); /* au lieu de 12px */
+                -webkit-backdrop-filter: blur(8px);
             }
         }
-        @supports (backdrop-filter: blur(12px)) {
-            /* Pour les appareils puissants, on peut appliquer un blur plus fort */
-            @media (min-width: 768px) {
-                .glass-card, #mainInterface, .modal-content, .tooltip-reservation, .toast {
-                    backdrop-filter: blur(12px) saturate(160%);
-                    -webkit-backdrop-filter: blur(12px) saturate(160%);
-                }
-            }
-        }
-        /* Fallback pour les navigateurs sans backdrop-filter */
-        @supports not (backdrop-filter: blur(8px)) {
-            .glass-card, #mainInterface, .modal-content, .tooltip-reservation, .toast {
-                background: rgba(20,25,45,0.85);
+        /* Fallback pour les navigateurs qui ne supportent pas backdrop-filter */
+        @supports not (backdrop-filter: blur(1px)) {
+            .glass-card, #mainInterface, .modal-content, .toast, .tooltip-reservation {
+                background: rgba(20, 25, 45, 0.85);
             }
         }
 
@@ -76,14 +62,17 @@
             transition: background 0.2s, color 0.2s, opacity 0.2s;
             text-align: center;
             display: inline-block;
+            position: relative;
             user-select: none;
-        }
-        .btn-led:active { transform: scale(0.97); }
-        .btn-led:disabled, .btn-led.disabled {
-            opacity: 0.5;
-            pointer-events: none;
+            touch-action: manipulation;
         }
         .btn-led:hover { background: #2b3b66; color: #fff; }
+        .btn-led:active { background: #16203a; }
+        .btn-led:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
         .btn-led.pulsing {
             animation: pulse 1s ease-in-out infinite;
             background: #00b8b0;
@@ -292,9 +281,13 @@
         .admin-list .item:hover { background: rgba(255,255,255,0.05); }
         .admin-list .item:last-child { border-bottom: none; }
         .admin-list .item .email { color: #8aa0c8; font-size: 0.65rem; }
+        .crop-container { width: 100%; margin: 0.3rem 0; display: none; min-height: 150px; }
+        .crop-container img { max-width: 100%; display: block; }
         .tooltip-reservation {
             position: fixed;
             background: rgba(18,24,44,0.95);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
             border: 1px solid rgba(255,255,255,0.1);
             border-radius: 1rem;
             padding: 0.4rem 0.6rem;
@@ -330,6 +323,8 @@
             left: 50%;
             transform: translateX(-50%);
             background: rgba(0,180,170,0.15);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
             border: 1px solid rgba(0,255,200,0.15);
             padding: 0.4rem 1.2rem;
             border-radius: 60px;
@@ -359,6 +354,7 @@
             display: none;
             cursor: pointer;
             animation: pulseButton 1.5s ease-in-out infinite;
+            transition: transform 0.2s;
         }
         .btn-start-ride:hover { background: #00d4cc; transform: translateX(-50%) scale(1.02); }
         @keyframes pulseButton { 0% { box-shadow: 0 0 0 0 rgba(0,200,180,0.5); } 70% { box-shadow: 0 0 20px 10px rgba(0,200,180,0); } 100% { box-shadow: 0 0 0 0 rgba(0,200,180,0); } }
@@ -384,7 +380,6 @@
     </style>
 </head>
 <body>
-    <!-- ========== HTML (identique) ========== -->
     <div id="homeScreen" class="glass-card">
         <h1 class="text-xl font-bold text-center text-cyan-200 mb-0.5">Machi</h1>
         <p class="text-center text-slate-400 text-xs mb-4 tracking-wider">⚡ mobilité en circuit fermé</p>
@@ -438,10 +433,10 @@
                 <p class="text-xs text-cyan-200 font-medium mb-1">📸 Photos</p>
                 <label class="text-xs">Photo de la voiture (3:2)</label>
                 <input type="file" id="adminEditCarPhotoInput" accept="image/*" />
-                <div id="adminEditCarCropContainer" class="crop-container"><img id="adminEditCarCropImage" src="#" alt="Rogner" style="display:none;" /></div>
+                <div id="adminEditCarCropContainer" class="crop-container"><img id="adminEditCarCropImage" src="#" alt="Rogner" /></div>
                 <label class="text-xs mt-2">Photo de profil (1:1)</label>
                 <input type="file" id="adminEditProfilePhotoInput" accept="image/*" />
-                <div id="adminEditProfileCropContainer" class="crop-container"><img id="adminEditProfileCropImage" src="#" alt="Rogner" style="display:none;" /></div>
+                <div id="adminEditProfileCropContainer" class="crop-container"><img id="adminEditProfileCropImage" src="#" alt="Rogner" /></div>
             </div>
             <div class="flex gap-2 mt-4">
                 <button id="btnAdminEditSave" class="btn-led btn-validate flex-1">💾 Enregistrer</button>
@@ -511,31 +506,9 @@
     <div id="tooltipReservation" class="tooltip-reservation"><span class="nom">Passager</span><button class="btn-supprimer" id="btnSupprimerResa">✕</button></div>
     <div id="toast" class="toast"></div>
 
-    <!-- ======================================================================== -->
-    <!-- JAVASCRIPT EN MODULE (Firebase v10, lazy Cropper) -->
-    <!-- ======================================================================== -->
-    <script type="module">
+    <script>
         // ========================================================================
-        // 1. IMPORTS FIREBASE MODULAIRES (v10)
-        // ========================================================================
-        import { initializeApp } from 'firebase/app';
-        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from 'firebase/auth';
-        import {
-            getFirestore,
-            doc,
-            getDoc,
-            getDocs,
-            collection,
-            query,
-            addDoc,
-            updateDoc,
-            deleteDoc,
-            setDoc,
-            onSnapshot
-        } from 'firebase/firestore';
-
-        // ========================================================================
-        // 2. CONFIG & INIT
+        // 1. FIREBASE INIT
         // ========================================================================
         const FIREBASE_CONFIG = {
             apiKey: "AIzaSyACgeZXog1KZGU29HpjM4qpKTBt54KbJFg",
@@ -546,12 +519,13 @@
             appId: "1:984764801380:web:c082a0988bba3f899fda71",
             measurementId: "G-EDZXP8QF9Q"
         };
-        const app = initializeApp(FIREBASE_CONFIG);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
+        firebase.initializeApp(FIREBASE_CONFIG);
+        const auth = firebase.auth(),
+            db = firebase.firestore();
+        db.enablePersistence().catch(()=>{});
 
         // ========================================================================
-        // 3. DOM REFERENCES (inchangées)
+        // 2. DOM REFERENCES
         // ========================================================================
         const $ = id => document.getElementById(id);
         const homeScreen = $('homeScreen'),
@@ -619,7 +593,7 @@
             toast = $('toast');
 
         // ========================================================================
-        // 4. STATE & UTILITY
+        // 3. STATE & UTILITY
         // ========================================================================
         let currentUser = null,
             watchId = null,
@@ -630,18 +604,6 @@
             adminEditProfileCropper = null;
 
         const longPressTimers = new Map();
-
-        // Fonction pour désactiver temporairement un bouton (évite doubles clics)
-        const debounceButton = (btn, delay = 800) => {
-            if (btn.disabled) return false;
-            btn.disabled = true;
-            btn.classList.add('disabled');
-            setTimeout(() => {
-                btn.disabled = false;
-                btn.classList.remove('disabled');
-            }, delay);
-            return true;
-        };
 
         const showToast = (msg, err = false) => {
             toast.textContent = msg;
@@ -655,6 +617,17 @@
         const hideLoader = (btn, txt) => { btn.disabled = false; btn.textContent = txt; };
         const isOnline = () => navigator.onLine;
 
+        // Désactivation temporaire d'un bouton pour éviter les doubles soumissions
+        const debounceButton = (btn, delay = 800) => {
+            if (btn._debounceTimer) return false;
+            btn.disabled = true;
+            btn._debounceTimer = setTimeout(() => {
+                btn.disabled = false;
+                btn._debounceTimer = null;
+            }, delay);
+            return true;
+        };
+
         const closeModal = (modalEl) => { if (modalEl) modalEl.classList.remove('active'); };
         const closeAllModals = () => {
             document.querySelectorAll('.modal-overlay.active').forEach(m => closeModal(m));
@@ -664,8 +637,6 @@
                 adminEditProfileCropper = null; }
             adminEditCarCropContainer.style.display = 'none';
             adminEditProfileCropContainer.style.display = 'none';
-            adminEditCarCropImage.style.display = 'none';
-            adminEditProfileCropImage.style.display = 'none';
             adminEditTargetEmail = null;
         };
 
@@ -701,29 +672,38 @@
         };
 
         // ========================================================================
-        // 5. FIRESTORE HELPERS (modulaires)
+        // 4. FIRESTORE HELPERS
         // ========================================================================
-        const getDocRef = (col, id) => doc(db, col, id);
-        const setDocData = (col, id, data) => setDoc(doc(db, col, id), data, { merge: true });
-        const addDocData = (col, data) => addDoc(collection(db, col), data);
-        const updateDocData = (col, id, data) => updateDoc(doc(db, col, id), data);
-        const deleteDocData = (col, id) => deleteDoc(doc(db, col, id));
-
-        const fetchAllDocs = async (col) => {
-            try {
-                const q = query(collection(db, col));
-                const snap = await getDocs(q);
-                const arr = [];
-                snap.forEach(d => arr.push({ id: d.id, ...d.data() }));
-                return arr;
-            } catch { return []; }
+        const dbGet = (col, id = null) => {
+            if (!isOnline()) throw new Error('Offline');
+            const ref = id ? db.collection(col).doc(id) : db.collection(col);
+            return ref.get();
         };
-        const fetchUsers = () => fetchAllDocs('users');
-        const fetchRides = () => fetchAllDocs('rides');
-        const fetchSpots = () => fetchAllDocs('spots');
+        const dbSet = (col, id, data) => {
+            if (!isOnline()) throw new Error('Offline');
+            return db.collection(col).doc(id).set(data, { merge: true });
+        };
+        const dbAdd = (col, data) => {
+            if (!isOnline()) throw new Error('Offline');
+            return db.collection(col).add(data);
+        };
+        const dbUpdate = (col, id, data) => {
+            if (!isOnline()) throw new Error('Offline');
+            return db.collection(col).doc(id).update(data);
+        };
+        const dbDelete = (col, id) => {
+            if (!isOnline()) throw new Error('Offline');
+            return db.collection(col).doc(id).delete();
+        };
+        const fetchAll = async (col) => {
+            try { const snap = await dbGet(col); const arr = []; snap.forEach(d => arr.push({ id: d.id, ...d.data() })); return arr; } catch { return []; }
+        };
+        const fetchUsers = () => fetchAll('users');
+        const fetchRides = () => fetchAll('rides');
+        const fetchSpots = () => fetchAll('spots');
 
         // ========================================================================
-        // 6. GEOLOCATION
+        // 5. GEOLOCATION
         // ========================================================================
         const getCurrentPos = () => new Promise((res, rej) => {
             if (!navigator.geolocation) rej(new Error('Geo not supported'));
@@ -733,7 +713,7 @@
             );
         });
         const updateUserLocation = async (email) => {
-            try { const { lat, lon } = await getCurrentPos(); await updateDocData('users', email, { lastLatitude: lat, lastLongitude: lon, lastLocationUpdate: new Date().toISOString() }); } catch (e) { console.warn('Geo fail:', e.message); }
+            try { const { lat, lon } = await getCurrentPos(); await dbUpdate('users', email, { lastLatitude: lat, lastLongitude: lon, lastLocationUpdate: new Date().toISOString() }); } catch (e) { console.warn('Geo fail:', e.message); }
         };
         const haversine = (lat1, lon1, lat2, lon2) => {
             const R = 6371000,
@@ -744,7 +724,7 @@
         };
 
         // ========================================================================
-        // 7. SEED DEMO USERS (auto)
+        // 6. SEED DEMO USERS (auto)
         // ========================================================================
         (async () => {
             const demos = [
@@ -755,22 +735,22 @@
             ];
             for (const u of demos) {
                 try {
-                    const docSnap = await getDoc(doc(db, 'users', u.email));
-                    if (!docSnap.exists()) {
-                        await createUserWithEmailAndPassword(auth, u.email, u.password);
-                        await setDocData('users', u.email, { nom: u.nom, telephone: u.telephone, email: u.email, role: u.role,
+                    const doc = await dbGet('users', u.email);
+                    if (!doc.exists) {
+                        await auth.createUserWithEmailAndPassword(u.email, u.password);
+                        await dbSet('users', u.email, { nom: u.nom, telephone: u.telephone, email: u.email, role: u.role,
                             credits: 100, dateInscription: new Date().toISOString() });
                     }
                 } catch (e) { if (e.code === 'auth/email-already-in-use') {
-                        const docSnap = await getDoc(doc(db, 'users', u.email));
-                        if (!docSnap.exists()) await setDocData('users', u.email, { nom: u.nom, telephone: u.telephone, email: u
-                                .email, role: u.role, credits: 100, dateInscription: new Date().toISOString() });
+                        const doc = await dbGet('users', u.email);
+                        if (!doc.exists) await dbSet('users', u.email, { nom: u.nom, telephone: u.telephone, email: u.email,
+                                role: u.role, credits: 100, dateInscription: new Date().toISOString() });
                     } }
             }
         })();
 
         // ========================================================================
-        // 8. RENDER COURSES (with templates)
+        // 7. RENDER COURSES (with templates)
         // ========================================================================
         const renderCourses = async (user) => {
             try {
@@ -906,7 +886,7 @@
         };
 
         // ========================================================================
-        // 9. ADMIN LISTS (with templates)
+        // 8. ADMIN LISTS (with templates)
         // ========================================================================
         const renderAdminLists = async () => {
             try {
@@ -948,7 +928,7 @@
                         e.stopPropagation();
                         const id = btn.closest('.item').dataset.id;
                         if (confirm('Supprimer ce spot ?')) {
-                            try { await deleteDocData('spots', id);
+                            try { await dbDelete('spots', id);
                                 showToast('🗑️ Spot supprimé');
                                 renderSpotsList(); } catch (err) { showToast('❌ Erreur', true);
                                 console.error(err); }
@@ -960,30 +940,9 @@
         };
 
         // ========================================================================
-        // 10. LAZY LOADING DE CROPPER.JS
+        // 9. ADMIN EDIT MODAL
         // ========================================================================
-        let cropperLoaded = false;
-
-        async function loadCropper() {
-            if (cropperLoaded) return;
-            // Charger le CSS
-            const link = document.createElement('link');
-            link.rel = 'stylesheet';
-            link.href = 'https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css';
-            document.head.appendChild(link);
-            // Charger le JS
-            const { default: Cropper } = await import('https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js');
-            window.Cropper = Cropper;
-            cropperLoaded = true;
-        }
-
-        // ========================================================================
-        // 11. ADMIN EDIT MODAL (avec lazy loading)
-        // ========================================================================
-        const openAdminEdit = async (user) => {
-            // Charger Cropper à la volée
-            await loadCropper();
-
+        const openAdminEdit = (user) => {
             adminEditTargetEmail = user.email;
             adminEditUserInfo.textContent = `Édition de ${user.nom} (${user.email})`;
             adminEditNom.value = user.nom || '';
@@ -997,8 +956,6 @@
                 adminEditProfileCropper = null; }
             adminEditCarCropContainer.style.display = 'none';
             adminEditProfileCropContainer.style.display = 'none';
-            adminEditCarCropImage.style.display = 'none';
-            adminEditProfileCropImage.style.display = 'none';
             adminEditCarPhotoInput.value = '';
             adminEditProfilePhotoInput.value = '';
             modalAdminEdit.classList.add('active');
@@ -1010,7 +967,6 @@
             const reader = new FileReader();
             reader.onload = (ev) => {
                 adminEditCarCropImage.src = ev.target.result;
-                adminEditCarCropImage.style.display = 'block';
                 adminEditCarCropContainer.style.display = 'block';
                 if (adminEditCarCropper) adminEditCarCropper.destroy();
                 adminEditCarCropper = new Cropper(adminEditCarCropImage, { aspectRatio: 3 / 2, viewMode: 1, dragMode: 'move',
@@ -1027,7 +983,6 @@
             const reader = new FileReader();
             reader.onload = (ev) => {
                 adminEditProfileCropImage.src = ev.target.result;
-                adminEditProfileCropImage.style.display = 'block';
                 adminEditProfileCropContainer.style.display = 'block';
                 if (adminEditProfileCropper) adminEditProfileCropper.destroy();
                 adminEditProfileCropper = new Cropper(adminEditProfileCropImage, { aspectRatio: 1 / 1, viewMode: 1,
@@ -1041,16 +996,16 @@
 
         const saveAdminEdit = async () => {
             if (!adminEditTargetEmail) return showToast('⚠️ Aucun utilisateur', true);
-            if (!debounceButton(btnAdminEditSave)) return;
             const nom = adminEditNom.value.trim(),
                 tel = adminEditTelephone.value.trim(),
                 credits = parseInt(adminEditCredits.value);
             if (!nom || !tel || isNaN(credits) || credits < 0) return showToast('⚠️ Nom, téléphone, crédits valides', true);
             const btn = btnAdminEditSave,
                 orig = btn.textContent;
+            if (!debounceButton(btn)) return;
             showLoader(btn);
             try {
-                await updateDocData('users', adminEditTargetEmail, { nom, telephone: tel, credits });
+                await dbUpdate('users', adminEditTargetEmail, { nom, telephone: tel, credits });
                 let carURL = null,
                     profURL = null;
                 if (adminEditCarCropper) {
@@ -1087,8 +1042,8 @@
                         }
                     }
                 }
-                if (carURL) await updateDocData('users', adminEditTargetEmail, { photoURL: carURL });
-                if (profURL) await updateDocData('users', adminEditTargetEmail, { profilePhotoURL: profURL });
+                if (carURL) await dbUpdate('users', adminEditTargetEmail, { photoURL: carURL });
+                if (profURL) await dbUpdate('users', adminEditTargetEmail, { profilePhotoURL: profURL });
                 if (currentUser && currentUser.email === adminEditTargetEmail) { currentUser.credits = credits;
                     creditsBadge.textContent = `🪙 ${credits}`; }
                 showToast('✅ Utilisateur mis à jour');
@@ -1101,7 +1056,7 @@
         };
 
         // ========================================================================
-        // 12. SPOTS MODAL
+        // 10. SPOTS MODAL
         // ========================================================================
         const renderSpotsListModal = async () => {
             const container = adminSpotsListContainer;
@@ -1116,7 +1071,7 @@
                     e.stopPropagation();
                     const id = btn.closest('.item').dataset.id;
                     if (confirm('Supprimer ce spot ?')) {
-                        try { await deleteDocData('spots', id);
+                        try { await dbDelete('spots', id);
                             showToast('🗑️ Spot supprimé');
                             renderSpotsListModal();
                             renderSpotsList(); } catch (err) { showToast('❌ Erreur', true);
@@ -1134,13 +1089,14 @@
             await renderSpotsListModal();
         };
         const addSpot = async () => {
-            if (!debounceButton(btnAdminSpotAdd)) return;
             const nom = adminSpotNom.value.trim(),
                 lat = parseFloat(adminSpotLat.value.trim()),
                 lon = parseFloat(adminSpotLon.value.trim());
             if (!nom || isNaN(lat) || isNaN(lon)) return showToast('⚠️ Remplissez tous les champs', true);
+            const btn = btnAdminSpotAdd;
+            if (!debounceButton(btn)) return;
             try {
-                await addDocData('spots', { nom, latitude: lat, longitude: lon });
+                await dbAdd('spots', { nom, latitude: lat, longitude: lon });
                 showToast('✅ Spot ajouté');
                 renderSpotsListModal();
                 renderSpotsList();
@@ -1152,11 +1108,10 @@
         };
 
         btnGetLocation.addEventListener('click', async function() {
-            if (!debounceButton(this)) return;
             const orig = this.textContent;
+            if (!debounceButton(this)) return;
             this.textContent = '⏳ Localisation…';
             this.classList.add('pulsing');
-            this.disabled = true;
             try {
                 const { lat, lon } = await getCurrentPos();
                 adminSpotLat.value = lat.toFixed(6);
@@ -1173,56 +1128,62 @@
                 this.textContent = orig;
                 this.classList.remove('pulsing');
                 this.disabled = false;
+                this._debounceTimer = null;
             }
         });
 
         // ========================================================================
-        // 13. GESTION DÉLÉGUÉE DES ÉVÉNEMENTS
+        // 11. GESTION DÉLÉGUÉE DES ÉVÉNEMENTS
         // ========================================================================
+
+        // Gestion des clics sur les sièges
         coursesList.addEventListener('click', async (e) => {
             const seat = e.target.closest('.seat');
             if (!seat) return;
-            // Éviter doubles clics sur un siège
-            if (seat.dataset.processing) return;
-            seat.dataset.processing = 'true';
-
             const status = seat.dataset.status,
                 courseId = seat.dataset.courseId,
                 placeIndex = parseInt(seat.dataset.placeIndex);
-            if (!currentUser || currentUser.role === 'admin') { delete seat.dataset.processing; return; }
+            if (!currentUser || currentUser.role === 'admin') return;
 
-            try {
-                if (currentUser.role === 'chauffeur') {
-                    if (status === 'reserved') {
-                        const nom = seat.dataset.reservedNom;
-                        if (nom) {
-                            tooltipCourseId = courseId;
-                            tooltipPlaceIndex = placeIndex;
-                            const rect = seat.getBoundingClientRect();
-                            tooltip.style.left = (rect.left + rect.width / 2 - 75) + 'px';
-                            tooltip.style.top = (rect.top - 10) + 'px';
-                            tooltip.style.display = 'flex';
-                            tooltip.querySelector('.nom').textContent = `👤 ${nom}`;
-                        } else tooltip.style.display = 'none';
+            if (currentUser.role === 'chauffeur') {
+                if (status === 'reserved') {
+                    const nom = seat.dataset.reservedNom;
+                    if (nom) {
+                        tooltipCourseId = courseId;
+                        tooltipPlaceIndex = placeIndex;
+                        const rect = seat.getBoundingClientRect();
+                        tooltip.style.left = (rect.left + rect.width / 2 - 75) + 'px';
+                        tooltip.style.top = (rect.top - 10) + 'px';
+                        tooltip.style.display = 'flex';
+                        tooltip.querySelector('.nom').textContent = `👤 ${nom}`;
                     } else tooltip.style.display = 'none';
-                } else if (currentUser.role === 'passager') {
-                    if (status === 'available') {
+                } else tooltip.style.display = 'none';
+            } else if (currentUser.role === 'passager') {
+                if (status === 'available') {
+                    // Éviter les doubles clics sur réservation
+                    if (seat.dataset.processing) return;
+                    seat.dataset.processing = 'true';
+                    try {
                         const rides = await fetchRides();
                         const course = rides.find(r => r.id === courseId);
                         if (!course) return;
                         const reservations = course.reservations || [];
                         if (reservations.some(r => r.email === currentUser.email)) {
                             showToast('❌ Déjà réservé', true);
-                            delete seat.dataset.processing;
+                            seat.dataset.processing = '';
                             return;
                         }
                         reservations.push({ email: currentUser.email, nom: currentUser.nom, placeIndex });
-                        await updateDocData('rides', courseId, { reservations });
+                        await dbUpdate('rides', courseId, { reservations });
                         showToast(`✅ Place réservée pour ${currentUser.nom}`);
                         renderCourses(currentUser);
-                    } else if (status === 'reserved') {
-                        const reservedEmail = seat.dataset.reservedEmail;
-                        if (reservedEmail === currentUser.email) {
+                    } catch (err) { showToast('❌ Erreur réservation', true);
+                        console.error(err); }
+                    seat.dataset.processing = '';
+                } else if (status === 'reserved') {
+                    const reservedEmail = seat.dataset.reservedEmail;
+                    if (reservedEmail === currentUser.email) {
+                        try {
                             const rides = await fetchRides();
                             const course = rides.find(r => r.id === courseId);
                             if (!course) return;
@@ -1230,15 +1191,14 @@
                             const idx = reservations.findIndex(r => r.placeIndex === placeIndex && r.email === currentUser
                             .email);
                             if (idx !== -1) { reservations.splice(idx, 1);
-                                await updateDocData('rides', courseId, { reservations });
+                                await dbUpdate('rides', courseId, { reservations });
                                 showToast('🗑️ Réservation annulée');
                                 renderCourses(currentUser); }
-                        } else showToast('ℹ️ Réservé par un autre', false);
-                    }
+                        } catch (err) { showToast('❌ Erreur annulation', true);
+                            console.error(err); }
+                    } else showToast('ℹ️ Réservé par un autre', false);
                 }
-            } catch (e) { showToast('❌ Erreur', true);
-                console.error(e); }
-            delete seat.dataset.processing;
+            }
         });
 
         // Long press sur .car-photo
@@ -1249,7 +1209,7 @@
             if (!courseId || currentUser?.role !== 'chauffeur') return;
             const timer = setTimeout(() => {
                 if (currentUser && currentUser.role === 'chauffeur' && confirm('Supprimer cette course ?')) {
-                    deleteDocData('rides', courseId).then(() => {
+                    deleteRide(courseId).then(() => {
                         showToast('🗑️ Course supprimée');
                         renderCourses(currentUser);
                     }).catch(err => showToast('❌ Erreur', true));
@@ -1279,7 +1239,7 @@
             if (!courseId || currentUser?.role !== 'chauffeur') return;
             const timer = setTimeout(() => {
                 if (currentUser && currentUser.role === 'chauffeur' && confirm('Supprimer cette course ?')) {
-                    deleteDocData('rides', courseId).then(() => {
+                    deleteRide(courseId).then(() => {
                         showToast('🗑️ Course supprimée');
                         renderCourses(currentUser);
                     }).catch(err => showToast('❌ Erreur', true));
@@ -1312,7 +1272,7 @@
                 const reservations = course.reservations || [];
                 const idx = reservations.findIndex(r => r.placeIndex === tooltipPlaceIndex);
                 if (idx !== -1) { reservations.splice(idx, 1);
-                    await updateDocData('rides', tooltipCourseId, { reservations });
+                    await dbUpdate('rides', tooltipCourseId, { reservations });
                     showToast('🗑️ Place libérée');
                     tooltip.style.display = 'none';
                     if (currentUser) renderCourses(currentUser); } else tooltip.style.display = 'none';
@@ -1321,11 +1281,11 @@
         });
 
         btnStartRide.addEventListener('click', async function() {
-            if (!debounceButton(this)) return;
             const rideId = this.dataset.rideId;
             if (!rideId) return;
+            if (!debounceButton(this, 1500)) return;
             try {
-                await updateDocData('rides', rideId, { started: true, startedAt: new Date().toISOString() });
+                await dbUpdate('rides', rideId, { started: true, startedAt: new Date().toISOString() });
                 showToast('🚀 Trajet commencé !');
                 btnStartRide.style.display = 'none';
                 if (watchId) { navigator.geolocation.clearWatch(watchId);
@@ -1333,14 +1293,18 @@
                 if (currentUser) renderCourses(currentUser);
             } catch (e) { showToast('❌ Erreur démarrage', true);
                 console.error(e); }
+            this.disabled = false;
+            this._debounceTimer = null;
         });
 
         // ========================================================================
-        // 14. GESTION CENTRALISÉE DES MODALES
+        // 12. GESTION CENTRALISÉE DES MODALES
         // ========================================================================
+
         document.querySelectorAll('.modal-overlay').forEach(modal => {
             modal.addEventListener('click', (e) => {
                 if (e.target === modal) {
+                    const modalName = modal.dataset.modal;
                     closeModal(modal);
                     if (modal === modalAdminEdit) {
                         if (adminEditCarCropper) { adminEditCarCropper.destroy();
@@ -1349,8 +1313,6 @@
                             adminEditProfileCropper = null; }
                         adminEditCarCropContainer.style.display = 'none';
                         adminEditProfileCropContainer.style.display = 'none';
-                        adminEditCarCropImage.style.display = 'none';
-                        adminEditProfileCropImage.style.display = 'none';
                         adminEditTargetEmail = null;
                     }
                 }
@@ -1371,8 +1333,6 @@
                         adminEditProfileCropper = null; }
                     adminEditCarCropContainer.style.display = 'none';
                     adminEditProfileCropContainer.style.display = 'none';
-                    adminEditCarCropImage.style.display = 'none';
-                    adminEditProfileCropImage.style.display = 'none';
                     adminEditTargetEmail = null;
                 }
             }
@@ -1390,8 +1350,6 @@
                             adminEditProfileCropper = null; }
                         adminEditCarCropContainer.style.display = 'none';
                         adminEditProfileCropContainer.style.display = 'none';
-                        adminEditCarCropImage.style.display = 'none';
-                        adminEditProfileCropImage.style.display = 'none';
                         adminEditTargetEmail = null;
                     }
                 }
@@ -1399,7 +1357,7 @@
         });
 
         // ========================================================================
-        // 15. ADMIN TOGGLES
+        // 13. ADMIN TOGGLES
         // ========================================================================
         const toggleList = (el) => {
             if (el.style.display === 'block') el.style.display = 'none';
@@ -1413,7 +1371,7 @@
         btnAdminSpots.addEventListener('click', openSpotsModal);
 
         // ========================================================================
-        // 16. CREATE COURSE
+        // 14. CREATE COURSE
         // ========================================================================
         const populateSpotSelects = async () => {
             const spots = await fetchSpots();
@@ -1441,7 +1399,6 @@
         });
 
         const handleCreateCourse = async () => {
-            if (!debounceButton(btnValiderCourse)) return;
             const dep = courseDepart.value,
                 arr = courseArrivee.value,
                 heure = courseHeure.value,
@@ -1457,6 +1414,7 @@
             if (!isOnline()) return showToast('📡 Pas de connexion', true);
             const btn = btnValiderCourse,
                 orig = btn.textContent;
+            if (!debounceButton(btn)) return;
             showLoader(btn);
             try {
                 const data = {
@@ -1474,7 +1432,7 @@
                     started: false,
                     dateCreation: new Date().toISOString()
                 };
-                await addDocData('rides', data);
+                await dbAdd('rides', data);
                 showToast(`✅ Course créée : ${dep} → ${arr}`);
                 closeModal(modalCreateCourse);
                 renderCourses(currentUser);
@@ -1484,10 +1442,9 @@
         };
 
         // ========================================================================
-        // 17. AUTH HANDLERS
+        // 15. AUTH HANDLERS
         // ========================================================================
         const handleLogin = async () => {
-            if (!debounceButton(btnValiderConnexion)) return;
             const email = loginEmail.value.trim(),
                 pw = loginPassword.value.trim();
             if (!email || !pw) return showToast('⚠️ Remplissez tous les champs', true);
@@ -1501,9 +1458,10 @@
             if (!isOnline()) return showToast('📡 Pas de connexion', true);
             const btn = btnValiderConnexion,
                 orig = btn.textContent;
+            if (!debounceButton(btn)) return;
             showLoader(btn);
             try {
-                await signInWithEmailAndPassword(auth, email, pw);
+                await auth.signInWithEmailAndPassword(email, pw);
                 closeModal(modalConnexion);
                 showToast('✅ Connexion réussie');
             } catch (e) {
@@ -1517,7 +1475,6 @@
         };
 
         const handleInscription = async () => {
-            if (!debounceButton(btnValiderInscription)) return;
             const role = roleSelect.value,
                 nom = nomInput.value.trim(),
                 tel = telInput.value.trim(),
@@ -1530,10 +1487,11 @@
             if (!isOnline()) return showToast('📡 Pas de connexion', true);
             const btn = btnValiderInscription,
                 orig = btn.textContent;
+            if (!debounceButton(btn)) return;
             showLoader(btn);
             try {
-                await createUserWithEmailAndPassword(auth, email, pw);
-                await setDocData('users', email, { nom, telephone: tel, email, role, credits: 100, dateInscription: new Date()
+                await auth.createUserWithEmailAndPassword(email, pw);
+                await dbSet('users', email, { nom, telephone: tel, email, role, credits: 100, dateInscription: new Date()
                         .toISOString() });
                 showToast(`✅ Compte ${role} « ${nom} » créé !`);
                 closeModal(modalInscription);
@@ -1550,7 +1508,7 @@
 
         const logout = async () => {
             try {
-                await signOut(auth);
+                await auth.signOut();
                 currentUser = null;
                 showHome();
                 showToast('🔓 Déconnecté');
@@ -1563,28 +1521,28 @@
         };
 
         // ========================================================================
-        // 18. STATS
+        // 16. STATS
         // ========================================================================
         const updateStats = async () => {
-            try { const snap = await getDocs(collection(db, 'users'));
+            try { const snap = await dbGet('users');
                 stats.textContent = `👤 ${snap.size} inscrit${snap.size > 1 ? 's' : ''}`; } catch { stats.textContent =
                     '👤 ? inscrits (hors ligne)'; }
         };
 
         // ========================================================================
-        // 19. SESSION
+        // 17. SESSION
         // ========================================================================
-        onAuthStateChanged(auth, async (user) => {
+        auth.onAuthStateChanged(async (user) => {
             if (user) {
                 try {
-                    const docSnap = await getDoc(doc(db, 'users', user.email));
-                    if (docSnap.exists()) {
-                        const data = docSnap.data();
+                    const doc = await dbGet('users', user.email);
+                    if (doc.exists) {
+                        const data = doc.data();
                         currentUser = { ...data, email: user.email };
                         updateUserLocation(user.email);
                         showMain(currentUser);
                     } else {
-                        await signOut(auth);
+                        await auth.signOut();
                         currentUser = null;
                         showHome();
                         showToast('❌ Utilisateur introuvable dans la base', true);
@@ -1602,7 +1560,7 @@
         });
 
         // ========================================================================
-        // 20. EVENT LISTENERS
+        // 18. EVENT LISTENERS
         // ========================================================================
         btnInscription.addEventListener('click', () => { modalInscription.classList.add('active');
             nomInput.value = '';
@@ -1632,9 +1590,8 @@
         btnAdminSpotAdd.addEventListener('click', addSpot);
         btnAdminSpotCancel.addEventListener('click', () => closeModal(modalAdminSpots));
 
-        // Mise à jour des stats toutes les 30s
         setInterval(updateStats, 30000);
-        console.log('✅ Machi ready (Firebase v10 modulaire, lazy Cropper, UI optimisée)');
+        console.log('✅ Machi ready – with debounce & performance tweaks');
     </script>
 </body>
 </html>
