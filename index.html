@@ -4,419 +4,369 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes" />
     <title>Machi – Mobile</title>
+
+    <!-- === STYLES (refactorisés, plus compacts) === -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz@14..32&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css" />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        /* --- Variables --- */
+        :root {
+            --bg-dark: #0a0d1a;
+            --glass-bg: rgba(20,25,45,0.6);
+            --border-glass: rgba(255,255,255,0.08);
+            --text-light: #d6eaff;
+            --text-muted: #8aa0c8;
+            --gold: #ffd700;
+            --blue-light: #60c0f0;
+            --green: #00b8b0;
+            --purple: #b44cff;
+            --radius: 1.5rem;
+            --radius-sm: 0.8rem;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
         body {
-            font-family: 'Inter', sans-serif;
-            min-height: 100vh;
-            background: #0a0d1a;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 0.5rem;
+            font-family:'Inter',sans-serif;
+            min-height:100vh;
+            background:var(--bg-dark);
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            padding:0.5rem;
         }
         .glass-card, #mainInterface {
-            background: rgba(20, 25, 45, 0.6);
-            backdrop-filter: blur(12px) saturate(160%);
-            -webkit-backdrop-filter: blur(12px) saturate(160%);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 1.5rem;
-            padding: 1rem 0.6rem;
-            width: 100%;
-            max-width: 480px;
-            transition: opacity 0.3s ease;
+            background:var(--glass-bg);
+            backdrop-filter:blur(12px) saturate(160%);
+            border:1px solid var(--border-glass);
+            border-radius:var(--radius);
+            padding:1rem 0.6rem;
+            width:100%;
+            max-width:480px;
+            transition:opacity 0.3s;
         }
-        #mainInterface {
-            display: none;
-            max-width: 480px;
-            min-height: 60vh;
-            position: relative;
-            padding-bottom: 5rem;
-        }
-        #mainInterface.active { display: block; }
+        #mainInterface { display:none; min-height:60vh; padding-bottom:5rem; }
+        #mainInterface.active { display:block; }
+
+        /* --- Boutons --- */
         .btn-led {
-            background: #1e2a4a;
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            border-radius: 60px;
-            padding: 0.4rem 1rem;
-            font-weight: 600;
-            font-size: 0.8rem;
-            color: #d6eaff;
-            cursor: pointer;
-            transition: background 0.2s, color 0.2s;
-            text-align: center;
-            display: inline-block;
+            background:#1e2a4a;
+            border:1px solid rgba(255,255,255,0.06);
+            border-radius:60px;
+            padding:0.4rem 1rem;
+            font-weight:600;
+            font-size:0.8rem;
+            color:var(--text-light);
+            cursor:pointer;
+            transition:background 0.2s;
+            text-align:center;
+            display:inline-block;
         }
-        .btn-led:hover { background: #2b3b66; color: #fff; }
-        .btn-led:active { background: #16203a; }
+        .btn-led:hover { background:#2b3b66; color:#fff; }
+        .btn-led:active { background:#16203a; }
+        .btn-validate { background:#00807a; border-color:#00a39a; color:#fff; }
+        .btn-validate:hover { background:#00a39a; }
+        .btn-cancel { background:rgba(255,70,70,0.12); border-color:rgba(255,70,70,0.2); color:#ffb0b0; }
+        .btn-cancel:hover { background:rgba(255,70,70,0.22); }
+
         .header-actions {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 0.3rem;
-            margin-bottom: 0.6rem;
-            flex-wrap: wrap;
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            gap:0.3rem;
+            margin-bottom:0.6rem;
+            flex-wrap:wrap;
         }
         .header-actions .btn-logout,
         .header-actions .btn-create {
-            background: rgba(255,70,70,0.10);
-            border: 1px solid rgba(255,70,70,0.15);
-            border-radius: 40px;
-            padding: 0.15rem 0.6rem;
-            color: #ffb0b0;
-            font-size: 0.65rem;
-            cursor: pointer;
-            transition: background 0.2s;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.2rem;
+            background:rgba(255,70,70,0.10);
+            border:1px solid rgba(255,70,70,0.15);
+            border-radius:40px;
+            padding:0.15rem 0.6rem;
+            color:#ffb0b0;
+            font-size:0.65rem;
+            cursor:pointer;
+            transition:background 0.2s;
+            display:inline-flex;
+            align-items:center;
+            gap:0.2rem;
         }
         .header-actions .btn-create {
-            background: rgba(0,180,170,0.10);
-            border-color: rgba(0,180,170,0.15);
-            color: #a0f0e8;
+            background:rgba(0,180,170,0.10);
+            border-color:rgba(0,180,170,0.15);
+            color:#a0f0e8;
         }
-        .header-actions .btn-logout:hover { background: rgba(255,70,70,0.2); }
-        .header-actions .btn-create:hover { background: rgba(0,180,170,0.2); }
+        .header-actions .btn-logout:hover { background:rgba(255,70,70,0.2); }
+        .header-actions .btn-create:hover { background:rgba(0,180,170,0.2); }
+
+        /* --- Modales --- */
         .modal-overlay {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.6);
-            backdrop-filter: blur(4px);
-            z-index: 50;
-            align-items: center;
-            justify-content: center;
+            display:none;
+            position:fixed;
+            inset:0;
+            background:rgba(0,0,0,0.6);
+            backdrop-filter:blur(4px);
+            z-index:50;
+            align-items:center;
+            justify-content:center;
         }
-        .modal-overlay.active { display: flex; }
+        .modal-overlay.active { display:flex; }
         .modal-content {
-            background: rgba(18,24,44,0.85);
-            backdrop-filter: blur(16px) saturate(180%);
-            border: 1px solid rgba(255,255,255,0.06);
-            border-radius: 1.5rem;
-            padding: 1.2rem 0.8rem;
-            max-width: 420px;
-            width: 90%;
-            max-height: 90vh;
-            overflow-y: auto;
+            background:rgba(18,24,44,0.85);
+            backdrop-filter:blur(16px) saturate(180%);
+            border:1px solid rgba(255,255,255,0.06);
+            border-radius:var(--radius);
+            padding:1.2rem 0.8rem;
+            max-width:420px;
+            width:90%;
+            max-height:90vh;
+            overflow-y:auto;
         }
         .modal-content label {
-            color: #b0c8e8;
-            font-size: 0.75rem;
-            font-weight: 500;
-            margin-top: 0.4rem;
-            display: block;
+            color:#b0c8e8;
+            font-size:0.75rem;
+            font-weight:500;
+            margin-top:0.4rem;
+            display:block;
         }
         .modal-content input,
         .modal-content select {
-            width: 100%;
-            padding: 0.3rem 0.7rem;
-            margin-top: 0.1rem;
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 40px;
-            color: #e8f0ff;
-            font-size: 0.85rem;
-            outline: none;
-            transition: border 0.15s;
+            width:100%;
+            padding:0.3rem 0.7rem;
+            margin-top:0.1rem;
+            background:rgba(255,255,255,0.05);
+            border:1px solid rgba(255,255,255,0.1);
+            border-radius:40px;
+            color:#e8f0ff;
+            font-size:0.85rem;
+            outline:none;
+            transition:border 0.15s;
         }
-        .modal-content input:focus { border-color: #4a8cff; }
-        .modal-content input::placeholder { color: #6a7a9a; }
-        .btn-validate { background: #00807a; border-color: #00a39a; color: #fff; }
-        .btn-validate:hover { background: #00a39a; }
-        .btn-cancel { background: rgba(255,70,70,0.12); border-color: rgba(255,70,70,0.2); color: #ffb0b0; }
-        .btn-cancel:hover { background: rgba(255,70,70,0.22); }
+        .modal-content input:focus { border-color:#4a8cff; }
+        .modal-content input::placeholder { color:#6a7a9a; }
+        .modal-content input:disabled { opacity:0.5; cursor:not-allowed; }
 
+        /* --- Liste des courses --- */
         .courses-list {
-            display: flex;
-            flex-direction: column;
-            gap: 0.6rem;
-            margin-top: 0.6rem;
+            display:flex;
+            flex-direction:column;
+            gap:0.6rem;
+            margin-top:0.6rem;
         }
         .course-card {
-            background: rgba(255,255,255,0.03);
-            border: 1px solid rgba(255,255,255,0.06);
-            border-radius: 0.8rem;
-            padding: 0.4rem 0.6rem;
-            width: 100%;
-            backdrop-filter: blur(4px);
-            transition: background 0.2s;
-            position: relative;
+            background:rgba(255,255,255,0.03);
+            border:1px solid rgba(255,255,255,0.06);
+            border-radius:var(--radius-sm);
+            padding:0.4rem 0.6rem;
+            width:100%;
+            backdrop-filter:blur(4px);
+            transition:background 0.2s;
         }
-        .course-card:hover { background: rgba(255,255,255,0.06); }
+        .course-card:hover { background:rgba(255,255,255,0.06); }
         .course-info {
-            display: flex;
-            flex-wrap: wrap;
-            align-items: baseline;
-            gap: 0.2rem 0.4rem;
-            margin-bottom: 0.2rem;
+            display:flex;
+            flex-wrap:wrap;
+            align-items:baseline;
+            gap:0.2rem 0.4rem;
+            margin-bottom:0.2rem;
         }
         .course-info .titre {
-            font-weight: 600;
-            font-size: 0.8rem;
-            color: #d6eaff;
-            flex: 1 1 auto;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
+            font-weight:600;
+            font-size:0.8rem;
+            color:var(--text-light);
+            flex:1 1 auto;
+            white-space:nowrap;
+            overflow:hidden;
+            text-overflow:ellipsis;
         }
-        .course-info .heure {
-            font-size: 0.65rem;
-            color: #8aa0c8;
-            white-space: nowrap;
-        }
-        .course-info .heure .temps-restant {
-            color: #fbbf24; /* jaune ambre */
-            font-weight: 500;
-            margin-left: 0.2rem;
-        }
-        .course-info .prix {
-            font-size: 0.65rem;
-            color: #b0c8e8;
-            white-space: nowrap;
-            font-weight: 500;
-        }
-        .course-info .places-restantes {
-            font-size: 0.65rem;
-            color: #6ee7b7; /* vert clair */
-            white-space: nowrap;
-            font-weight: 500;
-            margin-left: 0.2rem;
-        }
+        .course-info .heure { font-size:0.65rem; color:var(--text-muted); }
+        .course-info .temps-restant { font-size:0.65rem; color:var(--gold); }
+        .course-info .places-restantes { font-size:0.65rem; color:var(--blue-light); }
+        .course-info .prix { font-size:0.65rem; color:var(--gold); font-weight:500; }
 
-        /* --- Rangée : carreaux + image --- */
+        /* --- Rangée carreaux + image --- */
         .course-row {
-            display: flex;
-            flex-direction: row;
-            gap: 1rem;
-            width: 100%;
+            display:flex;
+            flex-direction:row;
+            gap:1rem;
+            width:100%;
         }
-
-        /* --- GRILLE 4×2 AVEC REMPLISSAGE PAR COLONNES --- */
         .seat-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            grid-template-rows: repeat(2, 1fr);
-            gap: 0.15rem;
-            flex: 4;
-            grid-auto-flow: column;
+            display:grid;
+            grid-template-columns:repeat(4,1fr);
+            grid-template-rows:repeat(2,1fr);
+            gap:0.15rem;
+            flex:4;
+            grid-auto-flow:column;
         }
         .seat {
-            aspect-ratio: 1 / 1;
-            border-radius: 4px;
-            border: 1.5px solid rgba(255,255,255,0.10);
-            width: 100%;
-            cursor: default;
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-            position: relative;
+            aspect-ratio:1/1;
+            border-radius:4px;
+            border:1.5px solid rgba(255,255,255,0.10);
+            width:100%;
+            cursor:default;
+            background-size:cover;
+            background-position:center;
+            background-repeat:no-repeat;
+            position:relative;
         }
-        .seat.driver {
-            background-color: #00b8b0;
-            border-color: #00d4cc;
-            box-shadow: 0 0 6px rgba(0,200,180,0.2);
-            cursor: default;
-        }
-        .seat.driver.has-profile {
-            background-color: transparent;
-            border-color: #00d4cc;
-        }
-        .seat.available {
-            background: transparent;
-            border-color: rgba(255,255,255,0.25);
-            cursor: pointer;
-        }
-        .seat.available:hover {
-            background: rgba(255,255,255,0.05);
-            border-color: rgba(255,255,255,0.5);
-        }
-        .seat.reserved {
-            background: #b44cff;
-            border-color: #b44cff;
-            box-shadow: 0 0 6px rgba(180,76,255,0.3);
-            cursor: pointer;
-        }
-        .seat.reserved:hover {
-            filter: brightness(1.15);
-        }
-        .seat.disabled {
-            background: rgba(255,255,255,0.02);
-            border-color: rgba(255,255,255,0.03);
-            opacity: 0.15;  /* ← encore plus discret */
-            cursor: default;
-        }
+        .seat.driver { background-color:var(--green); border-color:#00d4cc; box-shadow:0 0 6px rgba(0,200,180,0.2); }
+        .seat.driver.has-profile { background-color:transparent; border-color:#00d4cc; }
+        .seat.available { background:transparent; border-color:rgba(255,255,255,0.25); cursor:pointer; }
+        .seat.available:hover { background:rgba(255,255,255,0.05); border-color:rgba(255,255,255,0.5); }
+        .seat.reserved { background:var(--purple); border-color:var(--purple); box-shadow:0 0 6px rgba(180,76,255,0.3); cursor:pointer; }
+        .seat.reserved:hover { filter:brightness(1.15); }
+        .seat.disabled { background:rgba(255,255,255,0.015); border-color:rgba(255,255,255,0.02); opacity:0.15; cursor:default; }
 
         .car-photo {
-            flex: 3;
-            border-radius: 6px;
-            overflow: hidden;
-            background: rgba(255,255,255,0.03);
-            border: 1.5px solid rgba(255,255,255,0.06);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.6rem;
-            color: #6a7a9a;
-            cursor: default;
-            position: relative;
-            min-height: 40px;
+            flex:3;
+            border-radius:6px;
+            overflow:hidden;
+            background:rgba(255,255,255,0.03);
+            border:1.5px solid rgba(255,255,255,0.06);
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            font-size:1.6rem;
+            color:#6a7a9a;
+            cursor:default;
+            position:relative;
+            min-height:40px;
         }
-        .car-photo img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            display: block;
-        }
-        .car-photo.default {
-            font-size: 1.6rem;
-            background: rgba(255,255,255,0.02);
-        }
-        @media (max-width: 380px) {
-            .car-photo { font-size: 1.2rem; }
-            .course-row { gap: 0.6rem; }
-            .seat-grid { gap: 0.1rem; }
-            .seat { border-width: 1px; }
+        .car-photo img { width:100%; height:100%; object-fit:cover; display:block; }
+        .car-photo.default { font-size:1.6rem; background:rgba(255,255,255,0.02); }
+        @media (max-width:380px) {
+            .car-photo { font-size:1.2rem; }
+            .course-row { gap:0.6rem; }
+            .seat-grid { gap:0.1rem; }
+            .seat { border-width:1px; }
         }
 
         /* --- Admin --- */
-        .admin-panel { margin-top: 0.6rem; }
+        .admin-panel { margin-top:0.6rem; }
         .admin-panel .btn-admin {
-            background: #1e2a4a;
-            border: 1px solid rgba(255,255,255,0.06);
-            border-radius: 60px;
-            padding: 0.4rem 1rem;
-            color: #d6eaff;
-            cursor: pointer;
-            transition: background 0.2s;
-            width: 100%;
-            text-align: center;
-            font-weight: 600;
-            margin-bottom: 0.3rem;
-            font-size: 0.85rem;
+            background:#1e2a4a;
+            border:1px solid rgba(255,255,255,0.06);
+            border-radius:60px;
+            padding:0.4rem 1rem;
+            color:var(--text-light);
+            cursor:pointer;
+            transition:background 0.2s;
+            width:100%;
+            text-align:center;
+            font-weight:600;
+            margin-bottom:0.3rem;
+            font-size:0.85rem;
         }
-        .admin-panel .btn-admin:hover { background: #2b3b66; }
-        .admin-panel .btn-admin.active { background: #2b3b66; border-color: #4a8cff; }
+        .admin-panel .btn-admin:hover { background:#2b3b66; }
+        .admin-panel .btn-admin.active { background:#2b3b66; border-color:#4a8cff; }
         .admin-list {
-            background: rgba(255,255,255,0.03);
-            border: 1px solid rgba(255,255,255,0.06);
-            border-radius: 0.6rem;
-            padding: 0.4rem;
-            margin-top: 0.3rem;
-            max-height: 150px;
-            overflow-y: auto;
+            background:rgba(255,255,255,0.03);
+            border:1px solid rgba(255,255,255,0.06);
+            border-radius:0.6rem;
+            padding:0.4rem;
+            margin-top:0.3rem;
+            max-height:150px;
+            overflow-y:auto;
         }
         .admin-list .item {
-            display: flex;
-            justify-content: space-between;
-            padding: 0.2rem 0;
-            border-bottom: 1px solid rgba(255,255,255,0.04);
-            font-size: 0.75rem;
-            color: #b0c8e8;
-            cursor: pointer;
-            transition: background 0.2s;
+            display:flex;
+            justify-content:space-between;
+            padding:0.2rem 0;
+            border-bottom:1px solid rgba(255,255,255,0.04);
+            font-size:0.75rem;
+            color:#b0c8e8;
+            cursor:pointer;
+            transition:background 0.2s;
         }
-        .admin-list .item:hover { background: rgba(255,255,255,0.05); }
-        .admin-list .item:last-child { border-bottom: none; }
-        .admin-list .item .email { color: #8aa0c8; font-size: 0.65rem; }
+        .admin-list .item:hover { background:rgba(255,255,255,0.05); }
+        .admin-list .item:last-child { border-bottom:none; }
+        .admin-list .item .email { color:var(--text-muted); font-size:0.65rem; }
 
         /* --- Cropper --- */
-        .crop-container {
-            width: 100%;
-            margin: 0.3rem 0;
-            display: none;
-            min-height: 150px;
-        }
-        .crop-container img {
-            max-width: 100%;
-            display: block;
-        }
+        .crop-container { width:100%; margin:0.3rem 0; display:none; min-height:150px; }
+        .crop-container img { max-width:100%; display:block; }
 
         /* --- Tooltip --- */
         .tooltip-reservation {
-            position: fixed;
-            background: rgba(18,24,44,0.95);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 1rem;
-            padding: 0.4rem 0.6rem;
-            color: #e8f0ff;
-            font-size: 0.75rem;
-            display: none;
-            z-index: 60;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
-            min-width: 120px;
-            align-items: center;
-            gap: 0.4rem;
-            pointer-events: auto;
+            position:fixed;
+            background:rgba(18,24,44,0.95);
+            backdrop-filter:blur(12px);
+            border:1px solid rgba(255,255,255,0.1);
+            border-radius:1rem;
+            padding:0.4rem 0.6rem;
+            color:#e8f0ff;
+            font-size:0.75rem;
+            display:none;
+            z-index:60;
+            box-shadow:0 10px 30px rgba(0,0,0,0.6);
+            min-width:120px;
+            align-items:center;
+            gap:0.4rem;
+            pointer-events:auto;
         }
-        .tooltip-reservation .nom { flex: 1; }
+        .tooltip-reservation .nom { flex:1; }
         .tooltip-reservation .btn-supprimer {
-            background: rgba(255,70,70,0.2);
-            border: none;
-            border-radius: 50%;
-            width: 20px;
-            height: 20px;
-            color: #ffb0b0;
-            font-size: 0.75rem;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: background 0.2s;
+            background:rgba(255,70,70,0.2);
+            border:none;
+            border-radius:50%;
+            width:20px; height:20px;
+            color:#ffb0b0;
+            font-size:0.75rem;
+            cursor:pointer;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            transition:background 0.2s;
         }
-        .tooltip-reservation .btn-supprimer:hover { background: rgba(255,70,70,0.4); }
+        .tooltip-reservation .btn-supprimer:hover { background:rgba(255,70,70,0.4); }
 
+        /* --- Toast --- */
         .toast {
-            position: fixed;
-            bottom: 1.5rem;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0,180,170,0.15);
-            backdrop-filter: blur(8px);
-            border: 1px solid rgba(0,255,200,0.15);
-            padding: 0.4rem 1.2rem;
-            border-radius: 60px;
-            color: #c0fff0;
-            font-weight: 500;
-            display: none;
-            z-index: 100;
-            font-size: 0.8rem;
-            max-width: 90%;
-            text-align: center;
+            position:fixed;
+            bottom:1.5rem;
+            left:50%;
+            transform:translateX(-50%);
+            background:rgba(0,180,170,0.15);
+            backdrop-filter:blur(8px);
+            border:1px solid rgba(0,255,200,0.15);
+            padding:0.4rem 1.2rem;
+            border-radius:60px;
+            color:#c0fff0;
+            font-weight:500;
+            display:none;
+            z-index:100;
+            font-size:0.8rem;
+            max-width:90%;
+            text-align:center;
         }
-        .toast.show { display: block; }
-        #homeScreen .btn-led { flex: 1; text-align: center; }
+        .toast.show { display:block; }
+
+        /* --- Utilitaires --- */
+        #homeScreen .btn-led { flex:1; text-align:center; }
         .spinner {
-            display: inline-block;
-            width: 0.8rem;
-            height: 0.8rem;
-            border: 2px solid rgba(255,255,255,0.1);
-            border-top-color: #00b8b0;
-            border-radius: 50%;
-            animation: spin 0.6s linear infinite;
+            display:inline-block;
+            width:0.8rem;
+            height:0.8rem;
+            border:2px solid rgba(255,255,255,0.1);
+            border-top-color:#00b8b0;
+            border-radius:50%;
+            animation:spin 0.6s linear infinite;
         }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        @media (max-width: 480px) {
-            body { padding: 0.3rem; }
-            .glass-card, #mainInterface { padding: 0.6rem 0.4rem; border-radius: 1rem; }
-            .modal-content { padding: 1rem 0.6rem; }
-            .course-info .titre { font-size: 0.75rem; }
+        @keyframes spin { to { transform:rotate(360deg); } }
+
+        @media (max-width:480px) {
+            body { padding:0.3rem; }
+            .glass-card, #mainInterface { padding:0.6rem 0.4rem; border-radius:1rem; }
+            .modal-content { padding:1rem 0.6rem; }
+            .course-info .titre { font-size:0.75rem; }
             .header-actions .btn-logout,
-            .header-actions .btn-create { font-size: 0.6rem; padding: 0.15rem 0.5rem; }
+            .header-actions .btn-create { font-size:0.6rem; padding:0.15rem 0.5rem; }
         }
     </style>
 </head>
 <body>
-    <!-- ========== ÉCRAN D'ACCUEIL ========== -->
+
+    <!-- ==================== ÉCRAN D'ACCUEIL ==================== -->
     <div id="homeScreen" class="glass-card">
         <h1 class="text-xl font-bold text-center text-cyan-200 mb-0.5">Machi</h1>
         <p class="text-center text-slate-400 text-xs mb-4 tracking-wider">⚡ mobilité en circuit fermé</p>
@@ -424,24 +374,20 @@
             <button id="btnInscription" class="btn-led">✨ S'inscrire</button>
             <button id="btnConnexion" class="btn-led">🔐 Se connecter</button>
         </div>
-        <div class="mt-3 text-center text-xs text-slate-500">
-            <span id="stats">👤 0 inscrits</span>
-        </div>
+        <div class="mt-3 text-center text-xs text-slate-500"><span id="stats">👤 0 inscrits</span></div>
     </div>
 
-    <!-- ========== INTERFACE PRINCIPALE ========== -->
+    <!-- ==================== INTERFACE PRINCIPALE ==================== -->
     <div id="mainInterface">
         <div class="header-actions">
-            <div class="text-slate-400 text-xs truncate" id="userRoleBadge">Rôle : —</div>
+            <span class="text-slate-400 text-xs truncate" id="userRoleBadge">Rôle : —</span>
             <div style="display:flex; gap:0.3rem; flex-wrap:wrap;">
                 <button id="btnCreateCourse" class="btn-create" style="display:none;">➕ Créer</button>
                 <button id="btnLogout" class="btn-logout">✕ Déconnexion</button>
             </div>
         </div>
-
         <h2 id="welcomeMessage" class="text-base font-semibold text-cyan-200 mb-0.5">Bienvenue</h2>
         <hr class="border-white/5 my-1.5" />
-
         <div id="mainContent">
             <div id="coursesContainer">
                 <p class="text-slate-500 text-center text-xs" id="noCoursesMsg">Aucune course pour le moment.</p>
@@ -456,40 +402,28 @@
         </div>
     </div>
 
-    <!-- ========== MODALE ADMIN ÉDITION ========== -->
+    <!-- ==================== MODALE ADMIN ÉDITION ==================== -->
     <div id="modalAdminEdit" class="modal-overlay">
         <div class="modal-content">
             <h2 class="text-base font-semibold text-center text-cyan-200 mb-2">✏️ Modifier l'utilisateur</h2>
             <div id="adminEditUserInfo" class="text-xs text-slate-400 mb-2">Chargement...</div>
-
-            <label>Nom</label>
-            <input type="text" id="adminEditNom" placeholder="Nom" />
-
-            <label>Téléphone</label>
-            <input type="tel" id="adminEditTelephone" placeholder="0555 12 34 56" />
-
-            <label>Email (non modifiable)</label>
-            <input type="email" id="adminEditEmail" disabled />
-
-            <label>Rôle</label>
-            <input type="text" id="adminEditRole" disabled />
-
+            <label>Nom</label><input type="text" id="adminEditNom" placeholder="Nom" />
+            <label>Téléphone</label><input type="tel" id="adminEditTelephone" placeholder="0555 12 34 56" />
+            <label>Email (non modifiable)</label><input type="email" id="adminEditEmail" disabled />
+            <label>Rôle</label><input type="text" id="adminEditRole" disabled />
             <div class="mt-3 border-t border-white/5 pt-2">
                 <p class="text-xs text-cyan-200 font-medium mb-1">📸 Photos</p>
-
                 <label class="text-xs">Photo de la voiture (3:2)</label>
                 <input type="file" id="adminEditCarPhotoInput" accept="image/*" />
                 <div id="adminEditCarCropContainer" class="crop-container">
                     <img id="adminEditCarCropImage" src="#" alt="Rogner" />
                 </div>
-
                 <label class="text-xs mt-2">Photo de profil (1:1)</label>
                 <input type="file" id="adminEditProfilePhotoInput" accept="image/*" />
                 <div id="adminEditProfileCropContainer" class="crop-container">
                     <img id="adminEditProfileCropImage" src="#" alt="Rogner" />
                 </div>
             </div>
-
             <div class="flex gap-2 mt-4">
                 <button id="btnAdminEditSave" class="btn-led btn-validate flex-1">💾 Enregistrer</button>
                 <button id="btnAdminEditCancel" class="btn-led btn-cancel flex-1">✖ Annuler</button>
@@ -497,29 +431,22 @@
         </div>
     </div>
 
-    <!-- ========== TOOLTIP ========== -->
+    <!-- ==================== TOOLTIP ==================== -->
     <div id="tooltipReservation" class="tooltip-reservation">
         <span class="nom">Passager</span>
         <button class="btn-supprimer" id="btnSupprimerResa">✕</button>
     </div>
 
-    <!-- ========== MODALES AUTH & COURSES ========== -->
+    <!-- ==================== MODALES AUTH & COURSES ==================== -->
     <div id="modalInscription" class="modal-overlay">
         <div class="modal-content">
             <h2 class="text-base font-semibold text-center text-cyan-200 mb-2">Créer un compte</h2>
             <label>Je suis</label>
-            <select id="role">
-                <option value="passager">🚶 Passager</option>
-                <option value="chauffeur">🚗 Chauffeur</option>
-            </select>
-            <label>Nom complet</label>
-            <input type="text" id="nom" placeholder="ex: Karim Benali" />
-            <label>Téléphone</label>
-            <input type="tel" id="telephone" placeholder="0555 12 34 56" />
-            <label>Email</label>
-            <input type="email" id="email" placeholder="ex: farid@gmail.com" />
-            <label>Mot de passe</label>
-            <input type="password" id="motDePasse" placeholder="••••••••" />
+            <select id="role"><option value="passager">🚶 Passager</option><option value="chauffeur">🚗 Chauffeur</option></select>
+            <label>Nom complet</label><input type="text" id="nom" placeholder="ex: Karim Benali" />
+            <label>Téléphone</label><input type="tel" id="telephone" placeholder="0555 12 34 56" />
+            <label>Email</label><input type="email" id="email" placeholder="ex: farid@gmail.com" />
+            <label>Mot de passe</label><input type="password" id="motDePasse" placeholder="••••••••" />
             <div class="flex gap-2 mt-3">
                 <button id="btnValiderInscription" class="btn-led btn-validate flex-1">✔ Valider</button>
                 <button id="btnAnnulerInscription" class="btn-led btn-cancel flex-1">✖ Annuler</button>
@@ -530,10 +457,8 @@
     <div id="modalConnexion" class="modal-overlay">
         <div class="modal-content">
             <h2 class="text-base font-semibold text-center text-cyan-200 mb-2">🔐 Se connecter</h2>
-            <label>Email</label>
-            <input type="email" id="loginEmail" placeholder="ex: farid@gmail.com" />
-            <label>Mot de passe</label>
-            <input type="password" id="loginPassword" placeholder="••••••••" />
+            <label>Email</label><input type="email" id="loginEmail" placeholder="ex: farid@gmail.com" />
+            <label>Mot de passe</label><input type="password" id="loginPassword" placeholder="••••••••" />
             <div class="flex gap-2 mt-3">
                 <button id="btnValiderConnexion" class="btn-led btn-validate flex-1">✔ Se connecter</button>
                 <button id="btnAnnulerConnexion" class="btn-led btn-cancel flex-1">✖ Annuler</button>
@@ -544,16 +469,11 @@
     <div id="modalCreateCourse" class="modal-overlay">
         <div class="modal-content">
             <h2 class="text-base font-semibold text-center text-cyan-200 mb-2">🚗 Nouvelle course</h2>
-            <label>Départ</label>
-            <input type="text" id="courseDepart" placeholder="ex: Tiaret" />
-            <label>Arrivée</label>
-            <input type="text" id="courseArrivee" placeholder="ex: Mahdia" />
-            <label>Heure de départ</label>
-            <input type="time" id="courseHeure" />
-            <label>Prix (unités)</label>
-            <input type="number" id="coursePrix" placeholder="ex: 12" min="1" />
-            <label>Places (hors chauffeur, max 7)</label>
-            <input type="number" id="coursePlaces" placeholder="ex: 3" min="1" max="7" />
+            <label>Départ</label><input type="text" id="courseDepart" placeholder="ex: Tiaret" />
+            <label>Arrivée</label><input type="text" id="courseArrivee" placeholder="ex: Mahdia" />
+            <label>Heure de départ</label><input type="time" id="courseHeure" />
+            <label>Prix (unités)</label><input type="number" id="coursePrix" placeholder="ex: 12" min="1" />
+            <label>Places (hors chauffeur, max 7)</label><input type="number" id="coursePlaces" placeholder="ex: 3" min="1" max="7" />
             <div class="flex gap-2 mt-3">
                 <button id="btnValiderCourse" class="btn-led btn-validate flex-1">✔ Confirmer</button>
                 <button id="btnAnnulerCourse" class="btn-led btn-cancel flex-1">✖ Annuler</button>
@@ -563,1131 +483,920 @@
 
     <div id="toast" class="toast"></div>
 
+    <!-- ============================================================== -->
+    <!-- ==================== JAVASCRIPT (refactorisé) ================== -->
+    <!-- ============================================================== -->
     <script>
-        // ========================================================================
-        // FIREBASE
-        // ========================================================================
-        const firebaseConfig = {
-            apiKey: "AIzaSyACgeZXog1KZGU29HpjM4qpKTBt54KbJFg",
-            authDomain: "machi-51024.firebaseapp.com",
-            projectId: "machi-51024",
-            storageBucket: "machi-51024.firebasestorage.app",
-            messagingSenderId: "984764801380",
-            appId: "1:984764801380:web:c082a0988bba3f899fda71",
-            measurementId: "G-EDZXP8QF9Q"
-        };
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const db = firebase.firestore();
-        db.enablePersistence().catch(() => {});
+        (function() {
+            "use strict";
 
-        // ========================================================================
-        // COMPTES DE TEST
-        // ========================================================================
-        async function seedDemoUsers() {
-            const demoUsers = [
-                { email: 'chauffeur@gmail.com', password: 'chauffeur123', nom: 'Chauffeur Test', telephone: '0555000001',
-                    role: 'chauffeur' },
-                { email: 'passager@gmail.com', password: 'passager123', nom: 'Passager Test', telephone: '0555000002',
-                    role: 'passager' }
-            ];
-            for (const user of demoUsers) {
-                try {
-                    const doc = await db.collection('users').doc(user.email).get();
-                    if (doc.exists) continue;
-                    await auth.createUserWithEmailAndPassword(user.email, user.password);
-                    await db.collection('users').doc(user.email).set({
-                        nom: user.nom,
-                        telephone: user.telephone,
-                        email: user.email,
-                        role: user.role,
-                        dateInscription: new Date().toISOString()
-                    }, { merge: true });
-                } catch (error) {
-                    if (error.code === 'auth/email-already-in-use') {
-                        try {
-                            const doc = await db.collection('users').doc(user.email).get();
-                            if (!doc.exists) {
-                                await db.collection('users').doc(user.email).set({
-                                    nom: user.nom,
-                                    telephone: user.telephone,
-                                    email: user.email,
-                                    role: user.role,
-                                    dateInscription: new Date().toISOString()
-                                }, { merge: true });
-                            }
-                        } catch (e) {}
-                    }
-                }
+            // ----------------------------
+            // 1. FIREBASE INIT
+            // ----------------------------
+            const firebaseConfig = {
+                apiKey: "AIzaSyACgeZXog1KZGU29HpjM4qpKTBt54KbJFg",
+                authDomain: "machi-51024.firebaseapp.com",
+                projectId: "machi-51024",
+                storageBucket: "machi-51024.firebasestorage.app",
+                messagingSenderId: "984764801380",
+                appId: "1:984764801380:web:c082a0988bba3f899fda71",
+                measurementId: "G-EDZXP8QF9Q"
+            };
+            firebase.initializeApp(firebaseConfig);
+            const auth = firebase.auth();
+            const db = firebase.firestore();
+            db.enablePersistence().catch(() => {});
+
+            // ----------------------------
+            // 2. DOM REFERENCES (regroupées)
+            // ----------------------------
+            const $ = id => document.getElementById(id);
+            const DOM = {
+                // Home
+                homeScreen: $('homeScreen'),
+                stats: $('stats'),
+                btnInscription: $('btnInscription'),
+                btnConnexion: $('btnConnexion'),
+                // Main
+                mainInterface: $('mainInterface'),
+                userRoleBadge: $('userRoleBadge'),
+                welcomeMessage: $('welcomeMessage'),
+                btnLogout: $('btnLogout'),
+                btnCreateCourse: $('btnCreateCourse'),
+                coursesContainer: $('coursesContainer'),
+                coursesList: $('coursesList'),
+                noCoursesMsg: $('noCoursesMsg'),
+                // Admin
+                adminPanel: $('adminPanel'),
+                btnAdminChauffeurs: $('btnAdminChauffeurs'),
+                btnAdminPassagers: $('btnAdminPassagers'),
+                adminChauffeursList: $('adminChauffeursList'),
+                adminPassagersList: $('adminPassagersList'),
+                // Modales
+                modalInscription: $('modalInscription'),
+                btnValiderInscription: $('btnValiderInscription'),
+                btnAnnulerInscription: $('btnAnnulerInscription'),
+                role: $('role'),
+                nom: $('nom'),
+                telephone: $('telephone'),
+                email: $('email'),
+                motDePasse: $('motDePasse'),
+                modalConnexion: $('modalConnexion'),
+                loginEmail: $('loginEmail'),
+                loginPassword: $('loginPassword'),
+                btnValiderConnexion: $('btnValiderConnexion'),
+                btnAnnulerConnexion: $('btnAnnulerConnexion'),
+                modalCreateCourse: $('modalCreateCourse'),
+                courseDepart: $('courseDepart'),
+                courseArrivee: $('courseArrivee'),
+                courseHeure: $('courseHeure'),
+                coursePrix: $('coursePrix'),
+                coursePlaces: $('coursePlaces'),
+                btnValiderCourse: $('btnValiderCourse'),
+                btnAnnulerCourse: $('btnAnnulerCourse'),
+                // Admin edit
+                modalAdminEdit: $('modalAdminEdit'),
+                adminEditUserInfo: $('adminEditUserInfo'),
+                adminEditNom: $('adminEditNom'),
+                adminEditTelephone: $('adminEditTelephone'),
+                adminEditEmail: $('adminEditEmail'),
+                adminEditRole: $('adminEditRole'),
+                adminEditCarPhotoInput: $('adminEditCarPhotoInput'),
+                adminEditCarCropContainer: $('adminEditCarCropContainer'),
+                adminEditCarCropImage: $('adminEditCarCropImage'),
+                adminEditProfilePhotoInput: $('adminEditProfilePhotoInput'),
+                adminEditProfileCropContainer: $('adminEditProfileCropContainer'),
+                adminEditProfileCropImage: $('adminEditProfileCropImage'),
+                btnAdminEditSave: $('btnAdminEditSave'),
+                btnAdminEditCancel: $('btnAdminEditCancel'),
+                // Tooltip
+                tooltip: $('tooltipReservation'),
+                btnSupprimerResa: $('btnSupprimerResa'),
+                toast: $('toast'),
+            };
+
+            // ----------------------------
+            // 3. STATE
+            // ----------------------------
+            let currentUser = null;
+            let adminEditTargetEmail = null;
+            let adminEditCarCropper = null;
+            let adminEditProfileCropper = null;
+            let tooltipCourseId = null;
+            let tooltipPlaceIndex = null;
+
+            // ----------------------------
+            // 4. UTILITY FUNCTIONS
+            // ----------------------------
+            function showToast(msg, isError = false) {
+                const t = DOM.toast;
+                t.textContent = msg;
+                t.style.borderColor = isError ? 'rgba(255,100,100,0.2)' : 'rgba(0,255,200,0.15)';
+                t.style.color = isError ? '#ffb0b0' : '#c0fff0';
+                t.classList.add('show');
+                clearTimeout(t._timer);
+                t._timer = setTimeout(() => t.classList.remove('show'), 3000);
             }
-        }
 
-        // ========================================================================
-        // RÉFÉRENCES DOM
-        // ========================================================================
-        const homeScreen = document.getElementById('homeScreen');
-        const mainInterface = document.getElementById('mainInterface');
-        const welcomeMessage = document.getElementById('welcomeMessage');
-        const userRoleBadge = document.getElementById('userRoleBadge');
-        const stats = document.getElementById('stats');
-        const coursesList = document.getElementById('coursesList');
-        const noCoursesMsg = document.getElementById('noCoursesMsg');
-        const coursesContainer = document.getElementById('coursesContainer');
-        const adminPanel = document.getElementById('adminPanel');
-        const btnAdminChauffeurs = document.getElementById('btnAdminChauffeurs');
-        const btnAdminPassagers = document.getElementById('btnAdminPassagers');
-        const adminChauffeursList = document.getElementById('adminChauffeursList');
-        const adminPassagersList = document.getElementById('adminPassagersList');
+            function showLoader(btn) { btn.disabled = true;
+                btn.innerHTML = '<span class="spinner"></span>'; }
 
-        const btnInscription = document.getElementById('btnInscription');
-        const btnConnexion = document.getElementById('btnConnexion');
-        const btnLogout = document.getElementById('btnLogout');
-        const btnCreateCourse = document.getElementById('btnCreateCourse');
+            function hideLoader(btn, txt) { btn.disabled = false;
+                btn.textContent = txt; }
 
-        const modalInscription = document.getElementById('modalInscription');
-        const btnValiderInscription = document.getElementById('btnValiderInscription');
-        const btnAnnulerInscription = document.getElementById('btnAnnulerInscription');
-        const roleSelect = document.getElementById('role');
-        const nomInput = document.getElementById('nom');
-        const telInput = document.getElementById('telephone');
-        const emailInput = document.getElementById('email');
-        const pwdInput = document.getElementById('motDePasse');
+            function isOnline() { return navigator.onLine; }
 
-        const modalConnexion = document.getElementById('modalConnexion');
-        const loginEmail = document.getElementById('loginEmail');
-        const loginPassword = document.getElementById('loginPassword');
-        const btnValiderConnexion = document.getElementById('btnValiderConnexion');
-        const btnAnnulerConnexion = document.getElementById('btnAnnulerConnexion');
+            function closeModal(id) { if (id) id.classList.remove('active'); }
 
-        const modalCreateCourse = document.getElementById('modalCreateCourse');
-        const courseDepart = document.getElementById('courseDepart');
-        const courseArrivee = document.getElementById('courseArrivee');
-        const courseHeure = document.getElementById('courseHeure');
-        const coursePrix = document.getElementById('coursePrix');
-        const coursePlaces = document.getElementById('coursePlaces');
-        const btnValiderCourse = document.getElementById('btnValiderCourse');
-        const btnAnnulerCourse = document.getElementById('btnAnnulerCourse');
+            function openModal(id) { if (id) id.classList.add('active'); }
 
-        const modalAdminEdit = document.getElementById('modalAdminEdit');
-        const adminEditUserInfo = document.getElementById('adminEditUserInfo');
-        const adminEditNom = document.getElementById('adminEditNom');
-        const adminEditTelephone = document.getElementById('adminEditTelephone');
-        const adminEditEmail = document.getElementById('adminEditEmail');
-        const adminEditRole = document.getElementById('adminEditRole');
-        const adminEditCarPhotoInput = document.getElementById('adminEditCarPhotoInput');
-        const adminEditCarCropContainer = document.getElementById('adminEditCarCropContainer');
-        const adminEditCarCropImage = document.getElementById('adminEditCarCropImage');
-        const adminEditProfilePhotoInput = document.getElementById('adminEditProfilePhotoInput');
-        const adminEditProfileCropContainer = document.getElementById('adminEditProfileCropContainer');
-        const adminEditProfileCropImage = document.getElementById('adminEditProfileCropImage');
-        const btnAdminEditSave = document.getElementById('btnAdminEditSave');
-        const btnAdminEditCancel = document.getElementById('btnAdminEditCancel');
-
-        const tooltip = document.getElementById('tooltipReservation');
-        const btnSupprimerResa = document.getElementById('btnSupprimerResa');
-        const toast = document.getElementById('toast');
-
-        let tooltipCourseId = null;
-        let tooltipPlaceIndex = null;
-        let currentUser = null;
-
-        let adminEditTargetEmail = null;
-        let adminEditCarCropper = null;
-        let adminEditProfileCropper = null;
-
-        // ========================================================================
-        // UTILITAIRES
-        // ========================================================================
-        function showToast(message, isError = false) {
-            toast.textContent = message;
-            toast.style.borderColor = isError ? 'rgba(255,100,100,0.2)' : 'rgba(0,255,200,0.15)';
-            toast.style.color = isError ? '#ffb0b0' : '#c0fff0';
-            toast.classList.add('show');
-            clearTimeout(toast._timer);
-            toast._timer = setTimeout(() => toast.classList.remove('show'), 3000);
-        }
-
-        function showLoader(btn) {
-            btn.disabled = true;
-            btn.innerHTML = '<span class="spinner"></span>';
-        }
-
-        function hideLoader(btn, originalText) {
-            btn.disabled = false;
-            btn.textContent = originalText;
-        }
-
-        function isOnline() { return navigator.onLine; }
-
-        function closeModalInscription() { if (modalInscription) modalInscription.classList.remove('active'); }
-        function closeModalConnexion() { if (modalConnexion) modalConnexion.classList.remove('active'); }
-        function closeModalCreateCourse() { if (modalCreateCourse) modalCreateCourse.classList.remove('active'); }
-        function closeModalAdminEdit() {
-            if (modalAdminEdit) modalAdminEdit.classList.remove('active');
-            if (adminEditCarCropper) { adminEditCarCropper.destroy();
-                adminEditCarCropper = null; }
-            if (adminEditProfileCropper) { adminEditProfileCropper.destroy();
-                adminEditProfileCropper = null; }
-            adminEditCarCropContainer.style.display = 'none';
-            adminEditProfileCropContainer.style.display = 'none';
-            adminEditCarPhotoInput.value = '';
-            adminEditProfilePhotoInput.value = '';
-            adminEditTargetEmail = null;
-        }
-
-        function showHomeScreen() {
-            homeScreen.style.display = 'block';
-            mainInterface.classList.remove('active');
-            mainInterface.style.display = 'none';
-            updateStats();
-            tooltip.style.display = 'none';
-        }
-
-        function showMainInterface(user) {
-            homeScreen.style.display = 'none';
-            mainInterface.style.display = 'block';
-            requestAnimationFrame(() => mainInterface.classList.add('active'));
-
-            const roleFr = user.role === 'admin' ? 'Admin' : (user.role === 'chauffeur' ? 'Chauffeur' : 'Passager');
-            welcomeMessage.textContent = `👋 Bonjour ${user.nom || 'Admin'}`;
-            userRoleBadge.textContent = `Rôle : ${roleFr}`;
-
-            btnCreateCourse.style.display = 'none';
-
-            if (user.role === 'admin') {
-                coursesContainer.style.display = 'none';
-                adminPanel.style.display = 'block';
-                renderAdminLists();
-            } else {
-                coursesContainer.style.display = 'block';
-                adminPanel.style.display = 'none';
-                if (user.role === 'chauffeur') {
-                    btnCreateCourse.style.display = 'inline-block';
-                }
-                renderCourses(user);
-            }
-        }
-
-        // ========================================================================
-        // FIRESTORE (CRUD)
-        // ========================================================================
-        async function firestoreGet(collection, docId = null) {
-            try {
+            // ----------------------------
+            // 5. FIRESTORE HELPERS
+            // ----------------------------
+            async function fsGet(collection, docId = null) {
                 if (!isOnline()) throw new Error('Hors ligne');
                 const ref = docId ? db.collection(collection).doc(docId) : db.collection(collection);
-                const snap = await ref.get();
-                return snap;
-            } catch (error) { throw error; }
-        }
+                return await ref.get();
+            }
 
-        async function firestoreSet(collection, docId, data) {
-            try {
+            async function fsSet(collection, docId, data) {
                 if (!isOnline()) throw new Error('Hors ligne');
                 await db.collection(collection).doc(docId).set(data, { merge: true });
-            } catch (error) { throw error; }
-        }
+            }
 
-        async function firestoreAdd(collection, data) {
-            try {
+            async function fsAdd(collection, data) {
                 if (!isOnline()) throw new Error('Hors ligne');
                 const ref = await db.collection(collection).add(data);
                 return ref.id;
-            } catch (error) { throw error; }
-        }
+            }
 
-        async function firestoreUpdate(collection, docId, data) {
-            try {
+            async function fsUpdate(collection, docId, data) {
                 if (!isOnline()) throw new Error('Hors ligne');
                 await db.collection(collection).doc(docId).update(data);
-            } catch (error) { throw error; }
-        }
+            }
 
-        async function firestoreDelete(collection, docId) {
-            try {
+            async function fsDelete(collection, docId) {
                 if (!isOnline()) throw new Error('Hors ligne');
                 await db.collection(collection).doc(docId).delete();
-            } catch (error) { throw error; }
-        }
-
-        async function fetchUsers() {
-            try {
-                const snap = await firestoreGet('users');
-                const users = [];
-                snap.forEach(doc => users.push({ id: doc.id, ...doc.data() }));
-                return users;
-            } catch { return []; }
-        }
-
-        async function fetchRides() {
-            try {
-                const snap = await firestoreGet('rides');
-                const rides = [];
-                snap.forEach(doc => rides.push({ id: doc.id, ...doc.data() }));
-                return rides;
-            } catch { return []; }
-        }
-
-        async function createRide(rideData) { return await firestoreAdd('rides', rideData); }
-        async function updateRide(rideId, rideData) { await firestoreUpdate('rides', rideId, rideData); }
-        async function deleteRide(rideId) { await firestoreDelete('rides', rideId); }
-
-        async function countUsers() {
-            try {
-                const snap = await firestoreGet('users');
-                return snap.size;
-            } catch { return 0; }
-        }
-
-        async function updateStats() {
-            try {
-                const count = await countUsers();
-                stats.textContent = `👤 ${count} inscrit${count > 1 ? 's' : ''}`;
-            } catch {
-                stats.textContent = '👤 ? inscrits (hors ligne)';
             }
-        }
 
-        // ========================================================================
-        // RENDU DES COURSES (avec photo de profil sur le siège chauffeur)
-        // ========================================================================
-        async function renderCourses(user) {
-            try {
-                const allRides = await fetchRides();
-                const allUsers = await fetchUsers();
-                const userMap = {};
-                allUsers.forEach(u => { userMap[u.email] = u; });
+            async function fetchUsers() {
+                try { const snap = await fsGet('users'); const users = [];
+                    snap.forEach(d => users.push({ id: d.id, ...d.data() })); return users; } catch { return []; }
+            }
 
-                let ridesToShow = [];
-                if (user.role === 'chauffeur') {
-                    ridesToShow = allRides.filter(r => r.chauffeurEmail === user.email);
+            async function fetchRides() {
+                try { const snap = await fsGet('rides'); const rides = [];
+                    snap.forEach(d => rides.push({ id: d.id, ...d.data() })); return rides; } catch { return []; }
+            }
+
+            // ----------------------------
+            // 6. UI: AFFICHAGE
+            // ----------------------------
+            function showHomeScreen() {
+                DOM.homeScreen.style.display = 'block';
+                DOM.mainInterface.classList.remove('active');
+                DOM.mainInterface.style.display = 'none';
+                updateStats();
+                DOM.tooltip.style.display = 'none';
+            }
+
+            function showMainInterface(user) {
+                DOM.homeScreen.style.display = 'none';
+                DOM.mainInterface.style.display = 'block';
+                requestAnimationFrame(() => DOM.mainInterface.classList.add('active'));
+
+                const roleFr = user.role === 'admin' ? 'Admin' : (user.role === 'chauffeur' ? 'Chauffeur' : 'Passager');
+                DOM.welcomeMessage.textContent = `👋 Bonjour ${user.nom || 'Admin'}`;
+                DOM.userRoleBadge.textContent = `Rôle : ${roleFr}`;
+
+                DOM.btnCreateCourse.style.display = 'none';
+
+                if (user.role === 'admin') {
+                    DOM.coursesContainer.style.display = 'none';
+                    DOM.adminPanel.style.display = 'block';
+                    renderAdminLists();
                 } else {
-                    ridesToShow = allRides;
+                    DOM.coursesContainer.style.display = 'block';
+                    DOM.adminPanel.style.display = 'none';
+                    renderCourses(user);
                 }
-
-                coursesList.innerHTML = '';
-                if (ridesToShow.length === 0) {
-                    noCoursesMsg.style.display = 'block';
-                    coursesList.style.display = 'none';
-                    return;
-                }
-                noCoursesMsg.style.display = 'none';
-                coursesList.style.display = 'flex';
-
-                // Calcul du temps restant pour chaque course
-                const now = new Date();
-                const todayStr = now.toISOString().split('T')[0];
-
-                ridesToShow.forEach(course => {
-                    const chauffeurData = userMap[course.chauffeurEmail] || {};
-                    const carPhotoURL = chauffeurData.photoURL || null;
-                    const profilePhotoURL = chauffeurData.profilePhotoURL || null;
-
-                    const card = document.createElement('div');
-                    card.className = 'course-card';
-                    card.dataset.courseId = course.id;
-
-                    // --- Calcul du temps restant ---
-                    let tempsRestantStr = '';
-                    let tempsRestantCouleur = '#fbbf24'; // ambre par défaut
-                    if (course.heure) {
-                        const [h, m] = course.heure.split(':').map(Number);
-                        const departDate = new Date();
-                        departDate.setHours(h, m, 0, 0);
-                        const diffMs = departDate - now;
-                        if (diffMs > 0) {
-                            const diffMin = Math.floor(diffMs / 60000);
-                            if (diffMin < 60) {
-                                tempsRestantStr = `(${diffMin}min)`;
-                            } else {
-                                const diffH = Math.floor(diffMin / 60);
-                                const diffM = diffMin % 60;
-                                tempsRestantStr = `(${diffH}h${diffM > 0 ? diffM + 'min' : ''})`;
-                            }
-                        } else if (diffMs > -60000) {
-                            tempsRestantStr = '(maintenant)';
-                            tempsRestantCouleur = '#f87171'; // rouge si passé
-                        } else {
-                            tempsRestantStr = '(passée)';
-                            tempsRestantCouleur = '#f87171'; // rouge
-                        }
-                    }
-
-                    // --- Calcul des places restantes ---
-                    const reservations = course.reservations || [];
-                    const placesRestantes = course.places - reservations.length;
-                    const placesStr = placesRestantes > 0 ? `🟢 ${placesRestantes}` : '🔴 complet';
-
-                    // Info
-                    const info = document.createElement('div');
-                    info.className = 'course-info';
-                    const titre = document.createElement('span');
-                    titre.className = 'titre';
-                    titre.textContent = `${course.depart} → ${course.arrivee}`;
-                    info.appendChild(titre);
-
-                    const heure = document.createElement('span');
-                    heure.className = 'heure';
-                    heure.textContent = `🕐 ${course.heure}`;
-                    if (tempsRestantStr) {
-                        const tempsSpan = document.createElement('span');
-                        tempsSpan.className = 'temps-restant';
-                        tempsSpan.textContent = tempsRestantStr;
-                        tempsSpan.style.color = tempsRestantCouleur;
-                        heure.appendChild(tempsSpan);
-                    }
-                    info.appendChild(heure);
-
-                    const prix = document.createElement('span');
-                    prix.className = 'prix';
-                    prix.textContent = `💰 ${course.prix}`;
-                    info.appendChild(prix);
-
-                    const placesSpan = document.createElement('span');
-                    placesSpan.className = 'places-restantes';
-                    placesSpan.textContent = `👥 ${placesRestantes}`;
-                    placesSpan.style.color = placesRestantes > 2 ? '#6ee7b7' : (placesRestantes > 0 ? '#fbbf24' : '#f87171');
-                    info.appendChild(placesSpan);
-
-                    card.appendChild(info);
-
-                    // Ligne horizontale
-                    const row = document.createElement('div');
-                    row.className = 'course-row';
-
-                    const grid = document.createElement('div');
-                    grid.className = 'seat-grid';
-
-                    const totalPlaces = course.places + 1;
-                    const placesEffectives = Math.min(totalPlaces, 8);
-                    const disabledCount = 8 - placesEffectives;
-                    // reservations déjà récupérées
-
-                    const placeStatus = [];
-                    placeStatus[0] = 'driver';
-                    for (let i = 1; i < placesEffectives; i++) {
-                        const resa = reservations.find(r => r.placeIndex === i);
-                        if (resa) {
-                            placeStatus[i] = { type: 'reserved', email: resa.email, nom: resa.nom };
-                        } else {
-                            placeStatus[i] = { type: 'available' };
-                        }
-                    }
-                    for (let i = placesEffectives; i < 8; i++) {
-                        placeStatus[i] = { type: 'disabled' };
-                    }
-
-                    // Ordre naturel pour le remplissage des colonnes
-                    const colonneOrdre = [0, 1, 2, 3, 4, 5, 6, 7];
-
-                    for (let idx of colonneOrdre) {
-                        const seat = document.createElement('div');
-                        seat.className = 'seat';
-                        seat.dataset.placeIndex = idx;
-                        seat.dataset.courseId = course.id;
-
-                        const status = placeStatus[idx];
-
-                        if (idx === 0 && profilePhotoURL) {
-                            seat.classList.add('driver', 'has-profile');
-                            seat.style.backgroundImage = `url(${profilePhotoURL})`;
-                            seat.style.backgroundColor = 'rgba(0,0,0,0.3)';
-                            seat.dataset.status = 'driver';
-                        } else if (typeof status === 'string') {
-                            if (status === 'driver') {
-                                seat.classList.add('driver');
-                                seat.dataset.status = 'driver';
-                            } else if (status === 'disabled') {
-                                seat.classList.add('disabled');
-                                seat.dataset.status = 'disabled';
-                            }
-                        } else if (status.type === 'available') {
-                            seat.classList.add('available');
-                            seat.dataset.status = 'available';
-                        } else if (status.type === 'reserved') {
-                            seat.classList.add('reserved');
-                            seat.dataset.status = 'reserved';
-                            seat.dataset.reservedEmail = status.email;
-                            seat.dataset.reservedNom = status.nom;
-                        }
-                        grid.appendChild(seat);
-                    }
-
-                    row.appendChild(grid);
-
-                    // Image de la voiture
-                    const photoContainer = document.createElement('div');
-                    photoContainer.className = 'car-photo' + (carPhotoURL ? '' : ' default');
-                    photoContainer.dataset.courseId = course.id;
-                    if (carPhotoURL) {
-                        const img = document.createElement('img');
-                        img.src = carPhotoURL;
-                        img.alt = 'Voiture';
-                        photoContainer.appendChild(img);
-                    } else {
-                        photoContainer.textContent = '🚗';
-                    }
-
-                    // Long-press pour supprimer
-                    let longPressTimer = null;
-                    const startLongPress = (e) => {
-                        longPressTimer = setTimeout(() => {
-                            handleLongPress(course.id, photoContainer);
-                        }, 600);
-                    };
-                    const cancelLongPress = () => {
-                        if (longPressTimer) {
-                            clearTimeout(longPressTimer);
-                            longPressTimer = null;
-                        }
-                    };
-                    photoContainer.addEventListener('mousedown', startLongPress);
-                    photoContainer.addEventListener('mouseup', cancelLongPress);
-                    photoContainer.addEventListener('mouseleave', cancelLongPress);
-                    photoContainer.addEventListener('touchstart', startLongPress, { passive: true });
-                    photoContainer.addEventListener('touchend', cancelLongPress, { passive: true });
-                    photoContainer.addEventListener('touchmove', cancelLongPress, { passive: true });
-                    photoContainer.addEventListener('contextmenu', (e) => e.preventDefault());
-
-                    row.appendChild(photoContainer);
-
-                    card.appendChild(row);
-                    coursesList.appendChild(card);
-                });
-            } catch (error) {
-                showToast('❌ Erreur chargement des courses', true);
-                console.error('renderCourses error:', error);
-            }
-        }
-
-        // ========================================================================
-        // LONG-PRESS : suppression d'une course
-        // ========================================================================
-        function handleLongPress(courseId, photoElement) {
-            if (!currentUser || currentUser.role !== 'chauffeur') return;
-            if (confirm('Supprimer cette course ?')) {
-                deleteRide(courseId)
-                    .then(() => {
-                        showToast('🗑️ Course supprimée');
-                        renderCourses(currentUser);
-                    })
-                    .catch(err => {
-                        showToast('❌ Erreur lors de la suppression', true);
-                        console.error(err);
-                    });
-            }
-        }
-
-        // ========================================================================
-        // ADMIN : LISTES & ÉDITION
-        // ========================================================================
-        async function renderAdminLists() {
-            try {
-                const users = await fetchUsers();
-                const chauffeurs = users.filter(u => u.role === 'chauffeur');
-                const passagers = users.filter(u => u.role === 'passager');
-
-                adminChauffeursList.innerHTML = '';
-                if (chauffeurs.length === 0) {
-                    adminChauffeursList.innerHTML = '<div class="item">Aucun chauffeur</div>';
-                } else {
-                    chauffeurs.forEach(c => {
-                        const div = document.createElement('div');
-                        div.className = 'item';
-                        div.innerHTML = `<span>${c.nom} (${c.telephone})</span><span class="email">${c.email}</span>`;
-                        div.addEventListener('click', () => openAdminEditModal(c));
-                        adminChauffeursList.appendChild(div);
-                    });
-                }
-
-                adminPassagersList.innerHTML = '';
-                if (passagers.length === 0) {
-                    adminPassagersList.innerHTML = '<div class="item">Aucun passager</div>';
-                } else {
-                    passagers.forEach(p => {
-                        const div = document.createElement('div');
-                        div.className = 'item';
-                        div.innerHTML = `<span>${p.nom} (${p.telephone})</span><span class="email">${p.email}</span>`;
-                        div.addEventListener('click', () => openAdminEditModal(p));
-                        adminPassagersList.appendChild(div);
-                    });
-                }
-            } catch (error) {
-                showToast('❌ Erreur chargement des utilisateurs', true);
-                console.error('renderAdminLists error:', error);
-            }
-        }
-
-        // ---- Admin Edit Modal ----
-        function openAdminEditModal(user) {
-            adminEditTargetEmail = user.email;
-            adminEditUserInfo.textContent = `Édition de ${user.nom} (${user.email})`;
-            adminEditNom.value = user.nom || '';
-            adminEditTelephone.value = user.telephone || '';
-            adminEditEmail.value = user.email || '';
-            adminEditRole.value = user.role || '';
-
-            if (adminEditCarCropper) { adminEditCarCropper.destroy();
-                adminEditCarCropper = null; }
-            if (adminEditProfileCropper) { adminEditProfileCropper.destroy();
-                adminEditProfileCropper = null; }
-            adminEditCarCropContainer.style.display = 'none';
-            adminEditProfileCropContainer.style.display = 'none';
-            adminEditCarPhotoInput.value = '';
-            adminEditProfilePhotoInput.value = '';
-
-            modalAdminEdit.classList.add('active');
-        }
-
-        adminEditCarPhotoInput.addEventListener('change', function(e) {
-            const file = this.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function(ev) {
-                adminEditCarCropImage.src = ev.target.result;
-                adminEditCarCropContainer.style.display = 'block';
-                if (adminEditCarCropper) adminEditCarCropper.destroy();
-                adminEditCarCropper = new Cropper(adminEditCarCropImage, {
-                    aspectRatio: 3 / 2,
-                    viewMode: 1,
-                    dragMode: 'move',
-                    autoCropArea: 0.8,
-                    restore: false,
-                    guides: true,
-                    center: true,
-                    highlight: false,
-                    cropBoxMovable: true,
-                    cropBoxResizable: false,
-                    toggleDragModeOnDblclick: false,
-                    zoomOnWheel: true,
-                    zoomOnTouch: true,
-                    wheelZoomRatio: 0.1,
-                    minContainerWidth: 200,
-                    minContainerHeight: 150,
-                });
-            };
-            reader.readAsDataURL(file);
-        });
-
-        adminEditProfilePhotoInput.addEventListener('change', function(e) {
-            const file = this.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function(ev) {
-                adminEditProfileCropImage.src = ev.target.result;
-                adminEditProfileCropContainer.style.display = 'block';
-                if (adminEditProfileCropper) adminEditProfileCropper.destroy();
-                adminEditProfileCropper = new Cropper(adminEditProfileCropImage, {
-                    aspectRatio: 1 / 1,
-                    viewMode: 1,
-                    dragMode: 'move',
-                    autoCropArea: 0.8,
-                    restore: false,
-                    guides: true,
-                    center: true,
-                    highlight: false,
-                    cropBoxMovable: true,
-                    cropBoxResizable: false,
-                    toggleDragModeOnDblclick: false,
-                    zoomOnWheel: true,
-                    zoomOnTouch: true,
-                    wheelZoomRatio: 0.1,
-                    minContainerWidth: 200,
-                    minContainerHeight: 150,
-                });
-            };
-            reader.readAsDataURL(file);
-        });
-
-        async function saveAdminEdit() {
-            if (!adminEditTargetEmail) {
-                showToast('⚠️ Aucun utilisateur ciblé', true);
-                return;
             }
 
-            const nom = adminEditNom.value.trim();
-            const telephone = adminEditTelephone.value.trim();
-            if (!nom || !telephone) {
-                showToast('⚠️ Nom et téléphone requis', true);
-                return;
+            async function updateStats() {
+                try {
+                    const snap = await fsGet('users');
+                    DOM.stats.textContent = `👤 ${snap.size} inscrit${snap.size > 1 ? 's' : ''}`;
+                } catch { DOM.stats.textContent = '👤 ? inscrits (hors ligne)'; }
             }
 
-            const btn = btnAdminEditSave;
-            const originalText = btn.textContent;
-            showLoader(btn);
+            // ----------------------------
+            // 7. RENDU DES COURSES
+            // ----------------------------
+            async function renderCourses(user) {
+                try {
+                    const allRides = await fetchRides();
+                    const allUsers = await fetchUsers();
+                    const userMap = {};
+                    allUsers.forEach(u => { userMap[u.email] = u; });
 
-            try {
-                await db.collection('users').doc(adminEditTargetEmail).update({
-                    nom: nom,
-                    telephone: telephone
-                });
+                    let ridesToShow = user.role === 'chauffeur' ?
+                        allRides.filter(r => r.chauffeurEmail === user.email) :
+                        allRides;
 
-                let carPhotoURL = null;
-                let profilePhotoURL = null;
-
-                if (adminEditCarCropper) {
-                    const canvas = adminEditCarCropper.getCroppedCanvas({ width: 800, height: 533, imageSmoothingQuality: 'high' });
-                    if (canvas) {
-                        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.92));
-                        if (blob) {
-                            const formData = new FormData();
-                            formData.append('file', blob, 'car_photo.jpg');
-                            formData.append('upload_preset', 'machikey');
-                            formData.append('folder', 'machi');
-                            formData.append('cloud_name', 'y6u9peta');
-                            const response = await fetch('https://api.cloudinary.com/v1_1/y6u9peta/image/upload', {
-                                method: 'POST',
-                                body: formData
-                            });
-                            const data = await response.json();
-                            if (response.ok) {
-                                carPhotoURL = data.secure_url;
+                    // Vérifier si le chauffeur a un trajet actif (heure > maintenant)
+                    let hasActiveRide = false;
+                    if (user.role === 'chauffeur') {
+                        const now = new Date();
+                        const nowMin = now.getHours() * 60 + now.getMinutes();
+                        for (let r of ridesToShow) {
+                            if (r.heure) {
+                                const [h, m] = r.heure.split(':').map(Number);
+                                if (h * 60 + m > nowMin) { hasActiveRide = true; break; }
                             }
                         }
                     }
-                }
+                    DOM.btnCreateCourse.style.display = (user.role === 'chauffeur' && hasActiveRide) ? 'none' : (user.role ===
+                        'chauffeur' ? 'inline-block' : 'none');
 
-                if (adminEditProfileCropper) {
-                    const canvas = adminEditProfileCropper.getCroppedCanvas({ width: 400, height: 400, imageSmoothingQuality: 'high' });
-                    if (canvas) {
-                        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.92));
-                        if (blob) {
-                            const formData = new FormData();
-                            formData.append('file', blob, 'profile_photo.jpg');
-                            formData.append('upload_preset', 'machikey');
-                            formData.append('folder', 'machi');
-                            formData.append('cloud_name', 'y6u9peta');
-                            const response = await fetch('https://api.cloudinary.com/v1_1/y6u9peta/image/upload', {
-                                method: 'POST',
-                                body: formData
-                            });
-                            const data = await response.json();
-                            if (response.ok) {
-                                profilePhotoURL = data.secure_url;
-                            }
-                        }
+                    DOM.coursesList.innerHTML = '';
+                    if (ridesToShow.length === 0) {
+                        DOM.noCoursesMsg.style.display = 'block';
+                        DOM.coursesList.style.display = 'none';
+                        return;
                     }
-                }
+                    DOM.noCoursesMsg.style.display = 'none';
+                    DOM.coursesList.style.display = 'flex';
 
-                const updateData = {};
-                if (carPhotoURL) updateData.photoURL = carPhotoURL;
-                if (profilePhotoURL) updateData.profilePhotoURL = profilePhotoURL;
-                if (Object.keys(updateData).length > 0) {
-                    await db.collection('users').doc(adminEditTargetEmail).update(updateData);
-                }
+                    const now = new Date();
+                    const nowMin = now.getHours() * 60 + now.getMinutes();
 
-                showToast('✅ Utilisateur mis à jour');
-                closeModalAdminEdit();
-                renderAdminLists();
-                if (currentUser && currentUser.role !== 'admin') {
-                    renderCourses(currentUser);
-                }
-            } catch (error) {
-                console.error('Admin edit error:', error);
-                showToast('❌ Erreur : ' + error.message, true);
-            }
-            hideLoader(btn, originalText);
-        }
-
-        // ========================================================================
-        // GESTION DES CLICS SUR LES PLACES
-        // ========================================================================
-        async function handleSeatClick(e) {
-            const seat = e.target.closest('.seat');
-            if (!seat) return;
-            const status = seat.dataset.status;
-            const courseId = seat.dataset.courseId;
-            const placeIndex = parseInt(seat.dataset.placeIndex);
-            if (!currentUser) return;
-            if (currentUser.role === 'admin') return;
-
-            if (currentUser.role === 'chauffeur') {
-                if (status === 'reserved') {
-                    const nom = seat.dataset.reservedNom;
-                    if (nom) {
-                        tooltipCourseId = courseId;
-                        tooltipPlaceIndex = placeIndex;
-                        const rect = seat.getBoundingClientRect();
-                        tooltip.style.left = (rect.left + rect.width / 2 - 75) + 'px';
-                        tooltip.style.top = (rect.top - 10) + 'px';
-                        tooltip.style.display = 'flex';
-                        tooltip.querySelector('.nom').textContent = `👤 ${nom}`;
-                    } else {
-                        tooltip.style.display = 'none';
-                    }
-                } else {
-                    tooltip.style.display = 'none';
-                }
-            } else if (currentUser.role === 'passager') {
-                if (status === 'available') {
-                    try {
-                        const allRides = await fetchRides();
-                        const course = allRides.find(r => r.id === courseId);
-                        if (!course) return;
+                    ridesToShow.forEach(course => {
+                        const cData = userMap[course.chauffeurEmail] || {};
+                        const carPhotoURL = cData.photoURL || null;
+                        const profilePhotoURL = cData.profilePhotoURL || null;
                         const reservations = course.reservations || [];
-                        const dejaReserve = reservations.some(r => r.email === currentUser.email);
-                        if (dejaReserve) {
-                            showToast('❌ Vous avez déjà réservé une place dans ce trajet', true);
-                            return;
+
+                        // Temps restant
+                        let tempsRestant = '';
+                        if (course.heure) {
+                            const [h, m] = course.heure.split(':').map(Number);
+                            const diff = h * 60 + m - nowMin;
+                            if (diff > 0) {
+                                tempsRestant = diff < 60 ? ` (dans ${diff} min)` :
+                                    ` (dans ${Math.floor(diff/60)}h${diff%60>0?diff%60+'min':''})`;
+                            } else if (diff === 0) tempsRestant = ' (maintenant)';
+                            else tempsRestant = ' (passé)';
                         }
-                        reservations.push({ email: currentUser.email, nom: currentUser.nom, placeIndex });
-                        await updateRide(courseId, { reservations });
-                        showToast(`✅ Place réservée pour ${currentUser.nom}`);
-                        await renderCourses(currentUser);
-                    } catch (error) {
-                        showToast('❌ Erreur lors de la réservation', true);
-                        console.error('Reservation error:', error);
+
+                        // Places restantes
+                        const reservedCount = reservations.length;
+                        const available = Math.max(0, course.places - reservedCount);
+                        const placesRestantes = ` (${available} place${available>1?'s':''} restante${available>1?'s':''})`;
+
+                        // Carte
+                        const card = document.createElement('div');
+                        card.className = 'course-card';
+                        card.dataset.courseId = course.id;
+
+                        // Info
+                        const info = document.createElement('div');
+                        info.className = 'course-info';
+                        const titre = document.createElement('span');
+                        titre.className = 'titre';
+                        titre.textContent = `${course.depart} → ${course.arrivee}`;
+                        info.appendChild(titre);
+
+                        const heureSpan = document.createElement('span');
+                        heureSpan.className = 'heure';
+                        heureSpan.textContent = `🕐 ${course.heure}`;
+                        info.appendChild(heureSpan);
+
+                        if (tempsRestant) {
+                            const tr = document.createElement('span');
+                            tr.className = 'temps-restant';
+                            tr.textContent = tempsRestant;
+                            info.appendChild(tr);
+                        }
+
+                        const pr = document.createElement('span');
+                        pr.className = 'places-restantes';
+                        pr.textContent = placesRestantes;
+                        info.appendChild(pr);
+
+                        const prixSpan = document.createElement('span');
+                        prixSpan.className = 'prix';
+                        prixSpan.textContent = `🪙 ${course.prix}`;
+                        info.appendChild(prixSpan);
+
+                        card.appendChild(info);
+
+                        // Ligne des places
+                        const row = document.createElement('div');
+                        row.className = 'course-row';
+
+                        const grid = document.createElement('div');
+                        grid.className = 'seat-grid';
+
+                        const totalSeats = 8;
+                        const placesEffectives = Math.min(course.places + 1, totalSeats);
+                        const status = [];
+                        status[0] = 'driver';
+                        for (let i = 1; i < placesEffectives; i++) {
+                            const resa = reservations.find(r => r.placeIndex === i);
+                            status[i] = resa ? { type: 'reserved', email: resa.email, nom: resa.nom } : { type: 'available' };
+                        }
+                        for (let i = placesEffectives; i < totalSeats; i++) { status[i] = { type: 'disabled' }; }
+
+                        const order = [0, 1, 2, 3, 4, 5, 6, 7];
+                        for (let idx of order) {
+                            const seat = document.createElement('div');
+                            seat.className = 'seat';
+                            seat.dataset.placeIndex = idx;
+                            seat.dataset.courseId = course.id;
+                            const s = status[idx];
+
+                            if (idx === 0 && profilePhotoURL) {
+                                seat.classList.add('driver', 'has-profile');
+                                seat.style.backgroundImage = `url(${profilePhotoURL})`;
+                                seat.style.backgroundColor = 'rgba(0,0,0,0.3)';
+                                seat.dataset.status = 'driver';
+                            } else if (typeof s === 'string') {
+                                if (s === 'driver') { seat.classList.add('driver');
+                                    seat.dataset.status = 'driver'; } else if (s === 'disabled') { seat.classList.add('disabled');
+                                    seat.dataset.status = 'disabled'; }
+                            } else if (s.type === 'available') {
+                                seat.classList.add('available');
+                                seat.dataset.status = 'available';
+                            } else if (s.type === 'reserved') {
+                                seat.classList.add('reserved');
+                                seat.dataset.status = 'reserved';
+                                seat.dataset.reservedEmail = s.email;
+                                seat.dataset.reservedNom = s.nom;
+                            }
+                            grid.appendChild(seat);
+                        }
+                        row.appendChild(grid);
+
+                        // Image voiture + long-press
+                        const photo = document.createElement('div');
+                        photo.className = 'car-photo' + (carPhotoURL ? '' : ' default');
+                        photo.dataset.courseId = course.id;
+                        if (carPhotoURL) {
+                            const img = document.createElement('img');
+                            img.src = carPhotoURL;
+                            img.alt = 'Voiture';
+                            photo.appendChild(img);
+                        } else {
+                            photo.textContent = '🚗';
+                        }
+
+                        // Long-press
+                        let timer = null;
+                        const start = () => { timer = setTimeout(() => handleLongPress(course.id), 600); };
+                        const cancel = () => { if (timer) { clearTimeout(timer);
+                                timer = null; } };
+                        photo.addEventListener('mousedown', start);
+                        photo.addEventListener('mouseup', cancel);
+                        photo.addEventListener('mouseleave', cancel);
+                        photo.addEventListener('touchstart', start, { passive: true });
+                        photo.addEventListener('touchend', cancel, { passive: true });
+                        photo.addEventListener('touchmove', cancel, { passive: true });
+                        photo.addEventListener('contextmenu', e => e.preventDefault());
+
+                        row.appendChild(photo);
+                        card.appendChild(row);
+                        DOM.coursesList.appendChild(card);
+                    });
+                } catch (e) {
+                    showToast('❌ Erreur chargement des courses', true);
+                    console.error(e);
+                }
+            }
+
+            // ----------------------------
+            // 8. LONG-PRESS: SUPPRESSION COURSE
+            // ----------------------------
+            function handleLongPress(courseId) {
+                if (!currentUser || currentUser.role !== 'chauffeur') return;
+                if (confirm('Supprimer cette course ?')) {
+                    fsDelete('rides', courseId)
+                        .then(() => { showToast('🗑️ Course supprimée');
+                            renderCourses(currentUser); })
+                        .catch(err => { showToast('❌ Erreur suppression', true);
+                            console.error(err); });
+                }
+            }
+
+            // ----------------------------
+            // 9. ADMIN: LISTES & ÉDITION
+            // ----------------------------
+            async function renderAdminLists() {
+                try {
+                    const users = await fetchUsers();
+                    const chauffeurs = users.filter(u => u.role === 'chauffeur');
+                    const passagers = users.filter(u => u.role === 'passager');
+
+                    DOM.adminChauffeursList.innerHTML = chauffeurs.length === 0 ? '<div class="item">Aucun chauffeur</div>' :
+                        chauffeurs.map(c =>
+                            `<div class="item" data-email="${c.email}"><span>${c.nom} (${c.telephone})</span><span class="email">${c.email}</span></div>`
+                        ).join('');
+                    DOM.adminChauffeursList.querySelectorAll('.item').forEach(el => {
+                        el.addEventListener('click', () => openAdminEditModal(chauffeurs.find(c => c.email === el.dataset
+                            .email)));
+                    });
+
+                    DOM.adminPassagersList.innerHTML = passagers.length === 0 ? '<div class="item">Aucun passager</div>' :
+                        passagers.map(p =>
+                            `<div class="item" data-email="${p.email}"><span>${p.nom} (${p.telephone})</span><span class="email">${p.email}</span></div>`
+                        ).join('');
+                    DOM.adminPassagersList.querySelectorAll('.item').forEach(el => {
+                        el.addEventListener('click', () => openAdminEditModal(passagers.find(p => p.email === el.dataset
+                            .email)));
+                    });
+                } catch (e) {
+                    showToast('❌ Erreur chargement utilisateurs', true);
+                    console.error(e);
+                }
+            }
+
+            function openAdminEditModal(user) {
+                adminEditTargetEmail = user.email;
+                DOM.adminEditUserInfo.textContent = `Édition de ${user.nom} (${user.email})`;
+                DOM.adminEditNom.value = user.nom || '';
+                DOM.adminEditTelephone.value = user.telephone || '';
+                DOM.adminEditEmail.value = user.email || '';
+                DOM.adminEditRole.value = user.role || '';
+                if (adminEditCarCropper) { adminEditCarCropper.destroy();
+                    adminEditCarCropper = null; }
+                if (adminEditProfileCropper) { adminEditProfileCropper.destroy();
+                    adminEditProfileCropper = null; }
+                DOM.adminEditCarCropContainer.style.display = 'none';
+                DOM.adminEditProfileCropContainer.style.display = 'none';
+                DOM.adminEditCarPhotoInput.value = '';
+                DOM.adminEditProfilePhotoInput.value = '';
+                openModal(DOM.modalAdminEdit);
+            }
+
+            DOM.adminEditCarPhotoInput.addEventListener('change', function(e) {
+                const file = this.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = function(ev) {
+                    DOM.adminEditCarCropImage.src = ev.target.result;
+                    DOM.adminEditCarCropContainer.style.display = 'block';
+                    if (adminEditCarCropper) adminEditCarCropper.destroy();
+                    adminEditCarCropper = new Cropper(DOM.adminEditCarCropImage, {
+                        aspectRatio: 3 / 2,
+                        viewMode: 1,
+                        dragMode: 'move',
+                        autoCropArea: 0.8,
+                        restore: false,
+                        guides: true,
+                        center: true,
+                        highlight: false,
+                        cropBoxMovable: true,
+                        cropBoxResizable: false,
+                        toggleDragModeOnDblclick: false,
+                        zoomOnWheel: true,
+                        zoomOnTouch: true,
+                        wheelZoomRatio: 0.1,
+                        minContainerWidth: 200,
+                        minContainerHeight: 150,
+                    });
+                };
+                reader.readAsDataURL(file);
+            });
+
+            DOM.adminEditProfilePhotoInput.addEventListener('change', function(e) {
+                const file = this.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = function(ev) {
+                    DOM.adminEditProfileCropImage.src = ev.target.result;
+                    DOM.adminEditProfileCropContainer.style.display = 'block';
+                    if (adminEditProfileCropper) adminEditProfileCropper.destroy();
+                    adminEditProfileCropper = new Cropper(DOM.adminEditProfileCropImage, {
+                        aspectRatio: 1 / 1,
+                        viewMode: 1,
+                        dragMode: 'move',
+                        autoCropArea: 0.8,
+                        restore: false,
+                        guides: true,
+                        center: true,
+                        highlight: false,
+                        cropBoxMovable: true,
+                        cropBoxResizable: false,
+                        toggleDragModeOnDblclick: false,
+                        zoomOnWheel: true,
+                        zoomOnTouch: true,
+                        wheelZoomRatio: 0.1,
+                        minContainerWidth: 200,
+                        minContainerHeight: 150,
+                    });
+                };
+                reader.readAsDataURL(file);
+            });
+
+            async function saveAdminEdit() {
+                if (!adminEditTargetEmail) { showToast('⚠️ Aucun utilisateur ciblé', true); return; }
+                const nom = DOM.adminEditNom.value.trim(),
+                    tel = DOM.adminEditTelephone.value.trim();
+                if (!nom || !tel) { showToast('⚠️ Nom et téléphone requis', true); return; }
+
+                const btn = DOM.btnAdminEditSave;
+                const orig = btn.textContent;
+                showLoader(btn);
+
+                try {
+                    await fsUpdate('users', adminEditTargetEmail, { nom, telephone: tel });
+
+                    let carURL = null,
+                        profURL = null;
+                    if (adminEditCarCropper) {
+                        const canvas = adminEditCarCropper.getCroppedCanvas({ width: 800, height: 533,
+                            imageSmoothingQuality: 'high' });
+                        if (canvas) {
+                            const blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg', 0.92));
+                            if (blob) {
+                                const fd = new FormData();
+                                fd.append('file', blob, 'car.jpg');
+                                fd.append('upload_preset', 'machikey');
+                                fd.append('folder', 'machi');
+                                fd.append('cloud_name', 'y6u9peta');
+                                const resp = await fetch('https://api.cloudinary.com/v1_1/y6u9peta/image/upload', { method: 'POST',
+                                    body: fd });
+                                const data = await resp.json();
+                                if (resp.ok) carURL = data.secure_url;
+                            }
+                        }
                     }
-                } else if (status === 'reserved') {
-                    const reservedEmail = seat.dataset.reservedEmail;
-                    if (reservedEmail === currentUser.email) {
+                    if (adminEditProfileCropper) {
+                        const canvas = adminEditProfileCropper.getCroppedCanvas({ width: 400, height: 400,
+                            imageSmoothingQuality: 'high' });
+                        if (canvas) {
+                            const blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg', 0.92));
+                            if (blob) {
+                                const fd = new FormData();
+                                fd.append('file', blob, 'prof.jpg');
+                                fd.append('upload_preset', 'machikey');
+                                fd.append('folder', 'machi');
+                                fd.append('cloud_name', 'y6u9peta');
+                                const resp = await fetch('https://api.cloudinary.com/v1_1/y6u9peta/image/upload', { method: 'POST',
+                                    body: fd });
+                                const data = await resp.json();
+                                if (resp.ok) profURL = data.secure_url;
+                            }
+                        }
+                    }
+                    const upd = {};
+                    if (carURL) upd.photoURL = carURL;
+                    if (profURL) upd.profilePhotoURL = profURL;
+                    if (Object.keys(upd).length) await fsUpdate('users', adminEditTargetEmail, upd);
+
+                    showToast('✅ Utilisateur mis à jour');
+                    closeModal(DOM.modalAdminEdit);
+                    renderAdminLists();
+                    if (currentUser && currentUser.role !== 'admin') renderCourses(currentUser);
+                } catch (e) { showToast('❌ Erreur : ' + e.message, true);
+                    console.error(e); }
+                hideLoader(btn, orig);
+            }
+
+            // ----------------------------
+            // 10. AUTH & GESTION DES CLICS SUR PLACES
+            // ----------------------------
+            async function handleSeatClick(e) {
+                const seat = e.target.closest('.seat');
+                if (!seat) return;
+                const status = seat.dataset.status,
+                    courseId = seat.dataset.courseId,
+                    idx = parseInt(seat.dataset.placeIndex);
+                if (!currentUser || currentUser.role === 'admin') return;
+
+                if (currentUser.role === 'chauffeur') {
+                    if (status === 'reserved') {
+                        const nom = seat.dataset.reservedNom;
+                        if (nom) {
+                            tooltipCourseId = courseId;
+                            tooltipPlaceIndex = idx;
+                            const rect = seat.getBoundingClientRect();
+                            DOM.tooltip.style.left = (rect.left + rect.width / 2 - 75) + 'px';
+                            DOM.tooltip.style.top = (rect.top - 10) + 'px';
+                            DOM.tooltip.style.display = 'flex';
+                            DOM.tooltip.querySelector('.nom').textContent = `👤 ${nom}`;
+                        } else { DOM.tooltip.style.display = 'none'; }
+                    } else { DOM.tooltip.style.display = 'none'; }
+                } else if (currentUser.role === 'passager') {
+                    if (status === 'available') {
                         try {
-                            const allRides = await fetchRides();
-                            const course = allRides.find(r => r.id === courseId);
+                            const rides = await fetchRides();
+                            const course = rides.find(r => r.id === courseId);
                             if (!course) return;
                             const reservations = course.reservations || [];
-                            const idx = reservations.findIndex(r => r.placeIndex === placeIndex && r.email === currentUser
-                            .email);
-                            if (idx !== -1) {
-                                reservations.splice(idx, 1);
-                                await updateRide(courseId, { reservations });
-                                showToast('🗑️ Réservation annulée');
-                                await renderCourses(currentUser);
+                            if (reservations.some(r => r.email === currentUser.email)) {
+                                showToast('❌ Vous avez déjà réservé une place dans ce trajet', true);
+                                return;
                             }
-                        } catch (error) {
-                            showToast('❌ Erreur lors de l\'annulation', true);
-                            console.error('Cancel reservation error:', error);
+                            reservations.push({ email: currentUser.email, nom: currentUser.nom, placeIndex: idx });
+                            await fsUpdate('rides', courseId, { reservations });
+                            showToast(`✅ Place réservée pour ${currentUser.nom}`);
+                            renderCourses(currentUser);
+                        } catch (e) { showToast('❌ Erreur réservation', true);
+                            console.error(e); }
+                    } else if (status === 'reserved') {
+                        const reservedEmail = seat.dataset.reservedEmail;
+                        if (reservedEmail === currentUser.email) {
+                            try {
+                                const rides = await fetchRides();
+                                const course = rides.find(r => r.id === courseId);
+                                if (!course) return;
+                                const reservations = course.reservations || [];
+                                const i = reservations.findIndex(r => r.placeIndex === idx && r.email === currentUser.email);
+                                if (i !== -1) {
+                                    reservations.splice(i, 1);
+                                    await fsUpdate('rides', courseId, { reservations });
+                                    showToast('🗑️ Réservation annulée');
+                                    renderCourses(currentUser);
+                                }
+                            } catch (e) { showToast('❌ Erreur annulation', true);
+                                console.error(e); }
+                        } else {
+                            showToast('ℹ️ Cette place est réservée par un autre passager', false);
                         }
-                    } else {
-                        showToast('ℹ️ Cette place est réservée par un autre passager', false);
                     }
                 }
             }
-        }
 
-        // ========================================================================
-        // SUPPRIMER RÉSERVATION (CHAUFFEUR)
-        // ========================================================================
-        async function handleSupprimerResa() {
-            if (!tooltipCourseId || tooltipPlaceIndex === null) return;
-            try {
-                const allRides = await fetchRides();
-                const course = allRides.find(r => r.id === tooltipCourseId);
-                if (!course) return;
-                const reservations = course.reservations || [];
-                const idx = reservations.findIndex(r => r.placeIndex === tooltipPlaceIndex);
-                if (idx !== -1) {
-                    reservations.splice(idx, 1);
-                    await updateRide(tooltipCourseId, { reservations });
-                    showToast('🗑️ Place libérée');
-                    tooltip.style.display = 'none';
-                    if (currentUser) await renderCourses(currentUser);
-                } else {
-                    tooltip.style.display = 'none';
-                }
-            } catch (error) {
-                showToast('❌ Erreur lors de la suppression', true);
-                console.error('Suppression error:', error);
-            }
-        }
-
-        // ========================================================================
-        // ADMIN : TOGGLES LISTES
-        // ========================================================================
-        function toggleAdminList(listElement) {
-            if (listElement.style.display === 'block') {
-                listElement.style.display = 'none';
-            } else {
-                adminChauffeursList.style.display = 'none';
-                adminPassagersList.style.display = 'none';
-                listElement.style.display = 'block';
-            }
-        }
-
-        btnAdminChauffeurs.addEventListener('click', () => {
-            renderAdminLists();
-            toggleAdminList(adminChauffeursList);
-        });
-        btnAdminPassagers.addEventListener('click', () => {
-            renderAdminLists();
-            toggleAdminList(adminPassagersList);
-        });
-
-        // ========================================================================
-        // AUTH
-        // ========================================================================
-        async function handleInscription() {
-            const role = roleSelect.value;
-            const nom = nomInput.value.trim();
-            const tel = telInput.value.trim();
-            const email = emailInput.value.trim();
-            const motDePasse = pwdInput.value.trim();
-
-            if (!nom || !tel || !email || !motDePasse) {
-                showToast('⚠️ Tous les champs sont obligatoires', true);
-                return;
-            }
-            if (!/^\d[\d\s]{7,}$/.test(tel.replace(/\s/g, ''))) {
-                showToast('📞 Téléphone invalide (8+ chiffres)', true);
-                return;
-            }
-            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-                showToast('✉️ Email invalide', true);
-                return;
-            }
-            if (motDePasse.length < 4) {
-                showToast('🔒 Mot de passe : au moins 4 caractères', true);
-                return;
-            }
-            if (!isOnline()) {
-                showToast('📡 Pas de connexion Internet.', true);
-                return;
-            }
-
-            const btn = btnValiderInscription;
-            const originalText = btn.textContent;
-            showLoader(btn);
-
-            try {
-                await auth.createUserWithEmailAndPassword(email, motDePasse);
-                await db.collection('users').doc(email).set({
-                    nom,
-                    telephone: tel,
-                    email,
-                    role,
-                    dateInscription: new Date().toISOString()
-                }, { merge: true });
-                showToast(`✅ Compte ${role} « ${nom} » créé !`);
-                closeModalInscription();
-            } catch (error) {
-                let msg = error.message;
-                if (error.code === 'auth/email-already-in-use') msg = 'Cet email est déjà utilisé.';
-                else if (error.code === 'auth/weak-password') msg = 'Mot de passe trop faible (min 6 caractères).';
-                else if (error.message.includes('offline') || error.message.includes('network')) {
-                    msg = 'Problème de connexion réseau.';
-                }
-                showToast(`❌ ${msg}`, true);
-                console.error('Inscription error:', error);
-            }
-            hideLoader(btn, originalText);
-        }
-
-        async function handleLogin() {
-            const email = loginEmail.value.trim();
-            const password = loginPassword.value.trim();
-            if (!email || !password) {
-                showToast('⚠️ Remplissez tous les champs', true);
-                return;
-            }
-
-            if (email === 'admin@gmail.com' && password === 'admin123') {
-                const adminUser = { nom: 'Admin', email: 'admin@gmail.com', role: 'admin' };
-                currentUser = adminUser;
-                showToast('✅ Bienvenue Admin');
-                closeModalConnexion();
-                showMainInterface(adminUser);
-                return;
-            }
-
-            if (!isOnline()) {
-                showToast('📡 Pas de connexion Internet.', true);
-                return;
-            }
-
-            const btn = btnValiderConnexion;
-            const originalText = btn.textContent;
-            showLoader(btn);
-
-            try {
-                await auth.signInWithEmailAndPassword(email, password);
-                closeModalConnexion();
-                showToast('✅ Connexion réussie');
-            } catch (error) {
-                let msg = error.message;
-                if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
-                    msg = 'Email ou mot de passe incorrect.';
-                } else if (error.message.includes('offline')) {
-                    msg = 'Problème de connexion réseau.';
-                }
-                showToast(`❌ ${msg}`, true);
-                console.error('Login error:', error);
-            }
-            hideLoader(btn, originalText);
-        }
-
-        async function logout() {
-            try {
-                await auth.signOut();
-                currentUser = null;
-                showHomeScreen();
-                showToast('🔓 Déconnecté');
-                tooltip.style.display = 'none';
-            } catch (error) {
-                showToast('❌ Erreur déconnexion', true);
-                console.error('Logout error:', error);
-            }
-        }
-
-        async function handleCreateCourse() {
-            const depart = courseDepart.value.trim();
-            const arrivee = courseArrivee.value.trim();
-            const heure = courseHeure.value;
-            const prix = parseInt(coursePrix.value);
-            const places = parseInt(coursePlaces.value);
-
-            if (!depart || !arrivee || !heure || isNaN(prix) || isNaN(places)) {
-                showToast('⚠️ Tous les champs sont requis', true);
-                return;
-            }
-            if (prix < 1) { showToast('💰 Prix invalide', true); return; }
-            if (places < 1 || places > 7) { showToast('👥 Places entre 1 et 7', true); return; }
-
-            if (!currentUser) {
-                showToast('❌ Vous devez être connecté', true);
-                return;
-            }
-            if (!isOnline()) {
-                showToast('📡 Pas de connexion Internet.', true);
-                return;
-            }
-
-            const btn = btnValiderCourse;
-            const originalText = btn.textContent;
-            showLoader(btn);
-
-            try {
-                const nouvelleCourse = {
-                    chauffeurEmail: currentUser.email,
-                    depart,
-                    arrivee,
-                    heure,
-                    prix,
-                    places,
-                    reservations: [],
-                    dateCreation: new Date().toISOString()
-                };
-                await createRide(nouvelleCourse);
-                showToast(`✅ Course créée : ${depart} → ${arrivee}`);
-                closeModalCreateCourse();
-                await renderCourses(currentUser);
-            } catch (error) {
-                let msg = error.message;
-                if (error.message.includes('offline')) msg = 'Problème de connexion réseau.';
-                showToast(`❌ ${msg}`, true);
-                console.error('Create course error:', error);
-            }
-            hideLoader(btn, originalText);
-        }
-
-        // ========================================================================
-        // SESSION
-        // ========================================================================
-        auth.onAuthStateChanged(async (firebaseUser) => {
-            if (firebaseUser) {
+            async function handleSupprimerResa() {
+                if (!tooltipCourseId || tooltipPlaceIndex === null) return;
                 try {
-                    const doc = await db.collection('users').doc(firebaseUser.email).get();
-                    if (doc.exists) {
-                        const userData = doc.data();
-                        currentUser = { ...userData, email: firebaseUser.email };
-                        showMainInterface(currentUser);
-                    } else {
-                        await auth.signOut();
-                        currentUser = null;
-                        showHomeScreen();
-                        showToast('❌ Utilisateur introuvable dans la base', true);
-                    }
-                } catch (error) {
-                    console.error('Erreur récupération utilisateur:', error);
-                    currentUser = {
-                        email: firebaseUser.email,
-                        nom: firebaseUser.displayName || 'Utilisateur',
-                        role: 'passager'
-                    };
-                    showMainInterface(currentUser);
-                    showToast('📡 Profil minimal (hors ligne)', false);
+                    const rides = await fetchRides();
+                    const course = rides.find(r => r.id === tooltipCourseId);
+                    if (!course) return;
+                    const reservations = course.reservations || [];
+                    const i = reservations.findIndex(r => r.placeIndex === tooltipPlaceIndex);
+                    if (i !== -1) {
+                        reservations.splice(i, 1);
+                        await fsUpdate('rides', tooltipCourseId, { reservations });
+                        showToast('🗑️ Place libérée');
+                        DOM.tooltip.style.display = 'none';
+                        if (currentUser) renderCourses(currentUser);
+                    } else { DOM.tooltip.style.display = 'none'; }
+                } catch (e) { showToast('❌ Erreur suppression', true);
+                    console.error(e); }
+            }
+
+            // ----------------------------
+            // 11. GESTION DES MODALES AUTH
+            // ----------------------------
+            async function handleInscription() {
+                const role = DOM.role.value,
+                    nom = DOM.nom.value.trim(),
+                    tel = DOM.telephone.value.trim(),
+                    email = DOM.email.value.trim(),
+                    pass = DOM.motDePasse.value.trim();
+                if (!nom || !tel || !email || !pass) { showToast('⚠️ Tous les champs sont obligatoires', true); return; }
+                if (!/^\d[\d\s]{7,}$/.test(tel.replace(/\s/g, ''))) { showToast('📞 Téléphone invalide', true); return; }
+                if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showToast('✉️ Email invalide', true); return; }
+                if (pass.length < 4) { showToast('🔒 Mot de passe : min 4 caractères', true); return; }
+                if (!isOnline()) { showToast('📡 Pas de connexion Internet.', true); return; }
+
+                const btn = DOM.btnValiderInscription,
+                    orig = btn.textContent;
+                showLoader(btn);
+                try {
+                    await auth.createUserWithEmailAndPassword(email, pass);
+                    await fsSet('users', email, { nom, telephone: tel, email, role, dateInscription: new Date().toISOString() });
+                    showToast(`✅ Compte ${role} « ${nom} » créé !`);
+                    closeModal(DOM.modalInscription);
+                } catch (e) {
+                    let msg = e.message;
+                    if (e.code === 'auth/email-already-in-use') msg = 'Cet email est déjà utilisé.';
+                    else if (e.code === 'auth/weak-password') msg = 'Mot de passe trop faible (min 6 caractères).';
+                    else if (e.message.includes('network')) msg = 'Problème de connexion réseau.';
+                    showToast(`❌ ${msg}`, true);
+                    console.error(e);
                 }
-            } else {
-                currentUser = null;
-                showHomeScreen();
+                hideLoader(btn, orig);
             }
-        });
 
-        // ========================================================================
-        // ÉVÉNEMENTS
-        // ========================================================================
-        btnInscription.addEventListener('click', () => {
-            modalInscription.classList.add('active');
-            nomInput.value = '';
-            telInput.value = '';
-            emailInput.value = '';
-            pwdInput.value = '';
-            roleSelect.value = 'passager';
-            nomInput.focus();
-        });
-        btnAnnulerInscription.addEventListener('click', closeModalInscription);
-        modalInscription.addEventListener('click', (e) => {
-            if (e.target === modalInscription) closeModalInscription();
-        });
-        [nomInput, telInput, emailInput, pwdInput, roleSelect].forEach(el => {
-            el.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleInscription(); });
-        });
-        btnValiderInscription.addEventListener('click', handleInscription);
+            async function handleLogin() {
+                const email = DOM.loginEmail.value.trim(),
+                    pass = DOM.loginPassword.value.trim();
+                if (!email || !pass) { showToast('⚠️ Remplissez tous les champs', true); return; }
 
-        btnConnexion.addEventListener('click', () => {
-            modalConnexion.classList.add('active');
-            loginEmail.value = '';
-            loginPassword.value = '';
-            loginEmail.focus();
-        });
-        btnAnnulerConnexion.addEventListener('click', closeModalConnexion);
-        modalConnexion.addEventListener('click', (e) => {
-            if (e.target === modalConnexion) closeModalConnexion();
-        });
-        [loginEmail, loginPassword].forEach(el => {
-            el.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleLogin(); });
-        });
-        btnValiderConnexion.addEventListener('click', handleLogin);
+                if (email === 'admin@gmail.com' && pass === 'admin123') {
+                    currentUser = { nom: 'Admin', email, role: 'admin' };
+                    showToast('✅ Bienvenue Admin');
+                    closeModal(DOM.modalConnexion);
+                    showMainInterface(currentUser);
+                    return;
+                }
+                if (!isOnline()) { showToast('📡 Pas de connexion Internet.', true); return; }
 
-        btnLogout.addEventListener('click', logout);
-
-        btnCreateCourse.addEventListener('click', () => {
-            modalCreateCourse.classList.add('active');
-            courseDepart.value = '';
-            courseArrivee.value = '';
-            courseHeure.value = '';
-            coursePrix.value = '';
-            coursePlaces.value = '';
-            courseDepart.focus();
-        });
-        btnAnnulerCourse.addEventListener('click', closeModalCreateCourse);
-        modalCreateCourse.addEventListener('click', (e) => {
-            if (e.target === modalCreateCourse) closeModalCreateCourse();
-        });
-        [courseDepart, courseArrivee, courseHeure, coursePrix, coursePlaces].forEach(el => {
-            el.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleCreateCourse(); });
-        });
-        btnValiderCourse.addEventListener('click', handleCreateCourse);
-
-        btnAdminEditSave.addEventListener('click', saveAdminEdit);
-        btnAdminEditCancel.addEventListener('click', closeModalAdminEdit);
-        modalAdminEdit.addEventListener('click', (e) => {
-            if (e.target === modalAdminEdit) closeModalAdminEdit();
-        });
-
-        coursesList.addEventListener('click', handleSeatClick);
-        btnSupprimerResa.addEventListener('click', handleSupprimerResa);
-
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                if (modalInscription.classList.contains('active')) closeModalInscription();
-                else if (modalConnexion.classList.contains('active')) closeModalConnexion();
-                else if (modalCreateCourse.classList.contains('active')) closeModalCreateCourse();
-                else if (modalAdminEdit.classList.contains('active')) closeModalAdminEdit();
+                const btn = DOM.btnValiderConnexion,
+                    orig = btn.textContent;
+                showLoader(btn);
+                try {
+                    await auth.signInWithEmailAndPassword(email, pass);
+                    closeModal(DOM.modalConnexion);
+                    showToast('✅ Connexion réussie');
+                } catch (e) {
+                    let msg = e.message;
+                    if (e.code === 'auth/user-not-found' || e.code === 'auth/wrong-password') msg = 'Email ou mot de passe incorrect.';
+                    else if (e.message.includes('network')) msg = 'Problème de connexion réseau.';
+                    showToast(`❌ ${msg}`, true);
+                    console.error(e);
+                }
+                hideLoader(btn, orig);
             }
-        });
 
-        seedDemoUsers().catch(err => console.warn('Demo users:', err));
-        setInterval(updateStats, 30000);
-        console.log('✅ Machi prêt – améliorations UI');
+            async function logout() {
+                try { await auth.signOut();
+                    currentUser = null;
+                    showHomeScreen();
+                    showToast('🔓 Déconnecté');
+                    DOM.tooltip.style.display = 'none'; } catch (e) { showToast('❌ Erreur déconnexion', true);
+                    console.error(e); }
+            }
+
+            async function handleCreateCourse() {
+                const depart = DOM.courseDepart.value.trim(),
+                    arrivee = DOM.courseArrivee.value.trim(),
+                    heure = DOM.courseHeure.value,
+                    prix = parseInt(DOM.coursePrix.value),
+                    places = parseInt(DOM.coursePlaces.value);
+                if (!depart || !arrivee || !heure || isNaN(prix) || isNaN(places)) {
+                    showToast('⚠️ Tous les champs sont requis', true);
+                    return;
+                }
+                if (prix < 1) { showToast('💰 Prix invalide', true); return; }
+                if (places < 1 || places > 7) { showToast('👥 Places entre 1 et 7', true); return; }
+                if (!currentUser) { showToast('❌ Vous devez être connecté', true); return; }
+                if (!isOnline()) { showToast('📡 Pas de connexion Internet.', true); return; }
+
+                const btn = DOM.btnValiderCourse,
+                    orig = btn.textContent;
+                showLoader(btn);
+                try {
+                    await fsAdd('rides', {
+                        chauffeurEmail: currentUser.email,
+                        depart,
+                        arrivee,
+                        heure,
+                        prix,
+                        places,
+                        reservations: [],
+                        dateCreation: new Date().toISOString()
+                    });
+                    showToast(`✅ Course créée : ${depart} → ${arrivee}`);
+                    closeModal(DOM.modalCreateCourse);
+                    renderCourses(currentUser);
+                } catch (e) { showToast('❌ Erreur création', true);
+                    console.error(e); }
+                hideLoader(btn, orig);
+            }
+
+            // ----------------------------
+            // 12. SESSION (onAuthStateChanged)
+            // ----------------------------
+            auth.onAuthStateChanged(async (fbUser) => {
+                if (fbUser) {
+                    try {
+                        const doc = await fsGet('users', fbUser.email);
+                        if (doc.exists) {
+                            const data = doc.data();
+                            currentUser = { ...data, email: fbUser.email };
+                            showMainInterface(currentUser);
+                        } else {
+                            await auth.signOut();
+                            currentUser = null;
+                            showHomeScreen();
+                            showToast('❌ Utilisateur introuvable dans la base', true);
+                        }
+                    } catch (e) {
+                        console.error('Erreur récupération utilisateur:', e);
+                        currentUser = { email: fbUser.email, nom: fbUser.displayName || 'Utilisateur', role: 'passager' };
+                        showMainInterface(currentUser);
+                        showToast('📡 Profil minimal (hors ligne)', false);
+                    }
+                } else {
+                    currentUser = null;
+                    showHomeScreen();
+                }
+            });
+
+            // ----------------------------
+            // 13. ÉVÉNEMENTS
+            // ----------------------------
+            // Inscription
+            DOM.btnInscription.addEventListener('click', () => { openModal(DOM.modalInscription);
+                DOM.nom.focus(); });
+            DOM.btnAnnulerInscription.addEventListener('click', () => closeModal(DOM.modalInscription));
+            DOM.modalInscription.addEventListener('click', (e) => { if (e.target === DOM.modalInscription) closeModal(DOM
+                    .modalInscription); });
+            [DOM.nom, DOM.telephone, DOM.email, DOM.motDePasse, DOM.role].forEach(el => {
+                el.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleInscription(); });
+            });
+            DOM.btnValiderInscription.addEventListener('click', handleInscription);
+
+            // Connexion
+            DOM.btnConnexion.addEventListener('click', () => { openModal(DOM.modalConnexion);
+                DOM.loginEmail.focus(); });
+            DOM.btnAnnulerConnexion.addEventListener('click', () => closeModal(DOM.modalConnexion));
+            DOM.modalConnexion.addEventListener('click', (e) => { if (e.target === DOM.modalConnexion) closeModal(DOM
+                    .modalConnexion); });
+            [DOM.loginEmail, DOM.loginPassword].forEach(el => {
+                el.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleLogin(); });
+            });
+            DOM.btnValiderConnexion.addEventListener('click', handleLogin);
+
+            // Déconnexion
+            DOM.btnLogout.addEventListener('click', logout);
+
+            // Créer course
+            DOM.btnCreateCourse.addEventListener('click', () => {
+                openModal(DOM.modalCreateCourse);
+                DOM.courseDepart.focus();
+            });
+            DOM.btnAnnulerCourse.addEventListener('click', () => closeModal(DOM.modalCreateCourse));
+            DOM.modalCreateCourse.addEventListener('click', (e) => { if (e.target === DOM.modalCreateCourse) closeModal(DOM
+                    .modalCreateCourse); });
+            [DOM.courseDepart, DOM.courseArrivee, DOM.courseHeure, DOM.coursePrix, DOM.coursePlaces].forEach(el => {
+                el.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleCreateCourse(); });
+            });
+            DOM.btnValiderCourse.addEventListener('click', handleCreateCourse);
+
+            // Admin edit
+            DOM.btnAdminEditSave.addEventListener('click', saveAdminEdit);
+            DOM.btnAdminEditCancel.addEventListener('click', () => closeModal(DOM.modalAdminEdit));
+            DOM.modalAdminEdit.addEventListener('click', (e) => { if (e.target === DOM.modalAdminEdit) closeModal(DOM
+                    .modalAdminEdit); });
+
+            // Clics sur places
+            DOM.coursesList.addEventListener('click', handleSeatClick);
+            DOM.btnSupprimerResa.addEventListener('click', handleSupprimerResa);
+
+            // Admin toggles
+            DOM.btnAdminChauffeurs.addEventListener('click', () => {
+                renderAdminLists();
+                const el = DOM.adminChauffeursList;
+                el.style.display = el.style.display === 'block' ? 'none' : 'block';
+                DOM.adminPassagersList.style.display = 'none';
+            });
+            DOM.btnAdminPassagers.addEventListener('click', () => {
+                renderAdminLists();
+                const el = DOM.adminPassagersList;
+                el.style.display = el.style.display === 'block' ? 'none' : 'block';
+                DOM.adminChauffeursList.style.display = 'none';
+            });
+
+            // Échap
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    if (DOM.modalInscription.classList.contains('active')) closeModal(DOM.modalInscription);
+                    else if (DOM.modalConnexion.classList.contains('active')) closeModal(DOM.modalConnexion);
+                    else if (DOM.modalCreateCourse.classList.contains('active')) closeModal(DOM.modalCreateCourse);
+                    else if (DOM.modalAdminEdit.classList.contains('active')) closeModal(DOM.modalAdminEdit);
+                }
+            });
+
+            // Seeding & stats
+            seedDemoUsers().catch(err => console.warn('Demo users:', err));
+            setInterval(updateStats, 30000);
+
+            // ----------------------------
+            // 14. SEED DEMO USERS (optionnel)
+            // ----------------------------
+            async function seedDemoUsers() {
+                const users = [
+                    { email: 'chauffeur@gmail.com', password: 'chauffeur123', nom: 'Chauffeur Test',
+                        telephone: '0555000001', role: 'chauffeur' },
+                    { email: 'passager@gmail.com', password: 'passager123', nom: 'Passager Test',
+                        telephone: '0555000002', role: 'passager' }
+                ];
+                for (const u of users) {
+                    try {
+                        const doc = await fsGet('users', u.email);
+                        if (doc.exists) continue;
+                        await auth.createUserWithEmailAndPassword(u.email, u.password);
+                        await fsSet('users', u.email, { nom: u.nom, telephone: u.telephone, email: u.email, role: u.role,
+                            dateInscription: new Date().toISOString() });
+                    } catch (e) {
+                        if (e.code === 'auth/email-already-in-use') {
+                            const doc = await fsGet('users', u.email);
+                            if (!doc.exists) {
+                                await fsSet('users', u.email, { nom: u.nom, telephone: u.telephone, email: u.email,
+                                    role: u.role, dateInscription: new Date().toISOString() });
+                            }
+                        }
+                    }
+                }
+            }
+
+            console.log('✅ Machi prêt – version refactorisée');
+        })();
     </script>
 </body>
 </html>
