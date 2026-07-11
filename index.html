@@ -6,14 +6,13 @@
     <title>Machi – Mobile</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz@14..32&display=swap" rel="stylesheet" />
-
-    <!-- Firebase SDK -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
     <style>
-        /* --- STYLES (inchangés) --- */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Inter', sans-serif;
@@ -22,22 +21,22 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 1rem;
+            padding: 0.5rem;
         }
         .glass-card, #mainInterface {
             background: rgba(20, 25, 45, 0.6);
             backdrop-filter: blur(12px) saturate(160%);
             -webkit-backdrop-filter: blur(12px) saturate(160%);
             border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 2rem;
-            padding: 1.5rem 1.2rem;
+            border-radius: 1.5rem;
+            padding: 1rem 0.6rem;
             width: 100%;
-            max-width: 500px;
+            max-width: 480px;
             transition: opacity 0.3s ease;
         }
         #mainInterface {
             display: none;
-            max-width: 500px;
+            max-width: 480px;
             min-height: 60vh;
             position: relative;
             padding-bottom: 5rem;
@@ -47,9 +46,9 @@
             background: #1e2a4a;
             border: 1px solid rgba(255, 255, 255, 0.06);
             border-radius: 60px;
-            padding: 0.6rem 1.5rem;
+            padding: 0.4rem 1rem;
             font-weight: 600;
-            font-size: 0.95rem;
+            font-size: 0.8rem;
             color: #d6eaff;
             cursor: pointer;
             transition: background 0.2s, color 0.2s;
@@ -62,8 +61,8 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            gap: 0.6rem;
-            margin-bottom: 1.5rem;
+            gap: 0.3rem;
+            margin-bottom: 0.6rem;
             flex-wrap: wrap;
         }
         .header-actions .btn-logout,
@@ -71,14 +70,14 @@
             background: rgba(255,70,70,0.10);
             border: 1px solid rgba(255,70,70,0.15);
             border-radius: 40px;
-            padding: 0.35rem 1.2rem;
+            padding: 0.15rem 0.6rem;
             color: #ffb0b0;
-            font-size: 0.8rem;
+            font-size: 0.65rem;
             cursor: pointer;
             transition: background 0.2s;
             display: inline-flex;
             align-items: center;
-            gap: 0.3rem;
+            gap: 0.2rem;
         }
         .header-actions .btn-create {
             background: rgba(0,180,170,0.10);
@@ -102,44 +101,35 @@
             background: rgba(18,24,44,0.85);
             backdrop-filter: blur(16px) saturate(180%);
             border: 1px solid rgba(255,255,255,0.06);
-            border-radius: 2rem;
-            padding: 2rem 1.5rem;
-            max-width: 420px;
+            border-radius: 1.5rem;
+            padding: 1.2rem 0.8rem;
+            max-width: 380px;
             width: 90%;
             max-height: 90vh;
             overflow-y: auto;
         }
         .modal-content label {
             color: #b0c8e8;
-            font-size: 0.85rem;
+            font-size: 0.75rem;
             font-weight: 500;
-            margin-top: 0.75rem;
+            margin-top: 0.4rem;
             display: block;
         }
         .modal-content input,
         .modal-content select {
             width: 100%;
-            padding: 0.6rem 1rem;
-            margin-top: 0.2rem;
+            padding: 0.3rem 0.7rem;
+            margin-top: 0.1rem;
             background: rgba(255,255,255,0.05);
             border: 1px solid rgba(255,255,255,0.1);
             border-radius: 40px;
             color: #e8f0ff;
-            font-size: 0.95rem;
+            font-size: 0.85rem;
             outline: none;
             transition: border 0.15s;
         }
         .modal-content input:focus { border-color: #4a8cff; }
         .modal-content input::placeholder { color: #6a7a9a; }
-        .modal-content .photo-preview {
-            margin-top: 0.5rem;
-            width: 100%;
-            max-height: 150px;
-            object-fit: contain;
-            border-radius: 0.8rem;
-            background: rgba(255,255,255,0.03);
-            border: 1px dashed rgba(255,255,255,0.1);
-        }
         .btn-validate { background: #00807a; border-color: #00a39a; color: #fff; }
         .btn-validate:hover { background: #00a39a; }
         .btn-cancel { background: rgba(255,70,70,0.12); border-color: rgba(255,70,70,0.2); color: #ffb0b0; }
@@ -147,14 +137,14 @@
         .courses-list {
             display: flex;
             flex-direction: column;
-            gap: 1rem;
-            margin-top: 1rem;
+            gap: 0.6rem;
+            margin-top: 0.6rem;
         }
         .course-card {
             background: rgba(255,255,255,0.03);
             border: 1px solid rgba(255,255,255,0.06);
-            border-radius: 1.2rem;
-            padding: 0.8rem 1rem;
+            border-radius: 0.8rem;
+            padding: 0.4rem 0.6rem;
             width: 100%;
             backdrop-filter: blur(4px);
             transition: background 0.2s;
@@ -165,12 +155,12 @@
             display: flex;
             flex-wrap: wrap;
             align-items: baseline;
-            gap: 0.4rem 0.6rem;
-            margin-bottom: 0.5rem;
+            gap: 0.2rem 0.4rem;
+            margin-bottom: 0.2rem;
         }
         .course-info .titre {
             font-weight: 600;
-            font-size: 1rem;
+            font-size: 0.8rem;
             color: #d6eaff;
             flex: 1 1 auto;
             white-space: nowrap;
@@ -178,41 +168,42 @@
             text-overflow: ellipsis;
         }
         .course-info .heure {
-            font-size: 0.8rem;
+            font-size: 0.65rem;
             color: #8aa0c8;
             white-space: nowrap;
         }
         .course-info .prix {
-            font-size: 0.8rem;
+            font-size: 0.65rem;
             color: #b0c8e8;
             white-space: nowrap;
             font-weight: 500;
         }
+
+        /* ===== LAYOUT : 4 parts carreaux, 3 parts image ===== */
         .course-row {
             display: flex;
-            align-items: stretch;
-            gap: 0.8rem;
-            margin-top: 0.3rem;
+            flex-direction: row;
+            gap: 1rem;
+            width: 100%;
         }
         .seat-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
-            gap: 0.3rem;
-            flex: 1;
-            min-width: 0;
+            grid-template-rows: repeat(2, 1fr);
+            gap: 0.15rem;
+            flex: 4;
         }
         .seat {
             aspect-ratio: 1 / 1;
-            border-radius: 8px;
-            border: 1px solid rgba(255,255,255,0.10);
-            transition: background 0.2s, border-color 0.2s;
-            min-height: 28px;
+            border-radius: 4px;
+            border: 1.5px solid rgba(255,255,255,0.10);
+            width: 100%;
             cursor: default;
         }
         .seat.driver {
             background: #00b8b0;
             border-color: #00d4cc;
-            box-shadow: 0 0 10px rgba(0,200,180,0.2);
+            box-shadow: 0 0 6px rgba(0,200,180,0.2);
             cursor: default;
         }
         .seat.available {
@@ -227,7 +218,7 @@
         .seat.reserved {
             background: #b44cff;
             border-color: #b44cff;
-            box-shadow: 0 0 12px rgba(180,76,255,0.3);
+            box-shadow: 0 0 6px rgba(180,76,255,0.3);
             cursor: pointer;
         }
         .seat.reserved:hover {
@@ -240,18 +231,15 @@
             cursor: default;
         }
         .car-photo {
-            width: 80px;
-            aspect-ratio: 3 / 2;
-            border-radius: 12px;
+            flex: 3;
+            border-radius: 6px;
             overflow: hidden;
-            flex-shrink: 0;
             background: rgba(255,255,255,0.03);
-            border: 1px solid rgba(255,255,255,0.06);
-            align-self: center;
+            border: 1.5px solid rgba(255,255,255,0.06);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 2rem;
+            font-size: 1.6rem;
             color: #6a7a9a;
         }
         .car-photo img {
@@ -260,22 +248,46 @@
             object-fit: cover;
             display: block;
         }
-        .car-photo.default { font-size: 2.2rem; }
+        .car-photo.default {
+            font-size: 1.6rem;
+            background: rgba(255,255,255,0.02);
+        }
+
+        @media (max-width: 380px) {
+            .car-photo { font-size: 1.2rem; }
+            .course-row { gap: 0.6rem; }
+            .seat-grid { gap: 0.1rem; }
+            .seat { border-width: 1px; }
+        }
+
+        /* --- CROPPER --- */
+        .crop-container {
+            width: 100%;
+            margin: 0.3rem 0;
+            display: none;
+            min-height: 150px;
+        }
+        .crop-container img {
+            max-width: 100%;
+            display: block;
+        }
+
+        /* --- Tooltip --- */
         .tooltip-reservation {
             position: fixed;
             background: rgba(18,24,44,0.95);
             backdrop-filter: blur(12px);
             border: 1px solid rgba(255,255,255,0.1);
             border-radius: 1rem;
-            padding: 0.6rem 1rem;
+            padding: 0.4rem 0.6rem;
             color: #e8f0ff;
-            font-size: 0.85rem;
+            font-size: 0.75rem;
             display: none;
             z-index: 60;
             box-shadow: 0 10px 30px rgba(0,0,0,0.6);
-            min-width: 150px;
+            min-width: 120px;
             align-items: center;
-            gap: 0.6rem;
+            gap: 0.4rem;
             pointer-events: auto;
         }
         .tooltip-reservation .nom { flex: 1; }
@@ -283,10 +295,10 @@
             background: rgba(255,70,70,0.2);
             border: none;
             border-radius: 50%;
-            width: 24px;
-            height: 24px;
+            width: 20px;
+            height: 20px;
             color: #ffb0b0;
-            font-size: 0.9rem;
+            font-size: 0.75rem;
             cursor: pointer;
             display: flex;
             align-items: center;
@@ -294,59 +306,60 @@
             transition: background 0.2s;
         }
         .tooltip-reservation .btn-supprimer:hover { background: rgba(255,70,70,0.4); }
-        .admin-panel { margin-top: 1rem; }
+        .admin-panel { margin-top: 0.6rem; }
         .admin-panel .btn-admin {
             background: #1e2a4a;
             border: 1px solid rgba(255,255,255,0.06);
             border-radius: 60px;
-            padding: 0.6rem 1.5rem;
+            padding: 0.4rem 1rem;
             color: #d6eaff;
             cursor: pointer;
             transition: background 0.2s;
             width: 100%;
             text-align: center;
             font-weight: 600;
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.3rem;
+            font-size: 0.85rem;
         }
         .admin-panel .btn-admin:hover { background: #2b3b66; }
         .admin-panel .btn-admin.active { background: #2b3b66; border-color: #4a8cff; }
         .admin-list {
             background: rgba(255,255,255,0.03);
             border: 1px solid rgba(255,255,255,0.06);
-            border-radius: 1rem;
-            padding: 0.8rem;
-            margin-top: 0.5rem;
-            max-height: 200px;
+            border-radius: 0.6rem;
+            padding: 0.4rem;
+            margin-top: 0.3rem;
+            max-height: 150px;
             overflow-y: auto;
         }
         .admin-list .item {
             display: flex;
             justify-content: space-between;
-            padding: 0.4rem 0;
+            padding: 0.2rem 0;
             border-bottom: 1px solid rgba(255,255,255,0.04);
-            font-size: 0.85rem;
+            font-size: 0.75rem;
             color: #b0c8e8;
             cursor: pointer;
             transition: background 0.2s;
         }
         .admin-list .item:hover { background: rgba(255,255,255,0.05); }
         .admin-list .item:last-child { border-bottom: none; }
-        .admin-list .item .email { color: #8aa0c8; font-size: 0.75rem; }
+        .admin-list .item .email { color: #8aa0c8; font-size: 0.65rem; }
         .toast {
             position: fixed;
-            bottom: 2rem;
+            bottom: 1.5rem;
             left: 50%;
             transform: translateX(-50%);
             background: rgba(0,180,170,0.15);
             backdrop-filter: blur(8px);
             border: 1px solid rgba(0,255,200,0.15);
-            padding: 0.7rem 1.8rem;
+            padding: 0.4rem 1.2rem;
             border-radius: 60px;
             color: #c0fff0;
             font-weight: 500;
             display: none;
             z-index: 100;
-            font-size: 0.9rem;
+            font-size: 0.8rem;
             max-width: 90%;
             text-align: center;
         }
@@ -354,8 +367,8 @@
         #homeScreen .btn-led { flex: 1; text-align: center; }
         .spinner {
             display: inline-block;
-            width: 1rem;
-            height: 1rem;
+            width: 0.8rem;
+            height: 0.8rem;
             border: 2px solid rgba(255,255,255,0.1);
             border-top-color: #00b8b0;
             border-radius: 50%;
@@ -363,58 +376,47 @@
         }
         @keyframes spin { to { transform: rotate(360deg); } }
         @media (max-width: 480px) {
-            body { padding: 0.5rem; }
-            .glass-card, #mainInterface { padding: 1rem 0.8rem; border-radius: 1.5rem; }
-            .modal-content { padding: 1.5rem 1rem; }
-            .course-info .titre { font-size: 0.9rem; }
-            .seat { min-height: 22px; border-radius: 5px; }
-            .car-photo { width: 60px; }
+            body { padding: 0.3rem; }
+            .glass-card, #mainInterface { padding: 0.6rem 0.4rem; border-radius: 1rem; }
+            .modal-content { padding: 1rem 0.6rem; }
+            .course-info .titre { font-size: 0.75rem; }
             .header-actions .btn-logout,
-            .header-actions .btn-create { font-size: 0.7rem; padding: 0.25rem 0.9rem; }
-        }
-        @media (min-width: 600px) {
-            #mainInterface, .glass-card { max-width: 550px; }
-            .seat { min-height: 32px; }
-            .car-photo { width: 90px; }
+            .header-actions .btn-create { font-size: 0.6rem; padding: 0.15rem 0.5rem; }
         }
     </style>
 </head>
 <body>
-
-    <!-- ==================== ÉCRAN D'ACCUEIL ==================== -->
+    <!-- ========== ÉCRAN D'ACCUEIL ========== -->
     <div id="homeScreen" class="glass-card">
-        <h1 class="text-3xl font-bold text-center text-cyan-200 mb-1">Machi</h1>
-        <p class="text-center text-slate-400 text-sm mb-6 tracking-wider">⚡ mobilité en circuit fermé</p>
-        <div class="flex flex-col sm:flex-row gap-3">
+        <h1 class="text-xl font-bold text-center text-cyan-200 mb-0.5">Machi</h1>
+        <p class="text-center text-slate-400 text-xs mb-4 tracking-wider">⚡ mobilité en circuit fermé</p>
+        <div class="flex flex-col sm:flex-row gap-2">
             <button id="btnInscription" class="btn-led">✨ S'inscrire</button>
             <button id="btnConnexion" class="btn-led">🔐 Se connecter</button>
         </div>
-        <div class="mt-5 text-center text-xs text-slate-500">
+        <div class="mt-3 text-center text-xs text-slate-500">
             <span id="stats">👤 0 inscrits</span>
         </div>
     </div>
 
-    <!-- ==================== INTERFACE PRINCIPALE ==================== -->
+    <!-- ========== INTERFACE PRINCIPALE ========== -->
     <div id="mainInterface">
         <div class="header-actions">
-            <div class="text-slate-400 text-sm truncate" id="userRoleBadge">Rôle : —</div>
-            <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+            <div class="text-slate-400 text-xs truncate" id="userRoleBadge">Rôle : —</div>
+            <div style="display:flex; gap:0.3rem; flex-wrap:wrap;">
                 <button id="btnCreateCourse" class="btn-create" style="display:none;">➕ Créer</button>
                 <button id="btnLogout" class="btn-logout">✕ Déconnexion</button>
             </div>
         </div>
 
-        <h2 id="welcomeMessage" class="text-xl font-semibold text-cyan-200 mb-1">Bienvenue</h2>
-        <hr class="border-white/5 my-3" />
+        <h2 id="welcomeMessage" class="text-base font-semibold text-cyan-200 mb-0.5">Bienvenue</h2>
+        <hr class="border-white/5 my-1.5" />
 
         <div id="mainContent">
-            <!-- Courses -->
             <div id="coursesContainer">
-                <p class="text-slate-500 text-center text-sm" id="noCoursesMsg">Aucune course pour le moment.</p>
+                <p class="text-slate-500 text-center text-xs" id="noCoursesMsg">Aucune course pour le moment.</p>
                 <div id="coursesList" class="courses-list"></div>
             </div>
-
-            <!-- Admin Panel -->
             <div id="adminPanel" class="admin-panel" style="display:none;">
                 <button id="btnAdminChauffeurs" class="btn-admin">🚗 Chauffeurs</button>
                 <div id="adminChauffeursList" class="admin-list" style="display:none;"></div>
@@ -424,35 +426,38 @@
         </div>
     </div>
 
-    <!-- ==================== MODALE ADMIN PHOTO (Cloudinary) ==================== -->
+    <!-- ========== MODALE ADMIN PHOTO ========== -->
     <div id="modalAdminPhoto" class="modal-overlay">
         <div class="modal-content">
-            <h2 class="text-xl font-semibold text-center text-cyan-200 mb-4">📸 Photo de la voiture</h2>
-            <p id="adminPhotoChauffeurNom" class="text-center text-slate-400 text-sm mb-2">Chauffeur : —</p>
-            <div style="text-align:center; margin:0.5rem 0;">
-                <img id="adminPhotoPreview" class="photo-preview" src="" alt="Aperçu" style="display:none;" />
-            </div>
+            <h2 class="text-base font-semibold text-center text-cyan-200 mb-2">📸 Photo de la voiture</h2>
+            <p id="adminPhotoChauffeurNom" class="text-center text-slate-400 text-xs mb-2">Chauffeur : —</p>
             <label>Choisir une photo</label>
             <input type="file" id="adminPhotoInput" accept="image/*" />
-            <div class="text-xs text-slate-500 mt-1">Format paysage recommandé (3:2).</div>
-            <div class="flex gap-3 mt-5">
-                <button id="btnAdminPhotoValider" class="btn-led btn-validate flex-1">✔ Enregistrer</button>
+            <div id="cropContainer" class="crop-container">
+                <img id="cropImage" src="#" alt="Image à rogner" />
+            </div>
+            <div id="cropInstructions" class="text-xs text-slate-400 mt-1" style="display:none;">
+                🔄 Zoom / dézoom.<br />
+                ✋ Déplacez pour cadrer.<br />
+                📐 Cadre 3:2 (paysage).
+            </div>
+            <div class="flex gap-2 mt-3">
+                <button id="btnAdminPhotoValider" class="btn-led btn-validate flex-1">✔ Valider</button>
                 <button id="btnAdminPhotoAnnuler" class="btn-led btn-cancel flex-1">✖ Annuler</button>
             </div>
         </div>
     </div>
 
-    <!-- ==================== TOOLTIP ==================== -->
+    <!-- ========== TOOLTIP ========== -->
     <div id="tooltipReservation" class="tooltip-reservation">
         <span class="nom">Passager</span>
         <button class="btn-supprimer" id="btnSupprimerResa">✕</button>
     </div>
 
-    <!-- ==================== MODALES AUTH & COURSES ==================== -->
-    <!-- Inscription -->
+    <!-- ========== MODALES AUTH & COURSES ========== -->
     <div id="modalInscription" class="modal-overlay">
         <div class="modal-content">
-            <h2 class="text-xl font-semibold text-center text-cyan-200 mb-4">Créer un compte</h2>
+            <h2 class="text-base font-semibold text-center text-cyan-200 mb-2">Créer un compte</h2>
             <label>Je suis</label>
             <select id="role">
                 <option value="passager">🚶 Passager</option>
@@ -466,32 +471,30 @@
             <input type="email" id="email" placeholder="ex: farid@gmail.com" />
             <label>Mot de passe</label>
             <input type="password" id="motDePasse" placeholder="••••••••" />
-            <div class="flex gap-3 mt-5">
+            <div class="flex gap-2 mt-3">
                 <button id="btnValiderInscription" class="btn-led btn-validate flex-1">✔ Valider</button>
                 <button id="btnAnnulerInscription" class="btn-led btn-cancel flex-1">✖ Annuler</button>
             </div>
         </div>
     </div>
 
-    <!-- Connexion -->
     <div id="modalConnexion" class="modal-overlay">
         <div class="modal-content">
-            <h2 class="text-xl font-semibold text-center text-cyan-200 mb-4">🔐 Se connecter</h2>
+            <h2 class="text-base font-semibold text-center text-cyan-200 mb-2">🔐 Se connecter</h2>
             <label>Email</label>
             <input type="email" id="loginEmail" placeholder="ex: farid@gmail.com" />
             <label>Mot de passe</label>
             <input type="password" id="loginPassword" placeholder="••••••••" />
-            <div class="flex gap-3 mt-5">
+            <div class="flex gap-2 mt-3">
                 <button id="btnValiderConnexion" class="btn-led btn-validate flex-1">✔ Se connecter</button>
                 <button id="btnAnnulerConnexion" class="btn-led btn-cancel flex-1">✖ Annuler</button>
             </div>
         </div>
     </div>
 
-    <!-- Création course -->
     <div id="modalCreateCourse" class="modal-overlay">
         <div class="modal-content">
-            <h2 class="text-xl font-semibold text-center text-cyan-200 mb-4">🚗 Nouvelle course</h2>
+            <h2 class="text-base font-semibold text-center text-cyan-200 mb-2">🚗 Nouvelle course</h2>
             <label>Départ</label>
             <input type="text" id="courseDepart" placeholder="ex: Tiaret" />
             <label>Arrivée</label>
@@ -502,14 +505,13 @@
             <input type="number" id="coursePrix" placeholder="ex: 12" min="1" />
             <label>Places (hors chauffeur, max 7)</label>
             <input type="number" id="coursePlaces" placeholder="ex: 3" min="1" max="7" />
-            <div class="flex gap-3 mt-5">
+            <div class="flex gap-2 mt-3">
                 <button id="btnValiderCourse" class="btn-led btn-validate flex-1">✔ Confirmer</button>
                 <button id="btnAnnulerCourse" class="btn-led btn-cancel flex-1">✖ Annuler</button>
             </div>
         </div>
     </div>
 
-    <!-- ==================== TOAST ==================== -->
     <div id="toast" class="toast"></div>
 
     <!-- ============================================================== -->
@@ -517,7 +519,7 @@
     <!-- ============================================================== -->
     <script>
         // ========================================================================
-        // 1. INITIALISATION FIREBASE
+        // FIREBASE (inchangé)
         // ========================================================================
         const firebaseConfig = {
             apiKey: "AIzaSyACgeZXog1KZGU29HpjM4qpKTBt54KbJFg",
@@ -531,15 +533,48 @@
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.firestore();
+        db.enablePersistence().catch(() => {});
 
-        db.enablePersistence()
-            .catch((err) => {
-                if (err.code === 'failed-precondition') console.warn('Persistance déjà active');
-                else if (err.code === 'unimplemented') console.warn('Persistance non supportée');
-            });
+        async function seedDemoUsers() {
+            const demoUsers = [
+                { email: 'chauffeur@gmail.com', password: 'chauffeur123', nom: 'Chauffeur Test', telephone: '0555000001',
+                    role: 'chauffeur' },
+                { email: 'passager@gmail.com', password: 'passager123', nom: 'Passager Test', telephone: '0555000002',
+                    role: 'passager' }
+            ];
+            for (const user of demoUsers) {
+                try {
+                    const doc = await db.collection('users').doc(user.email).get();
+                    if (doc.exists) continue;
+                    await auth.createUserWithEmailAndPassword(user.email, user.password);
+                    await db.collection('users').doc(user.email).set({
+                        nom: user.nom,
+                        telephone: user.telephone,
+                        email: user.email,
+                        role: user.role,
+                        dateInscription: new Date().toISOString()
+                    }, { merge: true });
+                } catch (error) {
+                    if (error.code === 'auth/email-already-in-use') {
+                        try {
+                            const doc = await db.collection('users').doc(user.email).get();
+                            if (!doc.exists) {
+                                await db.collection('users').doc(user.email).set({
+                                    nom: user.nom,
+                                    telephone: user.telephone,
+                                    email: user.email,
+                                    role: user.role,
+                                    dateInscription: new Date().toISOString()
+                                }, { merge: true });
+                            }
+                        } catch (e) {}
+                    }
+                }
+            }
+        }
 
         // ========================================================================
-        // 2. RÉFÉRENCES DOM
+        // RÉFÉRENCES DOM
         // ========================================================================
         const homeScreen = document.getElementById('homeScreen');
         const mainInterface = document.getElementById('mainInterface');
@@ -586,8 +621,10 @@
 
         const modalAdminPhoto = document.getElementById('modalAdminPhoto');
         const adminPhotoChauffeurNom = document.getElementById('adminPhotoChauffeurNom');
-        const adminPhotoPreview = document.getElementById('adminPhotoPreview');
         const adminPhotoInput = document.getElementById('adminPhotoInput');
+        const cropContainer = document.getElementById('cropContainer');
+        const cropImage = document.getElementById('cropImage');
+        const cropInstructions = document.getElementById('cropInstructions');
         const btnAdminPhotoValider = document.getElementById('btnAdminPhotoValider');
         const btnAdminPhotoAnnuler = document.getElementById('btnAdminPhotoAnnuler');
 
@@ -598,11 +635,11 @@
         let tooltipCourseId = null;
         let tooltipPlaceIndex = null;
         let adminTargetChauffeurEmail = null;
-        let adminTempFile = null; // on stocke le fichier pour l'upload
+        let cropper = null;
         let currentUser = null;
 
         // ========================================================================
-        // 3. FONCTIONS UTILITAIRES
+        // UTILITAIRES
         // ========================================================================
         function showToast(message, isError = false) {
             toast.textContent = message;
@@ -617,39 +654,32 @@
             btn.disabled = true;
             btn.innerHTML = '<span class="spinner"></span>';
         }
+
         function hideLoader(btn, originalText) {
             btn.disabled = false;
             btn.textContent = originalText;
         }
 
-        function isOnline() {
-            return navigator.onLine;
-        }
+        function isOnline() { return navigator.onLine; }
 
-        // ========================================================================
-        // 4. FERMETURE DES MODALES
-        // ========================================================================
-        function closeModalInscription() {
-            if (modalInscription) modalInscription.classList.remove('active');
-        }
-        function closeModalConnexion() {
-            if (modalConnexion) modalConnexion.classList.remove('active');
-        }
-        function closeModalCreateCourse() {
-            if (modalCreateCourse) modalCreateCourse.classList.remove('active');
-        }
+        function closeModalInscription() { if (modalInscription) modalInscription.classList.remove('active'); }
+
+        function closeModalConnexion() { if (modalConnexion) modalConnexion.classList.remove('active'); }
+
+        function closeModalCreateCourse() { if (modalCreateCourse) modalCreateCourse.classList.remove('active'); }
+
         function closeAdminPhotoModal() {
             if (modalAdminPhoto) modalAdminPhoto.classList.remove('active');
-            adminTargetChauffeurEmail = null;
-            adminTempFile = null;
-            adminPhotoPreview.style.display = 'none';
-            adminPhotoPreview.src = '';
+            if (cropper) {
+                cropper.destroy();
+                cropper = null;
+            }
+            cropContainer.style.display = 'none';
+            cropInstructions.style.display = 'none';
             adminPhotoInput.value = '';
+            adminTargetChauffeurEmail = null;
         }
 
-        // ========================================================================
-        // 5. AFFICHAGE
-        // ========================================================================
         function showHomeScreen() {
             homeScreen.style.display = 'block';
             mainInterface.classList.remove('active');
@@ -684,7 +714,7 @@
         }
 
         // ========================================================================
-        // 6. FONCTIONS FIRESTORE
+        // FIRESTORE (CRUD)
         // ========================================================================
         async function firestoreGet(collection, docId = null) {
             try {
@@ -692,20 +722,14 @@
                 const ref = docId ? db.collection(collection).doc(docId) : db.collection(collection);
                 const snap = await ref.get();
                 return snap;
-            } catch (error) {
-                console.warn('Firestore get error:', error);
-                throw error;
-            }
+            } catch (error) { throw error; }
         }
 
         async function firestoreSet(collection, docId, data) {
             try {
                 if (!isOnline()) throw new Error('Hors ligne');
                 await db.collection(collection).doc(docId).set(data, { merge: true });
-            } catch (error) {
-                console.warn('Firestore set error:', error);
-                throw error;
-            }
+            } catch (error) { throw error; }
         }
 
         async function firestoreAdd(collection, data) {
@@ -713,20 +737,14 @@
                 if (!isOnline()) throw new Error('Hors ligne');
                 const ref = await db.collection(collection).add(data);
                 return ref.id;
-            } catch (error) {
-                console.warn('Firestore add error:', error);
-                throw error;
-            }
+            } catch (error) { throw error; }
         }
 
         async function firestoreUpdate(collection, docId, data) {
             try {
                 if (!isOnline()) throw new Error('Hors ligne');
                 await db.collection(collection).doc(docId).update(data);
-            } catch (error) {
-                console.warn('Firestore update error:', error);
-                throw error;
-            }
+            } catch (error) { throw error; }
         }
 
         async function fetchUsers() {
@@ -735,9 +753,7 @@
                 const users = [];
                 snap.forEach(doc => users.push(doc.data()));
                 return users;
-            } catch {
-                return [];
-            }
+            } catch { return []; }
         }
 
         async function fetchRides() {
@@ -746,33 +762,20 @@
                 const rides = [];
                 snap.forEach(doc => rides.push({ id: doc.id, ...doc.data() }));
                 return rides;
-            } catch {
-                return [];
-            }
+            } catch { return []; }
         }
 
-        async function createUser(userData) {
-            await firestoreSet('users', userData.email, userData);
-        }
-        async function createRide(rideData) {
-            return await firestoreAdd('rides', rideData);
-        }
-        async function updateRide(rideId, rideData) {
-            await firestoreUpdate('rides', rideId, rideData);
-        }
+        async function createRide(rideData) { return await firestoreAdd('rides', rideData); }
+
+        async function updateRide(rideId, rideData) { await firestoreUpdate('rides', rideId, rideData); }
 
         async function countUsers() {
             try {
                 const snap = await firestoreGet('users');
                 return snap.size;
-            } catch {
-                return 0;
-            }
+            } catch { return 0; }
         }
 
-        // ========================================================================
-        // 7. MISE À JOUR DU COMPTEUR
-        // ========================================================================
         async function updateStats() {
             try {
                 const count = await countUsers();
@@ -783,12 +786,11 @@
         }
 
         // ========================================================================
-        // 8. RENDU DES COURSES (avec photo depuis Firestore)
+        // RENDU DES COURSES (ORDRE COLONNE PAR COLONNE – SANS RÉORGANISATION)
         // ========================================================================
         async function renderCourses(user) {
             try {
                 const allRides = await fetchRides();
-                // Récupérer tous les utilisateurs pour avoir les photos
                 const allUsers = await fetchUsers();
                 const userMap = {};
                 allUsers.forEach(u => { userMap[u.email] = u; });
@@ -834,18 +836,20 @@
                     info.appendChild(prix);
                     card.appendChild(info);
 
-                    // Rangée carreaux + photo
+                    // Ligne horizontale
                     const row = document.createElement('div');
                     row.className = 'course-row';
 
-                    const seatGrid = document.createElement('div');
-                    seatGrid.className = 'seat-grid';
+                    // Grille 4×2
+                    const grid = document.createElement('div');
+                    grid.className = 'seat-grid';
 
                     const totalPlaces = course.places + 1;
                     const placesEffectives = Math.min(totalPlaces, 8);
                     const disabledCount = 8 - placesEffectives;
                     const reservations = course.reservations || [];
 
+                    // Statut pour chaque emplacement logique (0 = chauffeur, 1..7 = passagers)
                     const placeStatus = [];
                     placeStatus[0] = 'driver';
                     for (let i = 1; i < placesEffectives; i++) {
@@ -860,13 +864,16 @@
                         placeStatus[i] = { type: 'disabled' };
                     }
 
-                    for (let i = 0; i < 8; i++) {
+                    // ORDRE COLONNE PAR COLONNE : 0,4,1,5,2,6,3,7
+                    const columnOrder = [0, 4, 1, 5, 2, 6, 3, 7];
+
+                    for (let idx of columnOrder) {
                         const seat = document.createElement('div');
                         seat.className = 'seat';
-                        seat.dataset.placeIndex = i;
+                        seat.dataset.placeIndex = idx;
                         seat.dataset.courseId = course.id;
 
-                        const status = placeStatus[i];
+                        const status = placeStatus[idx];
                         if (typeof status === 'string') {
                             if (status === 'driver') {
                                 seat.classList.add('driver');
@@ -884,11 +891,12 @@
                             seat.dataset.reservedEmail = status.email;
                             seat.dataset.reservedNom = status.nom;
                         }
-                        seatGrid.appendChild(seat);
+                        grid.appendChild(seat);
                     }
-                    row.appendChild(seatGrid);
 
-                    // Photo depuis Firestore
+                    row.appendChild(grid);
+
+                    // Image 3:2 à droite
                     const photoContainer = document.createElement('div');
                     photoContainer.className = 'car-photo' + (photoURL ? '' : ' default');
                     if (photoURL) {
@@ -911,7 +919,7 @@
         }
 
         // ========================================================================
-        // 9. PANEL ADMIN
+        // ADMIN (inchangé)
         // ========================================================================
         async function renderAdminLists() {
             try {
@@ -950,14 +958,17 @@
         }
 
         // ========================================================================
-        // 10. ADMIN PHOTO AVEC CLOUDINARY
+        // ADMIN PHOTO AVEC CROPPER
         // ========================================================================
         function openAdminPhotoModal(chauffeur) {
             adminTargetChauffeurEmail = chauffeur.email;
             adminPhotoChauffeurNom.textContent = `Chauffeur : ${chauffeur.nom} (${chauffeur.email})`;
-            adminPhotoPreview.style.display = 'none';
-            adminPhotoPreview.src = '';
-            adminTempFile = null;
+            if (cropper) {
+                cropper.destroy();
+                cropper = null;
+            }
+            cropContainer.style.display = 'none';
+            cropInstructions.style.display = 'none';
             adminPhotoInput.value = '';
             modalAdminPhoto.classList.add('active');
         }
@@ -965,12 +976,36 @@
         adminPhotoInput.addEventListener('change', function(e) {
             const file = this.files[0];
             if (!file) return;
-            adminTempFile = file;
-            // Prévisualisation
+
             const reader = new FileReader();
             reader.onload = function(ev) {
-                adminPhotoPreview.src = ev.target.result;
-                adminPhotoPreview.style.display = 'block';
+                cropImage.src = ev.target.result;
+                cropContainer.style.display = 'block';
+                cropInstructions.style.display = 'block';
+
+                if (cropper) {
+                    cropper.destroy();
+                    cropper = null;
+                }
+
+                cropper = new Cropper(cropImage, {
+                    aspectRatio: 3 / 2,
+                    viewMode: 1,
+                    dragMode: 'move',
+                    autoCropArea: 0.8,
+                    restore: false,
+                    guides: true,
+                    center: true,
+                    highlight: false,
+                    cropBoxMovable: true,
+                    cropBoxResizable: false,
+                    toggleDragModeOnDblclick: false,
+                    zoomOnWheel: true,
+                    zoomOnTouch: true,
+                    wheelZoomRatio: 0.1,
+                    minContainerWidth: 200,
+                    minContainerHeight: 150,
+                });
             };
             reader.readAsDataURL(file);
         });
@@ -980,8 +1015,29 @@
                 showToast('⚠️ Aucun chauffeur ciblé', true);
                 return;
             }
-            if (!adminTempFile) {
-                showToast('⚠️ Veuillez choisir une photo', true);
+            if (!cropper) {
+                showToast('⚠️ Veuillez choisir une photo et la rogner', true);
+                return;
+            }
+
+            const canvas = cropper.getCroppedCanvas({
+                width: 800,
+                height: 533,
+                imageSmoothingQuality: 'high'
+            });
+
+            if (!canvas) {
+                showToast('❌ Erreur lors du recadrage', true);
+                return;
+            }
+
+            const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.92));
+            if (!blob) {
+                showToast('❌ Erreur lors de la conversion', true);
+                return;
+            }
+            if (blob.size > 10 * 1024 * 1024) {
+                showToast('❌ L\'image est trop lourde (>10Mo)', true);
                 return;
             }
             if (!isOnline()) {
@@ -994,9 +1050,8 @@
             showLoader(btn);
 
             try {
-                // 1. Upload vers Cloudinary
                 const formData = new FormData();
-                formData.append('file', adminTempFile);
+                formData.append('file', blob, 'car_photo.jpg');
                 formData.append('upload_preset', 'machikey');
                 formData.append('folder', 'machi');
                 formData.append('cloud_name', 'y6u9peta');
@@ -1012,34 +1067,15 @@
                 }
 
                 const photoURL = data.secure_url;
-
-                // 2. Mettre à jour Firestore
                 await db.collection('users').doc(adminTargetChauffeurEmail).update({
                     photoURL: photoURL
                 });
 
-                showToast('✅ Photo enregistrée sur Cloudinary !');
+                showToast('✅ Photo enregistrée (recadrée 3:2) !');
                 closeAdminPhotoModal();
 
-                // 3. Rafraîchir l'affichage
                 if (currentUser && currentUser.role === 'admin') {
                     renderAdminLists();
-                    // On rafraîchit aussi les courses pour que la photo apparaisse
-                    const allUsers = await fetchUsers();
-                    const updatedUser = allUsers.find(u => u.email === adminTargetChauffeurEmail);
-                    if (updatedUser) {
-                        // On met à jour currentUser si c'est le même
-                        if (currentUser.email === adminTargetChauffeurEmail) {
-                            currentUser.photoURL = photoURL;
-                        }
-                    }
-                    // Re-render les courses pour tout le monde
-                    const session = currentUser;
-                    if (session && session.role === 'admin') {
-                        // L'admin ne voit pas les courses, mais on peut forcer un re-render
-                        // Pour voir la photo, il faut se reconnecter en tant que chauffeur
-                        showToast('💡 La photo apparaîtra dans les trajets du chauffeur', false);
-                    }
                 } else if (currentUser) {
                     renderCourses(currentUser);
                 }
@@ -1058,7 +1094,7 @@
         });
 
         // ========================================================================
-        // 11. GESTION DES CLICS SUR LES PLACES (inchangé)
+        // GESTION DES CLICS
         // ========================================================================
         async function handleSeatClick(e) {
             const seat = e.target.closest('.seat');
@@ -1114,7 +1150,8 @@
                             const course = allRides.find(r => r.id === courseId);
                             if (!course) return;
                             const reservations = course.reservations || [];
-                            const idx = reservations.findIndex(r => r.placeIndex === placeIndex && r.email === currentUser.email);
+                            const idx = reservations.findIndex(r => r.placeIndex === placeIndex && r.email === currentUser
+                            .email);
                             if (idx !== -1) {
                                 reservations.splice(idx, 1);
                                 await updateRide(courseId, { reservations });
@@ -1132,9 +1169,6 @@
             }
         }
 
-        // ========================================================================
-        // 12. SUPPRIMER RÉSERVATION (CHAUFFEUR)
-        // ========================================================================
         async function handleSupprimerResa() {
             if (!tooltipCourseId || tooltipPlaceIndex === null) return;
             try {
@@ -1158,9 +1192,6 @@
             }
         }
 
-        // ========================================================================
-        // 13. ADMIN : TOGGLES LISTES
-        // ========================================================================
         function toggleAdminList(listElement) {
             if (listElement.style.display === 'block') {
                 listElement.style.display = 'none';
@@ -1181,7 +1212,7 @@
         });
 
         // ========================================================================
-        // 14. INSCRIPTION
+        // AUTH
         // ========================================================================
         async function handleInscription() {
             const role = roleSelect.value;
@@ -1216,15 +1247,14 @@
             showLoader(btn);
 
             try {
-                const userCredential = await auth.createUserWithEmailAndPassword(email, motDePasse);
-                const userData = {
+                await auth.createUserWithEmailAndPassword(email, motDePasse);
+                await db.collection('users').doc(email).set({
                     nom,
                     telephone: tel,
                     email,
                     role,
                     dateInscription: new Date().toISOString()
-                };
-                await db.collection('users').doc(email).set(userData, { merge: true });
+                }, { merge: true });
                 showToast(`✅ Compte ${role} « ${nom} » créé !`);
                 closeModalInscription();
             } catch (error) {
@@ -1240,9 +1270,6 @@
             hideLoader(btn, originalText);
         }
 
-        // ========================================================================
-        // 15. CONNEXION
-        // ========================================================================
         async function handleLogin() {
             const email = loginEmail.value.trim();
             const password = loginPassword.value.trim();
@@ -1251,7 +1278,6 @@
                 return;
             }
 
-            // Admin local
             if (email === 'admin@gmail.com' && password === 'admin123') {
                 const adminUser = { nom: 'Admin', email: 'admin@gmail.com', role: 'admin' };
                 currentUser = adminUser;
@@ -1287,9 +1313,6 @@
             hideLoader(btn, originalText);
         }
 
-        // ========================================================================
-        // 16. DÉCONNEXION
-        // ========================================================================
         async function logout() {
             try {
                 await auth.signOut();
@@ -1303,9 +1326,6 @@
             }
         }
 
-        // ========================================================================
-        // 17. CRÉATION COURSE
-        // ========================================================================
         async function handleCreateCourse() {
             const depart = courseDepart.value.trim();
             const arrivee = courseArrivee.value.trim();
@@ -1357,9 +1377,6 @@
             hideLoader(btn, originalText);
         }
 
-        // ========================================================================
-        // 18. GESTION DE LA SESSION (onAuthStateChanged)
-        // ========================================================================
         auth.onAuthStateChanged(async (firebaseUser) => {
             if (firebaseUser) {
                 try {
@@ -1391,10 +1408,8 @@
         });
 
         // ========================================================================
-        // 19. ÉVÉNEMENTS
+        // ÉVÉNEMENTS
         // ========================================================================
-
-        // -- Inscription --
         btnInscription.addEventListener('click', () => {
             modalInscription.classList.add('active');
             nomInput.value = '';
@@ -1409,13 +1424,10 @@
             if (e.target === modalInscription) closeModalInscription();
         });
         [nomInput, telInput, emailInput, pwdInput, roleSelect].forEach(el => {
-            el.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') handleInscription();
-            });
+            el.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleInscription(); });
         });
         btnValiderInscription.addEventListener('click', handleInscription);
 
-        // -- Connexion --
         btnConnexion.addEventListener('click', () => {
             modalConnexion.classList.add('active');
             loginEmail.value = '';
@@ -1427,16 +1439,12 @@
             if (e.target === modalConnexion) closeModalConnexion();
         });
         [loginEmail, loginPassword].forEach(el => {
-            el.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') handleLogin();
-            });
+            el.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleLogin(); });
         });
         btnValiderConnexion.addEventListener('click', handleLogin);
 
-        // -- Déconnexion --
         btnLogout.addEventListener('click', logout);
 
-        // -- Créer course --
         btnCreateCourse.addEventListener('click', () => {
             modalCreateCourse.classList.add('active');
             courseDepart.value = '';
@@ -1451,19 +1459,13 @@
             if (e.target === modalCreateCourse) closeModalCreateCourse();
         });
         [courseDepart, courseArrivee, courseHeure, coursePrix, coursePlaces].forEach(el => {
-            el.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') handleCreateCourse();
-            });
+            el.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleCreateCourse(); });
         });
         btnValiderCourse.addEventListener('click', handleCreateCourse);
 
-        // -- Clic sur les places --
         coursesList.addEventListener('click', handleSeatClick);
-
-        // -- Tooltip --
         btnSupprimerResa.addEventListener('click', handleSupprimerResa);
 
-        // -- Fermeture avec Échap --
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
                 if (modalInscription.classList.contains('active')) closeModalInscription();
@@ -1473,11 +1475,9 @@
             }
         });
 
-        // ========================================================================
-        // 20. INITIALISATION
-        // ========================================================================
+        seedDemoUsers().catch(err => console.warn('Demo users:', err));
         setInterval(updateStats, 30000);
-        console.log('✅ Machi avec Cloudinary (preset: machikey)');
+        console.log('✅ Machi prêt – ordre colonne par colonne pur');
     </script>
 </body>
 </html>
