@@ -167,7 +167,6 @@
         .admin-list .item:last-child { border-bottom: none; }
         .admin-list .item .email { color: #8aa0c8; font-size: 0.65rem; }
 
-        /* Le conteneur du cropper sera masqué tant que Cropper n'est pas chargé */
         .crop-container { width: 100%; margin: 0.3rem 0; display: none; min-height: 150px; }
         .crop-container img { max-width: 100%; display: block; }
 
@@ -208,7 +207,6 @@
             .header-actions .btn-logout { font-size: 0.6rem; padding: 0.15rem 0.5rem; }
         }
 
-        /* Indicateur de chargement Cropper */
         .cropper-loader {
             display: none;
             text-align: center;
@@ -241,7 +239,7 @@
         </div>
     </div>
 
-    <!-- Modale d'édition utilisateur (admin) -->
+    <!-- Modale d'édition utilisateur -->
     <div id="modalAdminEdit" class="modal-overlay" data-modal="adminEdit">
         <div class="modal-content">
             <h2 class="text-base font-semibold text-center text-cyan-200 mb-2">✏️ Modifier l'utilisateur</h2>
@@ -269,7 +267,7 @@
         </div>
     </div>
 
-    <!-- Modale de gestion des spots -->
+    <!-- Modale gestion spots -->
     <div id="modalAdminSpots" class="modal-overlay" data-modal="adminSpots">
         <div class="modal-content">
             <h2 class="text-base font-semibold text-center text-cyan-200 mb-2">📍 Gérer les spots</h2>
@@ -307,7 +305,7 @@
         db.enablePersistence().catch(()=>{});
 
         // ========================================================================
-        // LAZY LOADING DE CROPPER.JS
+        // LAZY LOADING CROPPER
         // ========================================================================
         let cropperLoaded = false;
         let cropperLoading = false;
@@ -315,32 +313,22 @@
 
         function loadCropper() {
             return new Promise((resolve, reject) => {
-                // Si déjà chargé, résoudre immédiatement
-                if (cropperLoaded) {
-                    resolve();
-                    return;
-                }
-                // Si en cours de chargement, mettre en attente
+                if (cropperLoaded) { resolve(); return; }
                 if (cropperLoading) {
                     cropperLoadCallbacks.push(resolve);
                     return;
                 }
                 cropperLoading = true;
-
-                // 1. Charger le CSS
                 const link = document.createElement('link');
                 link.rel = 'stylesheet';
                 link.href = 'https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css';
                 document.head.appendChild(link);
-
-                // 2. Charger le JS
                 const script = document.createElement('script');
                 script.src = 'https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js';
                 script.onload = () => {
                     cropperLoaded = true;
                     cropperLoading = false;
                     resolve();
-                    // Résoudre toutes les promesses en attente
                     cropperLoadCallbacks.forEach(cb => cb());
                     cropperLoadCallbacks = [];
                 };
@@ -525,7 +513,7 @@
         };
 
         // ========================================================================
-        // ADMIN EDIT MODAL (avec lazy loading Cropper)
+        // ADMIN EDIT MODAL
         // ========================================================================
         const openAdminEdit = async (user) => {
             adminEditTargetEmail = user.email;
@@ -541,31 +529,23 @@
             adminEditProfilePhotoInput.value = '';
             modalAdminEdit.classList.add('active');
 
-            // Charger Cropper.js en arrière-plan (sans bloquer l'ouverture)
             try {
                 await loadCropper();
-                // Une fois chargé, on peut activer les croppers quand l'utilisateur choisit un fichier
             } catch (e) {
                 console.warn('Cropper non disponible:', e);
                 showToast('⚠️ Éditeur d\'image non disponible', true);
             }
         };
 
-        // Gestion des uploads avec lazy loading
         adminEditCarPhotoInput.addEventListener('change', async function(e) {
             const file = this.files[0];
             if (!file) return;
-
-            // Afficher le loader
             cropperLoaderCar.style.display = 'block';
             this.disabled = true;
-
             try {
-                // S'assurer que Cropper est chargé
                 await loadCropper();
                 cropperLoaderCar.style.display = 'none';
                 this.disabled = false;
-
                 const reader = new FileReader();
                 reader.onload = (ev) => {
                     adminEditCarCropImage.src = ev.target.result;
@@ -602,15 +582,12 @@
         adminEditProfilePhotoInput.addEventListener('change', async function(e) {
             const file = this.files[0];
             if (!file) return;
-
             cropperLoaderProfile.style.display = 'block';
             this.disabled = true;
-
             try {
                 await loadCropper();
                 cropperLoaderProfile.style.display = 'none';
                 this.disabled = false;
-
                 const reader = new FileReader();
                 reader.onload = (ev) => {
                     adminEditProfileCropImage.src = ev.target.result;
@@ -794,7 +771,6 @@
                         adminEditCarCropContainer.style.display = 'none';
                         adminEditProfileCropContainer.style.display = 'none';
                         adminEditTargetEmail = null;
-                        // Cacher les loaders
                         cropperLoaderCar.style.display = 'none';
                         cropperLoaderProfile.style.display = 'none';
                         adminEditCarPhotoInput.disabled = false;
@@ -878,11 +854,43 @@
         btnLogout.addEventListener('click', logout);
 
         // ========================================================================
-        // SESSION
+        // SESSION (avec correction admin hardcodé)
         // ========================================================================
         auth.onAuthStateChanged(async (user) => {
             if (user) {
                 try {
+                    // ADMIN hardcodé : on accepte admin@gmail.com sans condition
+                    if (user.email === 'admin@gmail.com') {
+                        // Vérifier/créer le document admin dans Firestore
+                        const doc = await dbGet('users', user.email);
+                        if (!doc.exists) {
+                            await dbSet('users', user.email, {
+                                nom: 'Admin',
+                                telephone: '0000000000',
+                                email: user.email,
+                                role: 'admin',
+                                credits: 0,
+                                dateInscription: new Date().toISOString()
+                            });
+                        } else {
+                            const data = doc.data();
+                            if (data.role !== 'admin') {
+                                await dbUpdate('users', user.email, { role: 'admin' });
+                            }
+                        }
+                        // Récupérer les données à jour
+                        const updatedDoc = await dbGet('users', user.email);
+                        const data = updatedDoc.data();
+                        currentUser = { ...data, email: user.email };
+                        welcomeMessage.textContent = `👋 Bonjour ${currentUser.nom}`;
+                        userRoleBadge.textContent = 'Rôle : Admin';
+                        mainInterface.style.display = 'block';
+                        requestAnimationFrame(() => mainInterface.classList.add('active'));
+                        renderAdminLists();
+                        return;
+                    }
+
+                    // Pour les autres utilisateurs, vérifier le rôle
                     const doc = await dbGet('users', user.email);
                     if (doc.exists) {
                         const data = doc.data();
