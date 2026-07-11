@@ -163,7 +163,6 @@
         }
         .course-card:hover { background: rgba(255,255,255,0.06); }
 
-        /* --- Ligne d'info --- */
         .course-info {
             display: flex;
             flex-wrap: wrap;
@@ -247,27 +246,33 @@
             cursor: default;
         }
 
-        /* --- Photo de la voiture --- */
+        /* --- Photo de la voiture (format 3:2 paysage) --- */
         .car-photo {
-            width: 70px;
-            min-height: 70px;
-            max-height: 80px;
+            width: 80px;           /* largeur fixe, ajustable */
+            aspect-ratio: 3 / 2;   /* format 3:2 (largeur 3, hauteur 2) */
             border-radius: 12px;
-            object-fit: cover;
+            overflow: hidden;
+            flex-shrink: 0;
             background: rgba(255,255,255,0.03);
             border: 1px solid rgba(255,255,255,0.06);
-            flex-shrink: 0;
             align-self: center;
-        }
-        .car-photo.default {
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 2rem;
             color: #6a7a9a;
         }
+        .car-photo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+        .car-photo.default {
+            font-size: 2.2rem;
+        }
 
-        /* --- Tooltip (inchangé) --- */
+        /* --- Tooltip --- */
         .tooltip-reservation {
             position: fixed;
             background: rgba(18,24,44,0.95);
@@ -373,14 +378,14 @@
             .modal-content { padding: 1.5rem 1rem; }
             .course-info .titre { font-size: 0.9rem; }
             .seat { min-height: 22px; border-radius: 5px; }
-            .car-photo { width: 55px; min-height: 55px; max-height: 65px; }
+            .car-photo { width: 60px; }
             .header-actions .btn-logout,
             .header-actions .btn-create { font-size: 0.7rem; padding: 0.25rem 0.9rem; }
         }
         @media (min-width: 600px) {
             #mainInterface, .glass-card { max-width: 550px; }
             .seat { min-height: 32px; }
-            .car-photo { width: 80px; min-height: 80px; max-height: 90px; }
+            .car-photo { width: 90px; }
         }
     </style>
 </head>
@@ -413,13 +418,13 @@
         <hr class="border-white/5 my-3" />
 
         <div id="mainContent">
-            <!-- Courses (pour chauffeur et passager) -->
+            <!-- Courses -->
             <div id="coursesContainer">
                 <p class="text-slate-500 text-center text-sm" id="noCoursesMsg">Aucune course pour le moment.</p>
                 <div id="coursesList" class="courses-list"></div>
             </div>
 
-            <!-- Panneau Admin -->
+            <!-- Admin Panel -->
             <div id="adminPanel" class="admin-panel" style="display:none;">
                 <button id="btnAdminChauffeurs" class="btn-admin">🚗 Chauffeurs</button>
                 <div id="adminChauffeursList" class="admin-list" style="display:none;"></div>
@@ -446,7 +451,7 @@
         </div>
     </div>
 
-    <!-- TOOLTIP (pour chauffeur) -->
+    <!-- TOOLTIP -->
     <div id="tooltipReservation" class="tooltip-reservation">
         <span class="nom">Passager</span>
         <button class="btn-supprimer" id="btnSupprimerResa">✕</button>
@@ -663,7 +668,7 @@
                 }
             }
 
-            // --- Rendu des courses avec 8 carreaux (2x4) + photo ---
+            // --- Rendu des courses avec 8 carreaux (2x4) + photo corrigé ---
             function renderCourses(user) {
                 const allCourses = getCourses();
                 const photos = getPhotos();
@@ -684,7 +689,6 @@
                 coursesList.style.display = 'flex';
 
                 coursesToShow.forEach(course => {
-                    // Récupérer la photo du chauffeur
                     const photoData = photos[course.chauffeurEmail] || null;
 
                     const card = document.createElement('div');
@@ -716,8 +720,7 @@
                     const seatGrid = document.createElement('div');
                     seatGrid.className = 'seat-grid';
 
-                    // Construire le statut des 8 places (index 0 = chauffeur)
-                    const totalPlaces = course.places + 1; // +1 pour le chauffeur
+                    const totalPlaces = course.places + 1;
                     const placesEffectives = Math.min(totalPlaces, 8);
                     const disabledCount = 8 - placesEffectives;
                     const reservations = course.reservations || [];
@@ -764,24 +767,19 @@
                     }
                     row.appendChild(seatGrid);
 
-                    // Photo de la voiture
-                    const img = document.createElement('img');
-                    img.className = 'car-photo' + (photoData ? '' : ' default');
+                    // --- PHOTO DE LA VOITURE (format 3:2) ---
+                    const photoContainer = document.createElement('div');
+                    photoContainer.className = 'car-photo' + (photoData ? '' : ' default');
                     if (photoData) {
+                        const img = document.createElement('img');
                         img.src = photoData;
                         img.alt = 'Voiture';
+                        photoContainer.appendChild(img);
                     } else {
-                        img.alt = '🚗';
-                        img.textContent = '🚗';
-                        // On va utiliser un emoji en fallback via CSS
-                        img.style.display = 'flex';
-                        img.style.alignItems = 'center';
-                        img.style.justifyContent = 'center';
-                        img.style.fontSize = '2rem';
-                        img.style.color = '#6a7a9a';
-                        img.textContent = '🚗';
+                        photoContainer.textContent = '🚗';
                     }
-                    row.appendChild(img);
+                    row.appendChild(photoContainer);
+
                     card.appendChild(row);
                     coursesList.appendChild(card);
                 });
@@ -834,7 +832,6 @@
                 adminTempPhotoData = null;
             }
 
-            // --- Gestion de l'upload photo ---
             adminPhotoInput.addEventListener('change', function(e) {
                 const file = this.files[0];
                 if (!file) return;
@@ -858,7 +855,6 @@
                 savePhotos(photos);
                 showToast('✅ Photo enregistrée !');
                 closeAdminPhotoModal();
-                // Rafraîchir l'affichage
                 const session = getSession();
                 if (session && session.role === 'admin') {
                     renderAdminLists();
