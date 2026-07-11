@@ -786,7 +786,7 @@
         }
 
         // ========================================================================
-        // RENDU DES COURSES (ORDRE COLONNE PAR COLONNE – SANS RÉORGANISATION)
+        // RENDU DES COURSES – ORDRE COLONNE PAR COLONNE PUR
         // ========================================================================
         async function renderCourses(user) {
             try {
@@ -864,10 +864,12 @@
                         placeStatus[i] = { type: 'disabled' };
                     }
 
-                    // ORDRE COLONNE PAR COLONNE : 0,4,1,5,2,6,3,7
-                    const columnOrder = [0, 4, 1, 5, 2, 6, 3, 7];
+                    // ORDRE COLONNE PAR COLONNE :
+                    // colonne 1 haut (0), colonne 1 bas (4), colonne 2 haut (1), colonne 2 bas (5),
+                    // colonne 3 haut (2), colonne 3 bas (6), colonne 4 haut (3), colonne 4 bas (7)
+                    const colonneOrdre = [0, 4, 1, 5, 2, 6, 3, 7];
 
-                    for (let idx of columnOrder) {
+                    for (let idx of colonneOrdre) {
                         const seat = document.createElement('div');
                         seat.className = 'seat';
                         seat.dataset.placeIndex = idx;
@@ -1477,7 +1479,7 @@
 
         seedDemoUsers().catch(err => console.warn('Demo users:', err));
         setInterval(updateStats, 30000);
-        console.log('✅ Machi prêt – ordre colonne par colonne pur');
+        console.log('✅ Machi prêt – ordre colonne par colonne');
     </script>
 </body>
 </html>
