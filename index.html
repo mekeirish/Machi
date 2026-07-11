@@ -135,7 +135,6 @@
         .btn-cancel { background: rgba(255,70,70,0.12); border-color: rgba(255,70,70,0.2); color: #ffb0b0; }
         .btn-cancel:hover { background: rgba(255,70,70,0.22); }
 
-        /* ---- Liste des courses ---- */
         .courses-list {
             display: flex;
             flex-direction: column;
@@ -174,26 +173,41 @@
             color: #8aa0c8;
             white-space: nowrap;
         }
+        .course-info .heure .temps-restant {
+            color: #fbbf24; /* jaune ambre */
+            font-weight: 500;
+            margin-left: 0.2rem;
+        }
         .course-info .prix {
             font-size: 0.65rem;
             color: #b0c8e8;
             white-space: nowrap;
             font-weight: 500;
         }
+        .course-info .places-restantes {
+            font-size: 0.65rem;
+            color: #6ee7b7; /* vert clair */
+            white-space: nowrap;
+            font-weight: 500;
+            margin-left: 0.2rem;
+        }
 
-        /* ---- Ligne carreaux + image ---- */
+        /* --- Rangée : carreaux + image --- */
         .course-row {
             display: flex;
             flex-direction: row;
             gap: 1rem;
             width: 100%;
         }
+
+        /* --- GRILLE 4×2 AVEC REMPLISSAGE PAR COLONNES --- */
         .seat-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
             grid-template-rows: repeat(2, 1fr);
             gap: 0.15rem;
             flex: 4;
+            grid-auto-flow: column;
         }
         .seat {
             aspect-ratio: 1 / 1;
@@ -235,9 +249,9 @@
             filter: brightness(1.15);
         }
         .seat.disabled {
-            background: rgba(255,255,255,0.04);
-            border-color: rgba(255,255,255,0.05);
-            opacity: 0.25;
+            background: rgba(255,255,255,0.02);
+            border-color: rgba(255,255,255,0.03);
+            opacity: 0.15;  /* ← encore plus discret */
             cursor: default;
         }
 
@@ -273,7 +287,7 @@
             .seat { border-width: 1px; }
         }
 
-        /* ---- Admin list ---- */
+        /* --- Admin --- */
         .admin-panel { margin-top: 0.6rem; }
         .admin-panel .btn-admin {
             background: #1e2a4a;
@@ -314,7 +328,7 @@
         .admin-list .item:last-child { border-bottom: none; }
         .admin-list .item .email { color: #8aa0c8; font-size: 0.65rem; }
 
-        /* ---- Cropper ---- */
+        /* --- Cropper --- */
         .crop-container {
             width: 100%;
             margin: 0.3rem 0;
@@ -326,7 +340,7 @@
             display: block;
         }
 
-        /* ---- Tooltip ---- */
+        /* --- Tooltip --- */
         .tooltip-reservation {
             position: fixed;
             background: rgba(18,24,44,0.95);
@@ -460,7 +474,6 @@
             <label>Rôle</label>
             <input type="text" id="adminEditRole" disabled />
 
-            <!-- Photos -->
             <div class="mt-3 border-t border-white/5 pt-2">
                 <p class="text-xs text-cyan-200 font-medium mb-1">📸 Photos</p>
 
@@ -655,7 +668,6 @@
         const btnValiderCourse = document.getElementById('btnValiderCourse');
         const btnAnnulerCourse = document.getElementById('btnAnnulerCourse');
 
-        // Admin edit modal
         const modalAdminEdit = document.getElementById('modalAdminEdit');
         const adminEditUserInfo = document.getElementById('adminEditUserInfo');
         const adminEditNom = document.getElementById('adminEditNom');
@@ -679,7 +691,6 @@
         let tooltipPlaceIndex = null;
         let currentUser = null;
 
-        // Admin edit state
         let adminEditTargetEmail = null;
         let adminEditCarCropper = null;
         let adminEditProfileCropper = null;
@@ -713,8 +724,10 @@
         function closeModalCreateCourse() { if (modalCreateCourse) modalCreateCourse.classList.remove('active'); }
         function closeModalAdminEdit() {
             if (modalAdminEdit) modalAdminEdit.classList.remove('active');
-            if (adminEditCarCropper) { adminEditCarCropper.destroy(); adminEditCarCropper = null; }
-            if (adminEditProfileCropper) { adminEditProfileCropper.destroy(); adminEditProfileCropper = null; }
+            if (adminEditCarCropper) { adminEditCarCropper.destroy();
+                adminEditCarCropper = null; }
+            if (adminEditProfileCropper) { adminEditProfileCropper.destroy();
+                adminEditProfileCropper = null; }
             adminEditCarCropContainer.style.display = 'none';
             adminEditProfileCropContainer.style.display = 'none';
             adminEditCarPhotoInput.value = '';
@@ -860,6 +873,10 @@
                 noCoursesMsg.style.display = 'none';
                 coursesList.style.display = 'flex';
 
+                // Calcul du temps restant pour chaque course
+                const now = new Date();
+                const todayStr = now.toISOString().split('T')[0];
+
                 ridesToShow.forEach(course => {
                     const chauffeurData = userMap[course.chauffeurEmail] || {};
                     const carPhotoURL = chauffeurData.photoURL || null;
@@ -869,6 +886,37 @@
                     card.className = 'course-card';
                     card.dataset.courseId = course.id;
 
+                    // --- Calcul du temps restant ---
+                    let tempsRestantStr = '';
+                    let tempsRestantCouleur = '#fbbf24'; // ambre par défaut
+                    if (course.heure) {
+                        const [h, m] = course.heure.split(':').map(Number);
+                        const departDate = new Date();
+                        departDate.setHours(h, m, 0, 0);
+                        const diffMs = departDate - now;
+                        if (diffMs > 0) {
+                            const diffMin = Math.floor(diffMs / 60000);
+                            if (diffMin < 60) {
+                                tempsRestantStr = `(${diffMin}min)`;
+                            } else {
+                                const diffH = Math.floor(diffMin / 60);
+                                const diffM = diffMin % 60;
+                                tempsRestantStr = `(${diffH}h${diffM > 0 ? diffM + 'min' : ''})`;
+                            }
+                        } else if (diffMs > -60000) {
+                            tempsRestantStr = '(maintenant)';
+                            tempsRestantCouleur = '#f87171'; // rouge si passé
+                        } else {
+                            tempsRestantStr = '(passée)';
+                            tempsRestantCouleur = '#f87171'; // rouge
+                        }
+                    }
+
+                    // --- Calcul des places restantes ---
+                    const reservations = course.reservations || [];
+                    const placesRestantes = course.places - reservations.length;
+                    const placesStr = placesRestantes > 0 ? `🟢 ${placesRestantes}` : '🔴 complet';
+
                     // Info
                     const info = document.createElement('div');
                     info.className = 'course-info';
@@ -876,28 +924,43 @@
                     titre.className = 'titre';
                     titre.textContent = `${course.depart} → ${course.arrivee}`;
                     info.appendChild(titre);
+
                     const heure = document.createElement('span');
                     heure.className = 'heure';
                     heure.textContent = `🕐 ${course.heure}`;
+                    if (tempsRestantStr) {
+                        const tempsSpan = document.createElement('span');
+                        tempsSpan.className = 'temps-restant';
+                        tempsSpan.textContent = tempsRestantStr;
+                        tempsSpan.style.color = tempsRestantCouleur;
+                        heure.appendChild(tempsSpan);
+                    }
                     info.appendChild(heure);
+
                     const prix = document.createElement('span');
                     prix.className = 'prix';
                     prix.textContent = `💰 ${course.prix}`;
                     info.appendChild(prix);
+
+                    const placesSpan = document.createElement('span');
+                    placesSpan.className = 'places-restantes';
+                    placesSpan.textContent = `👥 ${placesRestantes}`;
+                    placesSpan.style.color = placesRestantes > 2 ? '#6ee7b7' : (placesRestantes > 0 ? '#fbbf24' : '#f87171');
+                    info.appendChild(placesSpan);
+
                     card.appendChild(info);
 
                     // Ligne horizontale
                     const row = document.createElement('div');
                     row.className = 'course-row';
 
-                    // Grille 4×2
                     const grid = document.createElement('div');
                     grid.className = 'seat-grid';
 
                     const totalPlaces = course.places + 1;
                     const placesEffectives = Math.min(totalPlaces, 8);
                     const disabledCount = 8 - placesEffectives;
-                    const reservations = course.reservations || [];
+                    // reservations déjà récupérées
 
                     const placeStatus = [];
                     placeStatus[0] = 'driver';
@@ -913,8 +976,8 @@
                         placeStatus[i] = { type: 'disabled' };
                     }
 
-                    // Ordre colonne par colonne
-                    const colonneOrdre = [0, 4, 1, 5, 2, 6, 3, 7];
+                    // Ordre naturel pour le remplissage des colonnes
+                    const colonneOrdre = [0, 1, 2, 3, 4, 5, 6, 7];
 
                     for (let idx of colonneOrdre) {
                         const seat = document.createElement('div');
@@ -924,11 +987,9 @@
 
                         const status = placeStatus[idx];
 
-                        // Si c'est le chauffeur (idx === 0) et qu'on a une photo de profil
                         if (idx === 0 && profilePhotoURL) {
                             seat.classList.add('driver', 'has-profile');
                             seat.style.backgroundImage = `url(${profilePhotoURL})`;
-                            // On garde une couleur de fond de secours
                             seat.style.backgroundColor = 'rgba(0,0,0,0.3)';
                             seat.dataset.status = 'driver';
                         } else if (typeof status === 'string') {
@@ -953,7 +1014,7 @@
 
                     row.appendChild(grid);
 
-                    // Image de la voiture (avec long-press pour supprimer)
+                    // Image de la voiture
                     const photoContainer = document.createElement('div');
                     photoContainer.className = 'car-photo' + (carPhotoURL ? '' : ' default');
                     photoContainer.dataset.courseId = course.id;
@@ -965,7 +1026,8 @@
                     } else {
                         photoContainer.textContent = '🚗';
                     }
-                    // Gestion du long-press
+
+                    // Long-press pour supprimer
                     let longPressTimer = null;
                     const startLongPress = (e) => {
                         longPressTimer = setTimeout(() => {
@@ -978,15 +1040,12 @@
                             longPressTimer = null;
                         }
                     };
-                    // Pour souris
                     photoContainer.addEventListener('mousedown', startLongPress);
                     photoContainer.addEventListener('mouseup', cancelLongPress);
                     photoContainer.addEventListener('mouseleave', cancelLongPress);
-                    // Pour tactile
                     photoContainer.addEventListener('touchstart', startLongPress, { passive: true });
                     photoContainer.addEventListener('touchend', cancelLongPress, { passive: true });
                     photoContainer.addEventListener('touchmove', cancelLongPress, { passive: true });
-                    // Empêcher le menu contextuel
                     photoContainer.addEventListener('contextmenu', (e) => e.preventDefault());
 
                     row.appendChild(photoContainer);
@@ -1005,8 +1064,6 @@
         // ========================================================================
         function handleLongPress(courseId, photoElement) {
             if (!currentUser || currentUser.role !== 'chauffeur') return;
-            // Vérifier que la course appartient bien au chauffeur connecté (on le fait côté serveur, mais on peut vérifier)
-            // On demande confirmation
             if (confirm('Supprimer cette course ?')) {
                 deleteRide(courseId)
                     .then(() => {
@@ -1069,7 +1126,6 @@
             adminEditEmail.value = user.email || '';
             adminEditRole.value = user.role || '';
 
-            // Réinitialiser les croppers
             if (adminEditCarCropper) { adminEditCarCropper.destroy();
                 adminEditCarCropper = null; }
             if (adminEditProfileCropper) { adminEditProfileCropper.destroy();
@@ -1082,7 +1138,6 @@
             modalAdminEdit.classList.add('active');
         }
 
-        // Gestion des uploads de photos dans la modale admin
         adminEditCarPhotoInput.addEventListener('change', function(e) {
             const file = this.files[0];
             if (!file) return;
@@ -1143,7 +1198,6 @@
             reader.readAsDataURL(file);
         });
 
-        // Sauvegarde des modifications admin
         async function saveAdminEdit() {
             if (!adminEditTargetEmail) {
                 showToast('⚠️ Aucun utilisateur ciblé', true);
@@ -1162,13 +1216,11 @@
             showLoader(btn);
 
             try {
-                // Mettre à jour les champs texte
                 await db.collection('users').doc(adminEditTargetEmail).update({
                     nom: nom,
                     telephone: telephone
                 });
 
-                // Uploader les photos si présentes
                 let carPhotoURL = null;
                 let profilePhotoURL = null;
 
@@ -1216,7 +1268,6 @@
                     }
                 }
 
-                // Mettre à jour les champs photo
                 const updateData = {};
                 if (carPhotoURL) updateData.photoURL = carPhotoURL;
                 if (profilePhotoURL) updateData.profilePhotoURL = profilePhotoURL;
@@ -1226,12 +1277,8 @@
 
                 showToast('✅ Utilisateur mis à jour');
                 closeModalAdminEdit();
-                // Rafraîchir les listes admin
                 renderAdminLists();
-                // Si l'utilisateur connecté est admin, les courses n'affichent pas, mais on peut rafraîchir
-                if (currentUser && currentUser.role === 'admin') {
-                    // On ne rend pas les courses pour admin, mais on pourrait
-                } else if (currentUser) {
+                if (currentUser && currentUser.role !== 'admin') {
                     renderCourses(currentUser);
                 }
             } catch (error) {
@@ -1620,7 +1667,6 @@
         });
         btnValiderCourse.addEventListener('click', handleCreateCourse);
 
-        // Admin edit modal events
         btnAdminEditSave.addEventListener('click', saveAdminEdit);
         btnAdminEditCancel.addEventListener('click', closeModalAdminEdit);
         modalAdminEdit.addEventListener('click', (e) => {
@@ -1641,7 +1687,7 @@
 
         seedDemoUsers().catch(err => console.warn('Demo users:', err));
         setInterval(updateStats, 30000);
-        console.log('✅ Machi prêt – admin edit + suppression + profile photo');
+        console.log('✅ Machi prêt – améliorations UI');
     </script>
 </body>
 </html>
