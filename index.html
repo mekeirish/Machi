@@ -57,6 +57,17 @@
         }
         .btn-led:hover { background: #2b3b66; color: #fff; }
         .btn-led:active { background: #16203a; }
+        .btn-led.pulsing {
+            animation: pulse 1s ease-in-out infinite;
+            background: #00b8b0;
+            border-color: #00d4cc;
+            color: #fff;
+        }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(0,200,180,0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(0,200,180,0); }
+            100% { box-shadow: 0 0 0 0 rgba(0,200,180,0); }
+        }
         .header-actions {
             display: flex;
             justify-content: space-between;
@@ -173,34 +184,29 @@
             color: #8aa0c8;
             white-space: nowrap;
         }
-        .course-info .heure .temps-restant {
-            color: #fbbf24; /* jaune ambre */
-            font-weight: 500;
-            margin-left: 0.2rem;
-        }
-        .course-info .prix {
+        .course-info .temps-restant {
             font-size: 0.65rem;
-            color: #b0c8e8;
+            color: #f0c060;
             white-space: nowrap;
-            font-weight: 500;
         }
         .course-info .places-restantes {
             font-size: 0.65rem;
-            color: #6ee7b7; /* vert clair */
+            color: #60c0f0;
+            white-space: nowrap;
+        }
+        .course-info .prix {
+            font-size: 0.65rem;
+            color: #ffd700;
             white-space: nowrap;
             font-weight: 500;
-            margin-left: 0.2rem;
         }
 
-        /* --- Rangée : carreaux + image --- */
         .course-row {
             display: flex;
             flex-direction: row;
             gap: 1rem;
             width: 100%;
         }
-
-        /* --- GRILLE 4×2 AVEC REMPLISSAGE PAR COLONNES --- */
         .seat-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
@@ -249,9 +255,9 @@
             filter: brightness(1.15);
         }
         .seat.disabled {
-            background: rgba(255,255,255,0.02);
-            border-color: rgba(255,255,255,0.03);
-            opacity: 0.15;  /* ← encore plus discret */
+            background: rgba(255,255,255,0.015);
+            border-color: rgba(255,255,255,0.02);
+            opacity: 0.15;
             cursor: default;
         }
 
@@ -287,7 +293,6 @@
             .seat { border-width: 1px; }
         }
 
-        /* --- Admin --- */
         .admin-panel { margin-top: 0.6rem; }
         .admin-panel .btn-admin {
             background: #1e2a4a;
@@ -328,7 +333,6 @@
         .admin-list .item:last-child { border-bottom: none; }
         .admin-list .item .email { color: #8aa0c8; font-size: 0.65rem; }
 
-        /* --- Cropper --- */
         .crop-container {
             width: 100%;
             margin: 0.3rem 0;
@@ -340,7 +344,6 @@
             display: block;
         }
 
-        /* --- Tooltip --- */
         .tooltip-reservation {
             position: fixed;
             background: rgba(18,24,44,0.95);
@@ -452,6 +455,8 @@
                 <div id="adminChauffeursList" class="admin-list" style="display:none;"></div>
                 <button id="btnAdminPassagers" class="btn-admin">🚶 Passagers</button>
                 <div id="adminPassagersList" class="admin-list" style="display:none;"></div>
+                <button id="btnAdminSpots" class="btn-admin">📍 Spots</button>
+                <div id="adminSpotsList" class="admin-list" style="display:none;"></div>
             </div>
         </div>
     </div>
@@ -461,38 +466,52 @@
         <div class="modal-content">
             <h2 class="text-base font-semibold text-center text-cyan-200 mb-2">✏️ Modifier l'utilisateur</h2>
             <div id="adminEditUserInfo" class="text-xs text-slate-400 mb-2">Chargement...</div>
-
             <label>Nom</label>
             <input type="text" id="adminEditNom" placeholder="Nom" />
-
             <label>Téléphone</label>
             <input type="tel" id="adminEditTelephone" placeholder="0555 12 34 56" />
-
             <label>Email (non modifiable)</label>
             <input type="email" id="adminEditEmail" disabled />
-
             <label>Rôle</label>
             <input type="text" id="adminEditRole" disabled />
-
             <div class="mt-3 border-t border-white/5 pt-2">
                 <p class="text-xs text-cyan-200 font-medium mb-1">📸 Photos</p>
-
                 <label class="text-xs">Photo de la voiture (3:2)</label>
                 <input type="file" id="adminEditCarPhotoInput" accept="image/*" />
                 <div id="adminEditCarCropContainer" class="crop-container">
                     <img id="adminEditCarCropImage" src="#" alt="Rogner" />
                 </div>
-
                 <label class="text-xs mt-2">Photo de profil (1:1)</label>
                 <input type="file" id="adminEditProfilePhotoInput" accept="image/*" />
                 <div id="adminEditProfileCropContainer" class="crop-container">
                     <img id="adminEditProfileCropImage" src="#" alt="Rogner" />
                 </div>
             </div>
-
             <div class="flex gap-2 mt-4">
                 <button id="btnAdminEditSave" class="btn-led btn-validate flex-1">💾 Enregistrer</button>
                 <button id="btnAdminEditCancel" class="btn-led btn-cancel flex-1">✖ Annuler</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== MODALE ADMIN SPOTS ========== -->
+    <div id="modalAdminSpots" class="modal-overlay">
+        <div class="modal-content">
+            <h2 class="text-base font-semibold text-center text-cyan-200 mb-2">📍 Gérer les spots</h2>
+            <div id="adminSpotsListContainer" class="admin-list" style="max-height:200px; margin-bottom:0.5rem;"></div>
+            <hr class="border-white/5 my-2" />
+            <label>Nom du spot</label>
+            <input type="text" id="adminSpotNom" placeholder="ex: Aéroport" />
+            <div style="text-align:center; margin:0.3rem 0;">
+                <button id="btnGetLocation" class="btn-led btn-validate" style="width:100%;">📍 Me localiser</button>
+            </div>
+            <label>Latitude</label>
+            <input type="text" id="adminSpotLat" placeholder="36.7538" />
+            <label>Longitude</label>
+            <input type="text" id="adminSpotLon" placeholder="3.0588" />
+            <div class="flex gap-2 mt-3">
+                <button id="btnAdminSpotAdd" class="btn-led btn-validate flex-1">➕ Ajouter</button>
+                <button id="btnAdminSpotCancel" class="btn-led btn-cancel flex-1">✖ Fermer</button>
             </div>
         </div>
     </div>
@@ -541,13 +560,18 @@
         </div>
     </div>
 
+    <!-- MODALE CRÉATION COURSE (avec selects) -->
     <div id="modalCreateCourse" class="modal-overlay">
         <div class="modal-content">
             <h2 class="text-base font-semibold text-center text-cyan-200 mb-2">🚗 Nouvelle course</h2>
             <label>Départ</label>
-            <input type="text" id="courseDepart" placeholder="ex: Tiaret" />
+            <select id="courseDepart">
+                <option value="">-- Choisir un départ --</option>
+            </select>
             <label>Arrivée</label>
-            <input type="text" id="courseArrivee" placeholder="ex: Mahdia" />
+            <select id="courseArrivee">
+                <option value="">-- Choisir une arrivée --</option>
+            </select>
             <label>Heure de départ</label>
             <input type="time" id="courseHeure" />
             <label>Prix (unités)</label>
@@ -636,8 +660,10 @@
         const adminPanel = document.getElementById('adminPanel');
         const btnAdminChauffeurs = document.getElementById('btnAdminChauffeurs');
         const btnAdminPassagers = document.getElementById('btnAdminPassagers');
+        const btnAdminSpots = document.getElementById('btnAdminSpots');
         const adminChauffeursList = document.getElementById('adminChauffeursList');
         const adminPassagersList = document.getElementById('adminPassagersList');
+        const adminSpotsList = document.getElementById('adminSpotsList');
 
         const btnInscription = document.getElementById('btnInscription');
         const btnConnexion = document.getElementById('btnConnexion');
@@ -682,6 +708,15 @@
         const adminEditProfileCropImage = document.getElementById('adminEditProfileCropImage');
         const btnAdminEditSave = document.getElementById('btnAdminEditSave');
         const btnAdminEditCancel = document.getElementById('btnAdminEditCancel');
+
+        const modalAdminSpots = document.getElementById('modalAdminSpots');
+        const adminSpotsListContainer = document.getElementById('adminSpotsListContainer');
+        const adminSpotNom = document.getElementById('adminSpotNom');
+        const adminSpotLat = document.getElementById('adminSpotLat');
+        const adminSpotLon = document.getElementById('adminSpotLon');
+        const btnAdminSpotAdd = document.getElementById('btnAdminSpotAdd');
+        const btnAdminSpotCancel = document.getElementById('btnAdminSpotCancel');
+        const btnGetLocation = document.getElementById('btnGetLocation');
 
         const tooltip = document.getElementById('tooltipReservation');
         const btnSupprimerResa = document.getElementById('btnSupprimerResa');
@@ -734,6 +769,9 @@
             adminEditProfilePhotoInput.value = '';
             adminEditTargetEmail = null;
         }
+        function closeModalAdminSpots() {
+            if (modalAdminSpots) modalAdminSpots.classList.remove('active');
+        }
 
         function showHomeScreen() {
             homeScreen.style.display = 'block';
@@ -761,9 +799,6 @@
             } else {
                 coursesContainer.style.display = 'block';
                 adminPanel.style.display = 'none';
-                if (user.role === 'chauffeur') {
-                    btnCreateCourse.style.display = 'inline-block';
-                }
                 renderCourses(user);
             }
         }
@@ -827,9 +862,20 @@
             } catch { return []; }
         }
 
+        async function fetchSpots() {
+            try {
+                const snap = await firestoreGet('spots');
+                const spots = [];
+                snap.forEach(doc => spots.push({ id: doc.id, ...doc.data() }));
+                return spots;
+            } catch { return []; }
+        }
+
         async function createRide(rideData) { return await firestoreAdd('rides', rideData); }
         async function updateRide(rideId, rideData) { await firestoreUpdate('rides', rideId, rideData); }
         async function deleteRide(rideId) { await firestoreDelete('rides', rideId); }
+        async function addSpot(spotData) { return await firestoreAdd('spots', spotData); }
+        async function deleteSpot(spotId) { await firestoreDelete('spots', spotId); }
 
         async function countUsers() {
             try {
@@ -848,7 +894,38 @@
         }
 
         // ========================================================================
-        // RENDU DES COURSES (avec photo de profil sur le siège chauffeur)
+        // GÉOLOCALISATION
+        // ========================================================================
+        function getCurrentPosition() {
+            return new Promise((resolve, reject) => {
+                if (!navigator.geolocation) {
+                    reject(new Error('Géolocalisation non supportée par ce navigateur.'));
+                    return;
+                }
+                navigator.geolocation.getCurrentPosition(
+                    (pos) => resolve({ lat: pos.coords.latitude, lon: pos.coords.longitude }),
+                    (err) => reject(err),
+                    { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+                );
+            });
+        }
+
+        async function updateUserLocation(userEmail) {
+            try {
+                const { lat, lon } = await getCurrentPosition();
+                await db.collection('users').doc(userEmail).update({
+                    lastLatitude: lat,
+                    lastLongitude: lon,
+                    lastLocationUpdate: new Date().toISOString()
+                });
+                console.log('📍 Position mise à jour pour', userEmail);
+            } catch (error) {
+                console.warn('Géolocalisation impossible:', error.message);
+            }
+        }
+
+        // ========================================================================
+        // RENDU DES COURSES
         // ========================================================================
         async function renderCourses(user) {
             try {
@@ -864,6 +941,26 @@
                     ridesToShow = allRides;
                 }
 
+                // Vérifier si le chauffeur a un trajet actif
+                let hasActiveRide = false;
+                if (user.role === 'chauffeur') {
+                    const now = new Date();
+                    const nowMinutes = now.getHours() * 60 + now.getMinutes();
+                    for (let ride of ridesToShow) {
+                        if (ride.heure) {
+                            const [h, m] = ride.heure.split(':').map(Number);
+                            const rideMinutes = h * 60 + m;
+                            if (rideMinutes > nowMinutes) {
+                                hasActiveRide = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+                if (user.role === 'chauffeur') {
+                    btnCreateCourse.style.display = hasActiveRide ? 'none' : 'inline-block';
+                }
+
                 coursesList.innerHTML = '';
                 if (ridesToShow.length === 0) {
                     noCoursesMsg.style.display = 'block';
@@ -873,9 +970,8 @@
                 noCoursesMsg.style.display = 'none';
                 coursesList.style.display = 'flex';
 
-                // Calcul du temps restant pour chaque course
                 const now = new Date();
-                const todayStr = now.toISOString().split('T')[0];
+                const nowMinutes = now.getHours() * 60 + now.getMinutes();
 
                 ridesToShow.forEach(course => {
                     const chauffeurData = userMap[course.chauffeurEmail] || {};
@@ -886,38 +982,31 @@
                     card.className = 'course-card';
                     card.dataset.courseId = course.id;
 
-                    // --- Calcul du temps restant ---
-                    let tempsRestantStr = '';
-                    let tempsRestantCouleur = '#fbbf24'; // ambre par défaut
+                    let tempsRestant = '';
                     if (course.heure) {
                         const [h, m] = course.heure.split(':').map(Number);
-                        const departDate = new Date();
-                        departDate.setHours(h, m, 0, 0);
-                        const diffMs = departDate - now;
-                        if (diffMs > 0) {
-                            const diffMin = Math.floor(diffMs / 60000);
-                            if (diffMin < 60) {
-                                tempsRestantStr = `(${diffMin}min)`;
+                        const rideMinutes = h * 60 + m;
+                        const diff = rideMinutes - nowMinutes;
+                        if (diff > 0) {
+                            if (diff < 60) {
+                                tempsRestant = ` (dans ${diff} min)`;
                             } else {
-                                const diffH = Math.floor(diffMin / 60);
-                                const diffM = diffMin % 60;
-                                tempsRestantStr = `(${diffH}h${diffM > 0 ? diffM + 'min' : ''})`;
+                                const hours = Math.floor(diff / 60);
+                                const minutes = diff % 60;
+                                tempsRestant = ` (dans ${hours}h${minutes > 0 ? minutes + 'min' : ''})`;
                             }
-                        } else if (diffMs > -60000) {
-                            tempsRestantStr = '(maintenant)';
-                            tempsRestantCouleur = '#f87171'; // rouge si passé
+                        } else if (diff === 0) {
+                            tempsRestant = ' (maintenant)';
                         } else {
-                            tempsRestantStr = '(passée)';
-                            tempsRestantCouleur = '#f87171'; // rouge
+                            tempsRestant = ' (passé)';
                         }
                     }
 
-                    // --- Calcul des places restantes ---
-                    const reservations = course.reservations || [];
-                    const placesRestantes = course.places - reservations.length;
-                    const placesStr = placesRestantes > 0 ? `🟢 ${placesRestantes}` : '🔴 complet';
+                    const totalPlaces = course.places + 1;
+                    const reservedCount = (course.reservations || []).length;
+                    const placesDisponibles = Math.max(0, course.places - reservedCount);
+                    const placesRestantes = ` (${placesDisponibles} place${placesDisponibles > 1 ? 's' : ''} restante${placesDisponibles > 1 ? 's' : ''})`;
 
-                    // Info
                     const info = document.createElement('div');
                     info.className = 'course-info';
                     const titre = document.createElement('span');
@@ -925,42 +1014,39 @@
                     titre.textContent = `${course.depart} → ${course.arrivee}`;
                     info.appendChild(titre);
 
-                    const heure = document.createElement('span');
-                    heure.className = 'heure';
-                    heure.textContent = `🕐 ${course.heure}`;
-                    if (tempsRestantStr) {
+                    const heureSpan = document.createElement('span');
+                    heureSpan.className = 'heure';
+                    heureSpan.textContent = `🕐 ${course.heure}`;
+                    info.appendChild(heureSpan);
+
+                    if (tempsRestant) {
                         const tempsSpan = document.createElement('span');
                         tempsSpan.className = 'temps-restant';
-                        tempsSpan.textContent = tempsRestantStr;
-                        tempsSpan.style.color = tempsRestantCouleur;
-                        heure.appendChild(tempsSpan);
+                        tempsSpan.textContent = tempsRestant;
+                        info.appendChild(tempsSpan);
                     }
-                    info.appendChild(heure);
-
-                    const prix = document.createElement('span');
-                    prix.className = 'prix';
-                    prix.textContent = `💰 ${course.prix}`;
-                    info.appendChild(prix);
 
                     const placesSpan = document.createElement('span');
                     placesSpan.className = 'places-restantes';
-                    placesSpan.textContent = `👥 ${placesRestantes}`;
-                    placesSpan.style.color = placesRestantes > 2 ? '#6ee7b7' : (placesRestantes > 0 ? '#fbbf24' : '#f87171');
+                    placesSpan.textContent = placesRestantes;
                     info.appendChild(placesSpan);
+
+                    const prixSpan = document.createElement('span');
+                    prixSpan.className = 'prix';
+                    prixSpan.textContent = `🪙 ${course.prix}`;
+                    info.appendChild(prixSpan);
 
                     card.appendChild(info);
 
-                    // Ligne horizontale
                     const row = document.createElement('div');
                     row.className = 'course-row';
 
                     const grid = document.createElement('div');
                     grid.className = 'seat-grid';
 
-                    const totalPlaces = course.places + 1;
-                    const placesEffectives = Math.min(totalPlaces, 8);
-                    const disabledCount = 8 - placesEffectives;
-                    // reservations déjà récupérées
+                    const totalSeats = 8;
+                    const placesEffectives = Math.min(totalPlaces, totalSeats);
+                    const reservations = course.reservations || [];
 
                     const placeStatus = [];
                     placeStatus[0] = 'driver';
@@ -972,11 +1058,10 @@
                             placeStatus[i] = { type: 'available' };
                         }
                     }
-                    for (let i = placesEffectives; i < 8; i++) {
+                    for (let i = placesEffectives; i < totalSeats; i++) {
                         placeStatus[i] = { type: 'disabled' };
                     }
 
-                    // Ordre naturel pour le remplissage des colonnes
                     const colonneOrdre = [0, 1, 2, 3, 4, 5, 6, 7];
 
                     for (let idx of colonneOrdre) {
@@ -1014,7 +1099,6 @@
 
                     row.appendChild(grid);
 
-                    // Image de la voiture
                     const photoContainer = document.createElement('div');
                     photoContainer.className = 'car-photo' + (carPhotoURL ? '' : ' default');
                     photoContainer.dataset.courseId = course.id;
@@ -1027,7 +1111,6 @@
                         photoContainer.textContent = '🚗';
                     }
 
-                    // Long-press pour supprimer
                     let longPressTimer = null;
                     const startLongPress = (e) => {
                         longPressTimer = setTimeout(() => {
@@ -1078,7 +1161,7 @@
         }
 
         // ========================================================================
-        // ADMIN : LISTES & ÉDITION
+        // ADMIN : LISTES
         // ========================================================================
         async function renderAdminLists() {
             try {
@@ -1111,9 +1194,52 @@
                         adminPassagersList.appendChild(div);
                     });
                 }
+
+                await renderSpotsList();
             } catch (error) {
                 showToast('❌ Erreur chargement des utilisateurs', true);
                 console.error('renderAdminLists error:', error);
+            }
+        }
+
+        // ---- Spots ----
+        async function renderSpotsList() {
+            try {
+                const spots = await fetchSpots();
+                adminSpotsList.innerHTML = '';
+                if (spots.length === 0) {
+                    adminSpotsList.innerHTML = '<div class="item">Aucun spot</div>';
+                } else {
+                    spots.forEach(s => {
+                        const div = document.createElement('div');
+                        div.className = 'item';
+                        div.innerHTML = `<span>${s.nom}</span><span class="email">${s.latitude}, ${s.longitude}</span>`;
+                        const delBtn = document.createElement('button');
+                        delBtn.textContent = '✕';
+                        delBtn.style.background = 'none';
+                        delBtn.style.border = 'none';
+                        delBtn.style.color = '#ff6b6b';
+                        delBtn.style.cursor = 'pointer';
+                        delBtn.onclick = async (e) => {
+                            e.stopPropagation();
+                            if (confirm(`Supprimer le spot "${s.nom}" ?`)) {
+                                try {
+                                    await deleteSpot(s.id);
+                                    showToast('🗑️ Spot supprimé');
+                                    renderSpotsList();
+                                } catch (err) {
+                                    showToast('❌ Erreur suppression', true);
+                                    console.error(err);
+                                }
+                            }
+                        };
+                        div.appendChild(delBtn);
+                        adminSpotsList.appendChild(div);
+                    });
+                }
+            } catch (error) {
+                showToast('❌ Erreur chargement des spots', true);
+                console.error('renderSpotsList error:', error);
             }
         }
 
@@ -1289,6 +1415,107 @@
         }
 
         // ========================================================================
+        // ADMIN SPOTS : OUVERTURE / AJOUT / LOCALISATION
+        // ========================================================================
+        async function openAdminSpotsModal() {
+            modalAdminSpots.classList.add('active');
+            adminSpotNom.value = '';
+            adminSpotLat.value = '';
+            adminSpotLon.value = '';
+            await renderSpotsListModal();
+        }
+
+        async function renderSpotsListModal() {
+            const container = adminSpotsListContainer;
+            container.innerHTML = '';
+            const spots = await fetchSpots();
+            if (spots.length === 0) {
+                container.innerHTML = '<div class="item">Aucun spot</div>';
+            } else {
+                spots.forEach(s => {
+                    const div = document.createElement('div');
+                    div.className = 'item';
+                    div.innerHTML = `<span>${s.nom}</span><span class="email">${s.latitude}, ${s.longitude}</span>`;
+                    const delBtn = document.createElement('button');
+                    delBtn.textContent = '✕';
+                    delBtn.style.background = 'none';
+                    delBtn.style.border = 'none';
+                    delBtn.style.color = '#ff6b6b';
+                    delBtn.style.cursor = 'pointer';
+                    delBtn.onclick = async (e) => {
+                        e.stopPropagation();
+                        if (confirm(`Supprimer le spot "${s.nom}" ?`)) {
+                            try {
+                                await deleteSpot(s.id);
+                                showToast('🗑️ Spot supprimé');
+                                await renderSpotsListModal();
+                                renderSpotsList(); // aussi dans l'admin
+                            } catch (err) {
+                                showToast('❌ Erreur suppression', true);
+                                console.error(err);
+                            }
+                        }
+                    };
+                    div.appendChild(delBtn);
+                    container.appendChild(div);
+                });
+            }
+        }
+
+        async function handleAddSpot() {
+            const nom = adminSpotNom.value.trim();
+            const lat = parseFloat(adminSpotLat.value.trim());
+            const lon = parseFloat(adminSpotLon.value.trim());
+            if (!nom || isNaN(lat) || isNaN(lon)) {
+                showToast('⚠️ Remplissez tous les champs (nom, latitude, longitude)', true);
+                return;
+            }
+            try {
+                await addSpot({ nom, latitude: lat, longitude: lon });
+                showToast('✅ Spot ajouté');
+                await renderSpotsListModal();
+                renderSpotsList();
+                adminSpotNom.value = '';
+                adminSpotLat.value = '';
+                adminSpotLon.value = '';
+            } catch (error) {
+                showToast('❌ Erreur : ' + error.message, true);
+                console.error(error);
+            }
+        }
+
+        btnGetLocation.addEventListener('click', async function() {
+            const originalText = this.textContent;
+            this.textContent = '⏳ Localisation…';
+            this.classList.add('pulsing');
+            this.disabled = true;
+
+            try {
+                const { lat, lon } = await getCurrentPosition();
+                adminSpotLat.value = lat.toFixed(6);
+                adminSpotLon.value = lon.toFixed(6);
+                showToast('✅ Coordonnées mises à jour');
+            } catch (error) {
+                let msg = 'Erreur de géolocalisation';
+                if (error.code === 1) msg = 'Permission refusée. Activez la géolocalisation.';
+                else if (error.code === 2) msg = 'Position indisponible. Vérifiez votre récepteur GPS.';
+                else if (error.code === 3) msg = 'Délai dépassé. Réessayez.';
+                else msg = error.message;
+                showToast('❌ ' + msg, true);
+            } finally {
+                this.textContent = originalText;
+                this.classList.remove('pulsing');
+                this.disabled = false;
+            }
+        });
+
+        btnAdminSpotAdd.addEventListener('click', handleAddSpot);
+        btnAdminSpotCancel.addEventListener('click', closeModalAdminSpots);
+        modalAdminSpots.addEventListener('click', (e) => {
+            if (e.target === modalAdminSpots) closeModalAdminSpots();
+        });
+
+        // ========================================================================
         // GESTION DES CLICS SUR LES PLACES
         // ========================================================================
         async function handleSeatClick(e) {
@@ -1399,6 +1626,7 @@
             } else {
                 adminChauffeursList.style.display = 'none';
                 adminPassagersList.style.display = 'none';
+                adminSpotsList.style.display = 'none';
                 listElement.style.display = 'block';
             }
         }
@@ -1410,6 +1638,41 @@
         btnAdminPassagers.addEventListener('click', () => {
             renderAdminLists();
             toggleAdminList(adminPassagersList);
+        });
+        btnAdminSpots.addEventListener('click', () => {
+            openAdminSpotsModal();
+        });
+
+        // ========================================================================
+        // CREATION COURSE : remplir les selects avec les spots
+        // ========================================================================
+        async function populateSpotSelects() {
+            const spots = await fetchSpots();
+            const departSelect = courseDepart;
+            const arriveeSelect = courseArrivee;
+            departSelect.innerHTML = '<option value="">-- Choisir un départ --</option>';
+            arriveeSelect.innerHTML = '<option value="">-- Choisir une arrivée --</option>';
+            spots.forEach(s => {
+                const opt1 = document.createElement('option');
+                opt1.value = s.nom;
+                opt1.textContent = s.nom;
+                departSelect.appendChild(opt1);
+
+                const opt2 = document.createElement('option');
+                opt2.value = s.nom;
+                opt2.textContent = s.nom;
+                arriveeSelect.appendChild(opt2);
+            });
+        }
+
+        btnCreateCourse.addEventListener('click', async () => {
+            await populateSpotSelects();
+            modalCreateCourse.classList.add('active');
+            courseHeure.value = '';
+            coursePrix.value = '';
+            coursePlaces.value = '';
+            courseDepart.value = '';
+            courseArrivee.value = '';
         });
 
         // ========================================================================
@@ -1528,8 +1791,8 @@
         }
 
         async function handleCreateCourse() {
-            const depart = courseDepart.value.trim();
-            const arrivee = courseArrivee.value.trim();
+            const depart = courseDepart.value;
+            const arrivee = courseArrivee.value;
             const heure = courseHeure.value;
             const prix = parseInt(coursePrix.value);
             const places = parseInt(coursePlaces.value);
@@ -1579,7 +1842,7 @@
         }
 
         // ========================================================================
-        // SESSION
+        // SESSION (avec géolocalisation automatique)
         // ========================================================================
         auth.onAuthStateChanged(async (firebaseUser) => {
             if (firebaseUser) {
@@ -1588,6 +1851,8 @@
                     if (doc.exists) {
                         const userData = doc.data();
                         currentUser = { ...userData, email: firebaseUser.email };
+                        // Mettre à jour la position en arrière-plan
+                        updateUserLocation(firebaseUser.email);
                         showMainInterface(currentUser);
                     } else {
                         await auth.signOut();
@@ -1649,20 +1914,11 @@
 
         btnLogout.addEventListener('click', logout);
 
-        btnCreateCourse.addEventListener('click', () => {
-            modalCreateCourse.classList.add('active');
-            courseDepart.value = '';
-            courseArrivee.value = '';
-            courseHeure.value = '';
-            coursePrix.value = '';
-            coursePlaces.value = '';
-            courseDepart.focus();
-        });
         btnAnnulerCourse.addEventListener('click', closeModalCreateCourse);
         modalCreateCourse.addEventListener('click', (e) => {
             if (e.target === modalCreateCourse) closeModalCreateCourse();
         });
-        [courseDepart, courseArrivee, courseHeure, coursePrix, coursePlaces].forEach(el => {
+        [courseHeure, coursePrix, coursePlaces, courseDepart, courseArrivee].forEach(el => {
             el.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleCreateCourse(); });
         });
         btnValiderCourse.addEventListener('click', handleCreateCourse);
@@ -1682,12 +1938,13 @@
                 else if (modalConnexion.classList.contains('active')) closeModalConnexion();
                 else if (modalCreateCourse.classList.contains('active')) closeModalCreateCourse();
                 else if (modalAdminEdit.classList.contains('active')) closeModalAdminEdit();
+                else if (modalAdminSpots.classList.contains('active')) closeModalAdminSpots();
             }
         });
 
         seedDemoUsers().catch(err => console.warn('Demo users:', err));
         setInterval(updateStats, 30000);
-        console.log('✅ Machi prêt – améliorations UI');
+        console.log('✅ Machi prêt – spots + géolocalisation');
     </script>
 </body>
 </html>
