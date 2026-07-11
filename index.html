@@ -103,7 +103,7 @@
             border: 1px solid rgba(255,255,255,0.06);
             border-radius: 1.5rem;
             padding: 1.2rem 0.8rem;
-            max-width: 380px;
+            max-width: 420px;
             width: 90%;
             max-height: 90vh;
             overflow-y: auto;
@@ -134,6 +134,8 @@
         .btn-validate:hover { background: #00a39a; }
         .btn-cancel { background: rgba(255,70,70,0.12); border-color: rgba(255,70,70,0.2); color: #ffb0b0; }
         .btn-cancel:hover { background: rgba(255,70,70,0.22); }
+
+        /* ---- Liste des courses ---- */
         .courses-list {
             display: flex;
             flex-direction: column;
@@ -179,7 +181,7 @@
             font-weight: 500;
         }
 
-        /* ===== LAYOUT : 4 parts carreaux, 3 parts image ===== */
+        /* ---- Ligne carreaux + image ---- */
         .course-row {
             display: flex;
             flex-direction: row;
@@ -199,12 +201,20 @@
             border: 1.5px solid rgba(255,255,255,0.10);
             width: 100%;
             cursor: default;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            position: relative;
         }
         .seat.driver {
-            background: #00b8b0;
+            background-color: #00b8b0;
             border-color: #00d4cc;
             box-shadow: 0 0 6px rgba(0,200,180,0.2);
             cursor: default;
+        }
+        .seat.driver.has-profile {
+            background-color: transparent;
+            border-color: #00d4cc;
         }
         .seat.available {
             background: transparent;
@@ -230,6 +240,7 @@
             opacity: 0.25;
             cursor: default;
         }
+
         .car-photo {
             flex: 3;
             border-radius: 6px;
@@ -241,6 +252,9 @@
             justify-content: center;
             font-size: 1.6rem;
             color: #6a7a9a;
+            cursor: default;
+            position: relative;
+            min-height: 40px;
         }
         .car-photo img {
             width: 100%;
@@ -252,7 +266,6 @@
             font-size: 1.6rem;
             background: rgba(255,255,255,0.02);
         }
-
         @media (max-width: 380px) {
             .car-photo { font-size: 1.2rem; }
             .course-row { gap: 0.6rem; }
@@ -260,52 +273,7 @@
             .seat { border-width: 1px; }
         }
 
-        /* --- CROPPER --- */
-        .crop-container {
-            width: 100%;
-            margin: 0.3rem 0;
-            display: none;
-            min-height: 150px;
-        }
-        .crop-container img {
-            max-width: 100%;
-            display: block;
-        }
-
-        /* --- Tooltip --- */
-        .tooltip-reservation {
-            position: fixed;
-            background: rgba(18,24,44,0.95);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 1rem;
-            padding: 0.4rem 0.6rem;
-            color: #e8f0ff;
-            font-size: 0.75rem;
-            display: none;
-            z-index: 60;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
-            min-width: 120px;
-            align-items: center;
-            gap: 0.4rem;
-            pointer-events: auto;
-        }
-        .tooltip-reservation .nom { flex: 1; }
-        .tooltip-reservation .btn-supprimer {
-            background: rgba(255,70,70,0.2);
-            border: none;
-            border-radius: 50%;
-            width: 20px;
-            height: 20px;
-            color: #ffb0b0;
-            font-size: 0.75rem;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: background 0.2s;
-        }
-        .tooltip-reservation .btn-supprimer:hover { background: rgba(255,70,70,0.4); }
+        /* ---- Admin list ---- */
         .admin-panel { margin-top: 0.6rem; }
         .admin-panel .btn-admin {
             background: #1e2a4a;
@@ -345,6 +313,54 @@
         .admin-list .item:hover { background: rgba(255,255,255,0.05); }
         .admin-list .item:last-child { border-bottom: none; }
         .admin-list .item .email { color: #8aa0c8; font-size: 0.65rem; }
+
+        /* ---- Cropper ---- */
+        .crop-container {
+            width: 100%;
+            margin: 0.3rem 0;
+            display: none;
+            min-height: 150px;
+        }
+        .crop-container img {
+            max-width: 100%;
+            display: block;
+        }
+
+        /* ---- Tooltip ---- */
+        .tooltip-reservation {
+            position: fixed;
+            background: rgba(18,24,44,0.95);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 1rem;
+            padding: 0.4rem 0.6rem;
+            color: #e8f0ff;
+            font-size: 0.75rem;
+            display: none;
+            z-index: 60;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+            min-width: 120px;
+            align-items: center;
+            gap: 0.4rem;
+            pointer-events: auto;
+        }
+        .tooltip-reservation .nom { flex: 1; }
+        .tooltip-reservation .btn-supprimer {
+            background: rgba(255,70,70,0.2);
+            border: none;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            color: #ffb0b0;
+            font-size: 0.75rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+        .tooltip-reservation .btn-supprimer:hover { background: rgba(255,70,70,0.4); }
+
         .toast {
             position: fixed;
             bottom: 1.5rem;
@@ -426,24 +442,44 @@
         </div>
     </div>
 
-    <!-- ========== MODALE ADMIN PHOTO ========== -->
-    <div id="modalAdminPhoto" class="modal-overlay">
+    <!-- ========== MODALE ADMIN ÉDITION ========== -->
+    <div id="modalAdminEdit" class="modal-overlay">
         <div class="modal-content">
-            <h2 class="text-base font-semibold text-center text-cyan-200 mb-2">📸 Photo de la voiture</h2>
-            <p id="adminPhotoChauffeurNom" class="text-center text-slate-400 text-xs mb-2">Chauffeur : —</p>
-            <label>Choisir une photo</label>
-            <input type="file" id="adminPhotoInput" accept="image/*" />
-            <div id="cropContainer" class="crop-container">
-                <img id="cropImage" src="#" alt="Image à rogner" />
+            <h2 class="text-base font-semibold text-center text-cyan-200 mb-2">✏️ Modifier l'utilisateur</h2>
+            <div id="adminEditUserInfo" class="text-xs text-slate-400 mb-2">Chargement...</div>
+
+            <label>Nom</label>
+            <input type="text" id="adminEditNom" placeholder="Nom" />
+
+            <label>Téléphone</label>
+            <input type="tel" id="adminEditTelephone" placeholder="0555 12 34 56" />
+
+            <label>Email (non modifiable)</label>
+            <input type="email" id="adminEditEmail" disabled />
+
+            <label>Rôle</label>
+            <input type="text" id="adminEditRole" disabled />
+
+            <!-- Photos -->
+            <div class="mt-3 border-t border-white/5 pt-2">
+                <p class="text-xs text-cyan-200 font-medium mb-1">📸 Photos</p>
+
+                <label class="text-xs">Photo de la voiture (3:2)</label>
+                <input type="file" id="adminEditCarPhotoInput" accept="image/*" />
+                <div id="adminEditCarCropContainer" class="crop-container">
+                    <img id="adminEditCarCropImage" src="#" alt="Rogner" />
+                </div>
+
+                <label class="text-xs mt-2">Photo de profil (1:1)</label>
+                <input type="file" id="adminEditProfilePhotoInput" accept="image/*" />
+                <div id="adminEditProfileCropContainer" class="crop-container">
+                    <img id="adminEditProfileCropImage" src="#" alt="Rogner" />
+                </div>
             </div>
-            <div id="cropInstructions" class="text-xs text-slate-400 mt-1" style="display:none;">
-                🔄 Zoom / dézoom.<br />
-                ✋ Déplacez pour cadrer.<br />
-                📐 Cadre 3:2 (paysage).
-            </div>
-            <div class="flex gap-2 mt-3">
-                <button id="btnAdminPhotoValider" class="btn-led btn-validate flex-1">✔ Valider</button>
-                <button id="btnAdminPhotoAnnuler" class="btn-led btn-cancel flex-1">✖ Annuler</button>
+
+            <div class="flex gap-2 mt-4">
+                <button id="btnAdminEditSave" class="btn-led btn-validate flex-1">💾 Enregistrer</button>
+                <button id="btnAdminEditCancel" class="btn-led btn-cancel flex-1">✖ Annuler</button>
             </div>
         </div>
     </div>
@@ -514,12 +550,9 @@
 
     <div id="toast" class="toast"></div>
 
-    <!-- ============================================================== -->
-    <!-- ==================== JAVASCRIPT ============================== -->
-    <!-- ============================================================== -->
     <script>
         // ========================================================================
-        // FIREBASE (inchangé)
+        // FIREBASE
         // ========================================================================
         const firebaseConfig = {
             apiKey: "AIzaSyACgeZXog1KZGU29HpjM4qpKTBt54KbJFg",
@@ -535,6 +568,9 @@
         const db = firebase.firestore();
         db.enablePersistence().catch(() => {});
 
+        // ========================================================================
+        // COMPTES DE TEST
+        // ========================================================================
         async function seedDemoUsers() {
             const demoUsers = [
                 { email: 'chauffeur@gmail.com', password: 'chauffeur123', nom: 'Chauffeur Test', telephone: '0555000001',
@@ -619,14 +655,21 @@
         const btnValiderCourse = document.getElementById('btnValiderCourse');
         const btnAnnulerCourse = document.getElementById('btnAnnulerCourse');
 
-        const modalAdminPhoto = document.getElementById('modalAdminPhoto');
-        const adminPhotoChauffeurNom = document.getElementById('adminPhotoChauffeurNom');
-        const adminPhotoInput = document.getElementById('adminPhotoInput');
-        const cropContainer = document.getElementById('cropContainer');
-        const cropImage = document.getElementById('cropImage');
-        const cropInstructions = document.getElementById('cropInstructions');
-        const btnAdminPhotoValider = document.getElementById('btnAdminPhotoValider');
-        const btnAdminPhotoAnnuler = document.getElementById('btnAdminPhotoAnnuler');
+        // Admin edit modal
+        const modalAdminEdit = document.getElementById('modalAdminEdit');
+        const adminEditUserInfo = document.getElementById('adminEditUserInfo');
+        const adminEditNom = document.getElementById('adminEditNom');
+        const adminEditTelephone = document.getElementById('adminEditTelephone');
+        const adminEditEmail = document.getElementById('adminEditEmail');
+        const adminEditRole = document.getElementById('adminEditRole');
+        const adminEditCarPhotoInput = document.getElementById('adminEditCarPhotoInput');
+        const adminEditCarCropContainer = document.getElementById('adminEditCarCropContainer');
+        const adminEditCarCropImage = document.getElementById('adminEditCarCropImage');
+        const adminEditProfilePhotoInput = document.getElementById('adminEditProfilePhotoInput');
+        const adminEditProfileCropContainer = document.getElementById('adminEditProfileCropContainer');
+        const adminEditProfileCropImage = document.getElementById('adminEditProfileCropImage');
+        const btnAdminEditSave = document.getElementById('btnAdminEditSave');
+        const btnAdminEditCancel = document.getElementById('btnAdminEditCancel');
 
         const tooltip = document.getElementById('tooltipReservation');
         const btnSupprimerResa = document.getElementById('btnSupprimerResa');
@@ -634,9 +677,12 @@
 
         let tooltipCourseId = null;
         let tooltipPlaceIndex = null;
-        let adminTargetChauffeurEmail = null;
-        let cropper = null;
         let currentUser = null;
+
+        // Admin edit state
+        let adminEditTargetEmail = null;
+        let adminEditCarCropper = null;
+        let adminEditProfileCropper = null;
 
         // ========================================================================
         // UTILITAIRES
@@ -663,21 +709,17 @@
         function isOnline() { return navigator.onLine; }
 
         function closeModalInscription() { if (modalInscription) modalInscription.classList.remove('active'); }
-
         function closeModalConnexion() { if (modalConnexion) modalConnexion.classList.remove('active'); }
-
         function closeModalCreateCourse() { if (modalCreateCourse) modalCreateCourse.classList.remove('active'); }
-
-        function closeAdminPhotoModal() {
-            if (modalAdminPhoto) modalAdminPhoto.classList.remove('active');
-            if (cropper) {
-                cropper.destroy();
-                cropper = null;
-            }
-            cropContainer.style.display = 'none';
-            cropInstructions.style.display = 'none';
-            adminPhotoInput.value = '';
-            adminTargetChauffeurEmail = null;
+        function closeModalAdminEdit() {
+            if (modalAdminEdit) modalAdminEdit.classList.remove('active');
+            if (adminEditCarCropper) { adminEditCarCropper.destroy(); adminEditCarCropper = null; }
+            if (adminEditProfileCropper) { adminEditProfileCropper.destroy(); adminEditProfileCropper = null; }
+            adminEditCarCropContainer.style.display = 'none';
+            adminEditProfileCropContainer.style.display = 'none';
+            adminEditCarPhotoInput.value = '';
+            adminEditProfilePhotoInput.value = '';
+            adminEditTargetEmail = null;
         }
 
         function showHomeScreen() {
@@ -747,11 +789,18 @@
             } catch (error) { throw error; }
         }
 
+        async function firestoreDelete(collection, docId) {
+            try {
+                if (!isOnline()) throw new Error('Hors ligne');
+                await db.collection(collection).doc(docId).delete();
+            } catch (error) { throw error; }
+        }
+
         async function fetchUsers() {
             try {
                 const snap = await firestoreGet('users');
                 const users = [];
-                snap.forEach(doc => users.push(doc.data()));
+                snap.forEach(doc => users.push({ id: doc.id, ...doc.data() }));
                 return users;
             } catch { return []; }
         }
@@ -766,8 +815,8 @@
         }
 
         async function createRide(rideData) { return await firestoreAdd('rides', rideData); }
-
         async function updateRide(rideId, rideData) { await firestoreUpdate('rides', rideId, rideData); }
+        async function deleteRide(rideId) { await firestoreDelete('rides', rideId); }
 
         async function countUsers() {
             try {
@@ -786,7 +835,7 @@
         }
 
         // ========================================================================
-        // RENDU DES COURSES – ORDRE COLONNE PAR COLONNE PUR
+        // RENDU DES COURSES (avec photo de profil sur le siège chauffeur)
         // ========================================================================
         async function renderCourses(user) {
             try {
@@ -813,7 +862,8 @@
 
                 ridesToShow.forEach(course => {
                     const chauffeurData = userMap[course.chauffeurEmail] || {};
-                    const photoURL = chauffeurData.photoURL || null;
+                    const carPhotoURL = chauffeurData.photoURL || null;
+                    const profilePhotoURL = chauffeurData.profilePhotoURL || null;
 
                     const card = document.createElement('div');
                     card.className = 'course-card';
@@ -849,7 +899,6 @@
                     const disabledCount = 8 - placesEffectives;
                     const reservations = course.reservations || [];
 
-                    // Statut pour chaque emplacement logique (0 = chauffeur, 1..7 = passagers)
                     const placeStatus = [];
                     placeStatus[0] = 'driver';
                     for (let i = 1; i < placesEffectives; i++) {
@@ -864,9 +913,7 @@
                         placeStatus[i] = { type: 'disabled' };
                     }
 
-                    // ORDRE COLONNE PAR COLONNE :
-                    // colonne 1 haut (0), colonne 1 bas (4), colonne 2 haut (1), colonne 2 bas (5),
-                    // colonne 3 haut (2), colonne 3 bas (6), colonne 4 haut (3), colonne 4 bas (7)
+                    // Ordre colonne par colonne
                     const colonneOrdre = [0, 4, 1, 5, 2, 6, 3, 7];
 
                     for (let idx of colonneOrdre) {
@@ -876,7 +923,15 @@
                         seat.dataset.courseId = course.id;
 
                         const status = placeStatus[idx];
-                        if (typeof status === 'string') {
+
+                        // Si c'est le chauffeur (idx === 0) et qu'on a une photo de profil
+                        if (idx === 0 && profilePhotoURL) {
+                            seat.classList.add('driver', 'has-profile');
+                            seat.style.backgroundImage = `url(${profilePhotoURL})`;
+                            // On garde une couleur de fond de secours
+                            seat.style.backgroundColor = 'rgba(0,0,0,0.3)';
+                            seat.dataset.status = 'driver';
+                        } else if (typeof status === 'string') {
                             if (status === 'driver') {
                                 seat.classList.add('driver');
                                 seat.dataset.status = 'driver';
@@ -898,17 +953,42 @@
 
                     row.appendChild(grid);
 
-                    // Image 3:2 à droite
+                    // Image de la voiture (avec long-press pour supprimer)
                     const photoContainer = document.createElement('div');
-                    photoContainer.className = 'car-photo' + (photoURL ? '' : ' default');
-                    if (photoURL) {
+                    photoContainer.className = 'car-photo' + (carPhotoURL ? '' : ' default');
+                    photoContainer.dataset.courseId = course.id;
+                    if (carPhotoURL) {
                         const img = document.createElement('img');
-                        img.src = photoURL;
+                        img.src = carPhotoURL;
                         img.alt = 'Voiture';
                         photoContainer.appendChild(img);
                     } else {
                         photoContainer.textContent = '🚗';
                     }
+                    // Gestion du long-press
+                    let longPressTimer = null;
+                    const startLongPress = (e) => {
+                        longPressTimer = setTimeout(() => {
+                            handleLongPress(course.id, photoContainer);
+                        }, 600);
+                    };
+                    const cancelLongPress = () => {
+                        if (longPressTimer) {
+                            clearTimeout(longPressTimer);
+                            longPressTimer = null;
+                        }
+                    };
+                    // Pour souris
+                    photoContainer.addEventListener('mousedown', startLongPress);
+                    photoContainer.addEventListener('mouseup', cancelLongPress);
+                    photoContainer.addEventListener('mouseleave', cancelLongPress);
+                    // Pour tactile
+                    photoContainer.addEventListener('touchstart', startLongPress, { passive: true });
+                    photoContainer.addEventListener('touchend', cancelLongPress, { passive: true });
+                    photoContainer.addEventListener('touchmove', cancelLongPress, { passive: true });
+                    // Empêcher le menu contextuel
+                    photoContainer.addEventListener('contextmenu', (e) => e.preventDefault());
+
                     row.appendChild(photoContainer);
 
                     card.appendChild(row);
@@ -921,7 +1001,27 @@
         }
 
         // ========================================================================
-        // ADMIN (inchangé)
+        // LONG-PRESS : suppression d'une course
+        // ========================================================================
+        function handleLongPress(courseId, photoElement) {
+            if (!currentUser || currentUser.role !== 'chauffeur') return;
+            // Vérifier que la course appartient bien au chauffeur connecté (on le fait côté serveur, mais on peut vérifier)
+            // On demande confirmation
+            if (confirm('Supprimer cette course ?')) {
+                deleteRide(courseId)
+                    .then(() => {
+                        showToast('🗑️ Course supprimée');
+                        renderCourses(currentUser);
+                    })
+                    .catch(err => {
+                        showToast('❌ Erreur lors de la suppression', true);
+                        console.error(err);
+                    });
+            }
+        }
+
+        // ========================================================================
+        // ADMIN : LISTES & ÉDITION
         // ========================================================================
         async function renderAdminLists() {
             try {
@@ -937,7 +1037,7 @@
                         const div = document.createElement('div');
                         div.className = 'item';
                         div.innerHTML = `<span>${c.nom} (${c.telephone})</span><span class="email">${c.email}</span>`;
-                        div.addEventListener('click', () => openAdminPhotoModal(c));
+                        div.addEventListener('click', () => openAdminEditModal(c));
                         adminChauffeursList.appendChild(div);
                     });
                 }
@@ -950,6 +1050,7 @@
                         const div = document.createElement('div');
                         div.className = 'item';
                         div.innerHTML = `<span>${p.nom} (${p.telephone})</span><span class="email">${p.email}</span>`;
+                        div.addEventListener('click', () => openAdminEditModal(p));
                         adminPassagersList.appendChild(div);
                     });
                 }
@@ -959,38 +1060,38 @@
             }
         }
 
-        // ========================================================================
-        // ADMIN PHOTO AVEC CROPPER
-        // ========================================================================
-        function openAdminPhotoModal(chauffeur) {
-            adminTargetChauffeurEmail = chauffeur.email;
-            adminPhotoChauffeurNom.textContent = `Chauffeur : ${chauffeur.nom} (${chauffeur.email})`;
-            if (cropper) {
-                cropper.destroy();
-                cropper = null;
-            }
-            cropContainer.style.display = 'none';
-            cropInstructions.style.display = 'none';
-            adminPhotoInput.value = '';
-            modalAdminPhoto.classList.add('active');
+        // ---- Admin Edit Modal ----
+        function openAdminEditModal(user) {
+            adminEditTargetEmail = user.email;
+            adminEditUserInfo.textContent = `Édition de ${user.nom} (${user.email})`;
+            adminEditNom.value = user.nom || '';
+            adminEditTelephone.value = user.telephone || '';
+            adminEditEmail.value = user.email || '';
+            adminEditRole.value = user.role || '';
+
+            // Réinitialiser les croppers
+            if (adminEditCarCropper) { adminEditCarCropper.destroy();
+                adminEditCarCropper = null; }
+            if (adminEditProfileCropper) { adminEditProfileCropper.destroy();
+                adminEditProfileCropper = null; }
+            adminEditCarCropContainer.style.display = 'none';
+            adminEditProfileCropContainer.style.display = 'none';
+            adminEditCarPhotoInput.value = '';
+            adminEditProfilePhotoInput.value = '';
+
+            modalAdminEdit.classList.add('active');
         }
 
-        adminPhotoInput.addEventListener('change', function(e) {
+        // Gestion des uploads de photos dans la modale admin
+        adminEditCarPhotoInput.addEventListener('change', function(e) {
             const file = this.files[0];
             if (!file) return;
-
             const reader = new FileReader();
             reader.onload = function(ev) {
-                cropImage.src = ev.target.result;
-                cropContainer.style.display = 'block';
-                cropInstructions.style.display = 'block';
-
-                if (cropper) {
-                    cropper.destroy();
-                    cropper = null;
-                }
-
-                cropper = new Cropper(cropImage, {
+                adminEditCarCropImage.src = ev.target.result;
+                adminEditCarCropContainer.style.display = 'block';
+                if (adminEditCarCropper) adminEditCarCropper.destroy();
+                adminEditCarCropper = new Cropper(adminEditCarCropImage, {
                     aspectRatio: 3 / 2,
                     viewMode: 1,
                     dragMode: 'move',
@@ -1012,91 +1113,136 @@
             reader.readAsDataURL(file);
         });
 
-        async function saveChauffeurPhoto() {
-            if (!adminTargetChauffeurEmail) {
-                showToast('⚠️ Aucun chauffeur ciblé', true);
-                return;
-            }
-            if (!cropper) {
-                showToast('⚠️ Veuillez choisir une photo et la rogner', true);
+        adminEditProfilePhotoInput.addEventListener('change', function(e) {
+            const file = this.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(ev) {
+                adminEditProfileCropImage.src = ev.target.result;
+                adminEditProfileCropContainer.style.display = 'block';
+                if (adminEditProfileCropper) adminEditProfileCropper.destroy();
+                adminEditProfileCropper = new Cropper(adminEditProfileCropImage, {
+                    aspectRatio: 1 / 1,
+                    viewMode: 1,
+                    dragMode: 'move',
+                    autoCropArea: 0.8,
+                    restore: false,
+                    guides: true,
+                    center: true,
+                    highlight: false,
+                    cropBoxMovable: true,
+                    cropBoxResizable: false,
+                    toggleDragModeOnDblclick: false,
+                    zoomOnWheel: true,
+                    zoomOnTouch: true,
+                    wheelZoomRatio: 0.1,
+                    minContainerWidth: 200,
+                    minContainerHeight: 150,
+                });
+            };
+            reader.readAsDataURL(file);
+        });
+
+        // Sauvegarde des modifications admin
+        async function saveAdminEdit() {
+            if (!adminEditTargetEmail) {
+                showToast('⚠️ Aucun utilisateur ciblé', true);
                 return;
             }
 
-            const canvas = cropper.getCroppedCanvas({
-                width: 800,
-                height: 533,
-                imageSmoothingQuality: 'high'
-            });
-
-            if (!canvas) {
-                showToast('❌ Erreur lors du recadrage', true);
+            const nom = adminEditNom.value.trim();
+            const telephone = adminEditTelephone.value.trim();
+            if (!nom || !telephone) {
+                showToast('⚠️ Nom et téléphone requis', true);
                 return;
             }
 
-            const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.92));
-            if (!blob) {
-                showToast('❌ Erreur lors de la conversion', true);
-                return;
-            }
-            if (blob.size > 10 * 1024 * 1024) {
-                showToast('❌ L\'image est trop lourde (>10Mo)', true);
-                return;
-            }
-            if (!isOnline()) {
-                showToast('📡 Pas de connexion Internet.', true);
-                return;
-            }
-
-            const btn = btnAdminPhotoValider;
+            const btn = btnAdminEditSave;
             const originalText = btn.textContent;
             showLoader(btn);
 
             try {
-                const formData = new FormData();
-                formData.append('file', blob, 'car_photo.jpg');
-                formData.append('upload_preset', 'machikey');
-                formData.append('folder', 'machi');
-                formData.append('cloud_name', 'y6u9peta');
-
-                const response = await fetch('https://api.cloudinary.com/v1_1/y6u9peta/image/upload', {
-                    method: 'POST',
-                    body: formData
+                // Mettre à jour les champs texte
+                await db.collection('users').doc(adminEditTargetEmail).update({
+                    nom: nom,
+                    telephone: telephone
                 });
 
-                const data = await response.json();
-                if (!response.ok) {
-                    throw new Error(data.error?.message || 'Erreur Cloudinary');
+                // Uploader les photos si présentes
+                let carPhotoURL = null;
+                let profilePhotoURL = null;
+
+                if (adminEditCarCropper) {
+                    const canvas = adminEditCarCropper.getCroppedCanvas({ width: 800, height: 533, imageSmoothingQuality: 'high' });
+                    if (canvas) {
+                        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.92));
+                        if (blob) {
+                            const formData = new FormData();
+                            formData.append('file', blob, 'car_photo.jpg');
+                            formData.append('upload_preset', 'machikey');
+                            formData.append('folder', 'machi');
+                            formData.append('cloud_name', 'y6u9peta');
+                            const response = await fetch('https://api.cloudinary.com/v1_1/y6u9peta/image/upload', {
+                                method: 'POST',
+                                body: formData
+                            });
+                            const data = await response.json();
+                            if (response.ok) {
+                                carPhotoURL = data.secure_url;
+                            }
+                        }
+                    }
                 }
 
-                const photoURL = data.secure_url;
-                await db.collection('users').doc(adminTargetChauffeurEmail).update({
-                    photoURL: photoURL
-                });
+                if (adminEditProfileCropper) {
+                    const canvas = adminEditProfileCropper.getCroppedCanvas({ width: 400, height: 400, imageSmoothingQuality: 'high' });
+                    if (canvas) {
+                        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.92));
+                        if (blob) {
+                            const formData = new FormData();
+                            formData.append('file', blob, 'profile_photo.jpg');
+                            formData.append('upload_preset', 'machikey');
+                            formData.append('folder', 'machi');
+                            formData.append('cloud_name', 'y6u9peta');
+                            const response = await fetch('https://api.cloudinary.com/v1_1/y6u9peta/image/upload', {
+                                method: 'POST',
+                                body: formData
+                            });
+                            const data = await response.json();
+                            if (response.ok) {
+                                profilePhotoURL = data.secure_url;
+                            }
+                        }
+                    }
+                }
 
-                showToast('✅ Photo enregistrée (recadrée 3:2) !');
-                closeAdminPhotoModal();
+                // Mettre à jour les champs photo
+                const updateData = {};
+                if (carPhotoURL) updateData.photoURL = carPhotoURL;
+                if (profilePhotoURL) updateData.profilePhotoURL = profilePhotoURL;
+                if (Object.keys(updateData).length > 0) {
+                    await db.collection('users').doc(adminEditTargetEmail).update(updateData);
+                }
 
+                showToast('✅ Utilisateur mis à jour');
+                closeModalAdminEdit();
+                // Rafraîchir les listes admin
+                renderAdminLists();
+                // Si l'utilisateur connecté est admin, les courses n'affichent pas, mais on peut rafraîchir
                 if (currentUser && currentUser.role === 'admin') {
-                    renderAdminLists();
+                    // On ne rend pas les courses pour admin, mais on pourrait
                 } else if (currentUser) {
                     renderCourses(currentUser);
                 }
-
             } catch (error) {
-                console.error('Cloudinary upload error:', error);
-                showToast(`❌ ${error.message || 'Erreur lors de l\'upload'}`, true);
+                console.error('Admin edit error:', error);
+                showToast('❌ Erreur : ' + error.message, true);
             }
             hideLoader(btn, originalText);
         }
 
-        btnAdminPhotoValider.addEventListener('click', saveChauffeurPhoto);
-        btnAdminPhotoAnnuler.addEventListener('click', closeAdminPhotoModal);
-        modalAdminPhoto.addEventListener('click', (e) => {
-            if (e.target === modalAdminPhoto) closeAdminPhotoModal();
-        });
-
         // ========================================================================
-        // GESTION DES CLICS
+        // GESTION DES CLICS SUR LES PLACES
         // ========================================================================
         async function handleSeatClick(e) {
             const seat = e.target.closest('.seat');
@@ -1171,6 +1317,9 @@
             }
         }
 
+        // ========================================================================
+        // SUPPRIMER RÉSERVATION (CHAUFFEUR)
+        // ========================================================================
         async function handleSupprimerResa() {
             if (!tooltipCourseId || tooltipPlaceIndex === null) return;
             try {
@@ -1194,6 +1343,9 @@
             }
         }
 
+        // ========================================================================
+        // ADMIN : TOGGLES LISTES
+        // ========================================================================
         function toggleAdminList(listElement) {
             if (listElement.style.display === 'block') {
                 listElement.style.display = 'none';
@@ -1379,6 +1531,9 @@
             hideLoader(btn, originalText);
         }
 
+        // ========================================================================
+        // SESSION
+        // ========================================================================
         auth.onAuthStateChanged(async (firebaseUser) => {
             if (firebaseUser) {
                 try {
@@ -1465,6 +1620,13 @@
         });
         btnValiderCourse.addEventListener('click', handleCreateCourse);
 
+        // Admin edit modal events
+        btnAdminEditSave.addEventListener('click', saveAdminEdit);
+        btnAdminEditCancel.addEventListener('click', closeModalAdminEdit);
+        modalAdminEdit.addEventListener('click', (e) => {
+            if (e.target === modalAdminEdit) closeModalAdminEdit();
+        });
+
         coursesList.addEventListener('click', handleSeatClick);
         btnSupprimerResa.addEventListener('click', handleSupprimerResa);
 
@@ -1473,13 +1635,13 @@
                 if (modalInscription.classList.contains('active')) closeModalInscription();
                 else if (modalConnexion.classList.contains('active')) closeModalConnexion();
                 else if (modalCreateCourse.classList.contains('active')) closeModalCreateCourse();
-                else if (modalAdminPhoto.classList.contains('active')) closeAdminPhotoModal();
+                else if (modalAdminEdit.classList.contains('active')) closeModalAdminEdit();
             }
         });
 
         seedDemoUsers().catch(err => console.warn('Demo users:', err));
         setInterval(updateStats, 30000);
-        console.log('✅ Machi prêt – ordre colonne par colonne');
+        console.log('✅ Machi prêt – admin edit + suppression + profile photo');
     </script>
 </body>
 </html>
