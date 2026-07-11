@@ -6,14 +6,14 @@
     <title>Machi – Mobile</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz@14..32&display=swap" rel="stylesheet" />
-    
+
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
     <style>
-        /* --- Styles identiques (inchangés) --- */
+        /* --- STYLES (inchangés) --- */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Inter', sans-serif;
@@ -381,7 +381,7 @@
 </head>
 <body>
 
-    <!-- ÉCRAN D'ACCUEIL -->
+    <!-- ==================== ÉCRAN D'ACCUEIL ==================== -->
     <div id="homeScreen" class="glass-card">
         <h1 class="text-3xl font-bold text-center text-cyan-200 mb-1">Machi</h1>
         <p class="text-center text-slate-400 text-sm mb-6 tracking-wider">⚡ mobilité en circuit fermé</p>
@@ -394,7 +394,7 @@
         </div>
     </div>
 
-    <!-- INTERFACE PRINCIPALE -->
+    <!-- ==================== INTERFACE PRINCIPALE ==================== -->
     <div id="mainInterface">
         <div class="header-actions">
             <div class="text-slate-400 text-sm truncate" id="userRoleBadge">Rôle : —</div>
@@ -408,10 +408,13 @@
         <hr class="border-white/5 my-3" />
 
         <div id="mainContent">
+            <!-- Courses -->
             <div id="coursesContainer">
                 <p class="text-slate-500 text-center text-sm" id="noCoursesMsg">Aucune course pour le moment.</p>
                 <div id="coursesList" class="courses-list"></div>
             </div>
+
+            <!-- Admin Panel -->
             <div id="adminPanel" class="admin-panel" style="display:none;">
                 <button id="btnAdminChauffeurs" class="btn-admin">🚗 Chauffeurs</button>
                 <div id="adminChauffeursList" class="admin-list" style="display:none;"></div>
@@ -421,7 +424,7 @@
         </div>
     </div>
 
-    <!-- MODALE ADMIN PHOTO -->
+    <!-- ==================== MODALE ADMIN PHOTO ==================== -->
     <div id="modalAdminPhoto" class="modal-overlay">
         <div class="modal-content">
             <h2 class="text-xl font-semibold text-center text-cyan-200 mb-4">📸 Photo de la voiture</h2>
@@ -438,13 +441,14 @@
         </div>
     </div>
 
-    <!-- TOOLTIP -->
+    <!-- ==================== TOOLTIP ==================== -->
     <div id="tooltipReservation" class="tooltip-reservation">
         <span class="nom">Passager</span>
         <button class="btn-supprimer" id="btnSupprimerResa">✕</button>
     </div>
 
-    <!-- MODALES -->
+    <!-- ==================== MODALES AUTH & COURSES ==================== -->
+    <!-- Inscription -->
     <div id="modalInscription" class="modal-overlay">
         <div class="modal-content">
             <h2 class="text-xl font-semibold text-center text-cyan-200 mb-4">Créer un compte</h2>
@@ -468,6 +472,7 @@
         </div>
     </div>
 
+    <!-- Connexion -->
     <div id="modalConnexion" class="modal-overlay">
         <div class="modal-content">
             <h2 class="text-xl font-semibold text-center text-cyan-200 mb-4">🔐 Se connecter</h2>
@@ -482,6 +487,7 @@
         </div>
     </div>
 
+    <!-- Création course -->
     <div id="modalCreateCourse" class="modal-overlay">
         <div class="modal-content">
             <h2 class="text-xl font-semibold text-center text-cyan-200 mb-4">🚗 Nouvelle course</h2>
@@ -502,12 +508,16 @@
         </div>
     </div>
 
+    <!-- ==================== TOAST ==================== -->
     <div id="toast" class="toast"></div>
 
+    <!-- ============================================================== -->
+    <!-- ==================== JAVASCRIPT ============================== -->
+    <!-- ============================================================== -->
     <script>
-        // ============================================================
+        // ========================================================================
         // 1. INITIALISATION FIREBASE
-        // ============================================================
+        // ========================================================================
         const firebaseConfig = {
             apiKey: "AIzaSyACgeZXog1KZGU29HpjM4qpKTBt54KbJFg",
             authDomain: "machi-51024.firebaseapp.com",
@@ -521,21 +531,19 @@
         const auth = firebase.auth();
         const db = firebase.firestore();
 
-        // Activer la persistance hors-ligne (optionnel)
+        // Activation de la persistance hors‑ligne (optionnel)
         db.enablePersistence()
             .catch((err) => {
                 if (err.code === 'failed-precondition') {
-                    // La persistance est déjà activée
                     console.warn('Persistance déjà active');
                 } else if (err.code === 'unimplemented') {
-                    // Le navigateur ne supporte pas la persistance
-                    console.warn('Persistance non supportée');
+                    console.warn('Persistance non supportée par le navigateur');
                 }
             });
 
-        // ============================================================
-        // 2. DOM & ÉLÉMENTS (inchangé)
-        // ============================================================
+        // ========================================================================
+        // 2. RÉFÉRENCES DOM
+        // ========================================================================
         const homeScreen = document.getElementById('homeScreen');
         const mainInterface = document.getElementById('mainInterface');
         const welcomeMessage = document.getElementById('welcomeMessage');
@@ -555,6 +563,7 @@
         const btnLogout = document.getElementById('btnLogout');
         const btnCreateCourse = document.getElementById('btnCreateCourse');
 
+        // Modales
         const modalInscription = document.getElementById('modalInscription');
         const btnValiderInscription = document.getElementById('btnValiderInscription');
         const btnAnnulerInscription = document.getElementById('btnAnnulerInscription');
@@ -579,6 +588,7 @@
         const btnValiderCourse = document.getElementById('btnValiderCourse');
         const btnAnnulerCourse = document.getElementById('btnAnnulerCourse');
 
+        // Admin photo
         const modalAdminPhoto = document.getElementById('modalAdminPhoto');
         const adminPhotoChauffeurNom = document.getElementById('adminPhotoChauffeurNom');
         const adminPhotoPreview = document.getElementById('adminPhotoPreview');
@@ -594,13 +604,14 @@
         let tooltipPlaceIndex = null;
         let adminTargetChauffeurEmail = null;
         let adminTempPhotoData = null;
-        let currentUser = null;
+        let currentUser = null; // utilisateur connecté (avec `role`)
 
+        // Clé pour les photos en localStorage (en attendant Cloudinary)
         const STORAGE_KEY_PHOTOS = 'chauffeur_photos';
 
-        // ============================================================
+        // ========================================================================
         // 3. FONCTIONS UTILITAIRES
-        // ============================================================
+        // ========================================================================
         function getPhotos() {
             try { return JSON.parse(localStorage.getItem(STORAGE_KEY_PHOTOS)) || {}; } catch { return {}; }
         }
@@ -626,14 +637,31 @@
             btn.textContent = originalText;
         }
 
-        // Vérification de la connectivité
         function isOnline() {
             return navigator.onLine;
         }
 
-        // ============================================================
-        // 4. AFFICHAGE (HOME / MAIN)
-        // ============================================================
+        // ========================================================================
+        // 4. FERMETURE DES MODALES (UNIFIÉE)
+        // ========================================================================
+        function closeModalInscription() {
+            if (modalInscription) modalInscription.classList.remove('active');
+        }
+        function closeModalConnexion() {
+            if (modalConnexion) modalConnexion.classList.remove('active');
+        }
+        function closeModalCreateCourse() {
+            if (modalCreateCourse) modalCreateCourse.classList.remove('active');
+        }
+        function closeAdminPhotoModal() {
+            if (modalAdminPhoto) modalAdminPhoto.classList.remove('active');
+            adminTargetChauffeurEmail = null;
+            adminTempPhotoData = null;
+        }
+
+        // ========================================================================
+        // 5. AFFICHAGE (HOME / MAIN)
+        // ========================================================================
         function showHomeScreen() {
             homeScreen.style.display = 'block';
             mainInterface.classList.remove('active');
@@ -667,11 +695,9 @@
             }
         }
 
-        // ============================================================
-        // 5. FONCTIONS FIRESTORE (CRUD avec gestion d'erreur)
-        // ============================================================
-
-        // Helper pour les appels Firestore avec retry (optionnel)
+        // ========================================================================
+        // 6. FONCTIONS FIRESTORE (CRUD avec gestion réseau)
+        // ========================================================================
         async function firestoreGet(collection, docId = null) {
             try {
                 if (!isOnline()) throw new Error('Hors ligne');
@@ -715,48 +741,38 @@
             }
         }
 
-        // --- Lire tous les utilisateurs ---
         async function fetchUsers() {
             try {
                 const snap = await firestoreGet('users');
                 const users = [];
                 snap.forEach(doc => users.push(doc.data()));
                 return users;
-            } catch (error) {
-                showToast('📡 Impossible de charger les utilisateurs (hors ligne)', true);
+            } catch {
                 return [];
             }
         }
 
-        // --- Lire tous les trajets ---
         async function fetchRides() {
             try {
                 const snap = await firestoreGet('rides');
                 const rides = [];
                 snap.forEach(doc => rides.push({ id: doc.id, ...doc.data() }));
                 return rides;
-            } catch (error) {
-                showToast('📡 Impossible de charger les trajets (hors ligne)', true);
+            } catch {
                 return [];
             }
         }
 
-        // --- Créer un utilisateur ---
         async function createUser(userData) {
             await firestoreSet('users', userData.email, userData);
         }
-
-        // --- Créer un trajet ---
         async function createRide(rideData) {
             return await firestoreAdd('rides', rideData);
         }
-
-        // --- Mettre à jour un trajet ---
         async function updateRide(rideId, rideData) {
             await firestoreUpdate('rides', rideId, rideData);
         }
 
-        // --- Compter les utilisateurs ---
         async function countUsers() {
             try {
                 const snap = await firestoreGet('users');
@@ -766,9 +782,9 @@
             }
         }
 
-        // ============================================================
-        // 6. MISE À JOUR DU COMPTEUR
-        // ============================================================
+        // ========================================================================
+        // 7. MISE À JOUR DU COMPTEUR
+        // ========================================================================
         async function updateStats() {
             try {
                 const count = await countUsers();
@@ -778,9 +794,9 @@
             }
         }
 
-        // ============================================================
-        // 7. RENDU DES COURSES (inchangé)
-        // ============================================================
+        // ========================================================================
+        // 8. RENDU DES COURSES
+        // ========================================================================
         async function renderCourses(user) {
             try {
                 const allRides = await fetchRides();
@@ -809,6 +825,7 @@
                     card.className = 'course-card';
                     card.dataset.courseId = course.id;
 
+                    // Info
                     const info = document.createElement('div');
                     info.className = 'course-info';
                     const titre = document.createElement('span');
@@ -825,6 +842,7 @@
                     info.appendChild(prix);
                     card.appendChild(info);
 
+                    // Rangée carreaux + photo
                     const row = document.createElement('div');
                     row.className = 'course-row';
 
@@ -878,6 +896,7 @@
                     }
                     row.appendChild(seatGrid);
 
+                    // Photo
                     const photoContainer = document.createElement('div');
                     photoContainer.className = 'car-photo' + (photoData ? '' : ' default');
                     if (photoData) {
@@ -899,9 +918,9 @@
             }
         }
 
-        // ============================================================
-        // 8. PANEL ADMIN (inchangé)
-        // ============================================================
+        // ========================================================================
+        // 9. PANEL ADMIN
+        // ========================================================================
         async function renderAdminLists() {
             try {
                 const users = await fetchUsers();
@@ -938,9 +957,9 @@
             }
         }
 
-        // ============================================================
-        // 9. ADMIN PHOTO (inchangé)
-        // ============================================================
+        // ========================================================================
+        // 10. ADMIN PHOTO
+        // ========================================================================
         function openAdminPhotoModal(chauffeur) {
             adminTargetChauffeurEmail = chauffeur.email;
             adminPhotoChauffeurNom.textContent = `Chauffeur : ${chauffeur.nom} (${chauffeur.email})`;
@@ -949,12 +968,6 @@
             adminTempPhotoData = null;
             adminPhotoInput.value = '';
             modalAdminPhoto.classList.add('active');
-        }
-
-        function closeAdminPhotoModal() {
-            modalAdminPhoto.classList.remove('active');
-            adminTargetChauffeurEmail = null;
-            adminTempPhotoData = null;
         }
 
         adminPhotoInput.addEventListener('change', function(e) {
@@ -970,8 +983,7 @@
         });
 
         function saveChauffeurPhoto() {
-            if (!adminTargetChauffeurEmail) return;
-            if (!adminTempPhotoData) {
+            if (!adminTargetChauffeurEmail || !adminTempPhotoData) {
                 showToast('⚠️ Veuillez choisir une photo', true);
                 return;
             }
@@ -993,9 +1005,9 @@
             if (e.target === modalAdminPhoto) closeAdminPhotoModal();
         });
 
-        // ============================================================
-        // 10. GESTION DES CLICS SUR LES PLACES (inchangé)
-        // ============================================================
+        // ========================================================================
+        // 11. GESTION DES CLICS SUR LES PLACES
+        // ========================================================================
         async function handleSeatClick(e) {
             const seat = e.target.closest('.seat');
             if (!seat) return;
@@ -1068,9 +1080,9 @@
             }
         }
 
-        // ============================================================
-        // 11. SUPPRIMER RÉSERVATION (CHAUFFEUR) - inchangé
-        // ============================================================
+        // ========================================================================
+        // 12. SUPPRIMER RÉSERVATION (CHAUFFEUR)
+        // ========================================================================
         async function handleSupprimerResa() {
             if (!tooltipCourseId || tooltipPlaceIndex === null) return;
             try {
@@ -1094,9 +1106,9 @@
             }
         }
 
-        // ============================================================
-        // 12. ADMIN : TOGGLES LISTES (inchangé)
-        // ============================================================
+        // ========================================================================
+        // 13. ADMIN : TOGGLES LISTES
+        // ========================================================================
         function toggleAdminList(listElement) {
             if (listElement.style.display === 'block') {
                 listElement.style.display = 'none';
@@ -1116,9 +1128,9 @@
             toggleAdminList(adminPassagersList);
         });
 
-        // ============================================================
-        // 13. INSCRIPTION (CORRIGÉE)
-        // ============================================================
+        // ========================================================================
+        // 14. INSCRIPTION
+        // ========================================================================
         async function handleInscription() {
             const role = roleSelect.value;
             const nom = nomInput.value.trim();
@@ -1142,9 +1154,8 @@
                 showToast('🔒 Mot de passe : au moins 4 caractères', true);
                 return;
             }
-
             if (!isOnline()) {
-                showToast('📡 Pas de connexion Internet. Vérifiez votre réseau.', true);
+                showToast('📡 Pas de connexion Internet.', true);
                 return;
             }
 
@@ -1153,9 +1164,7 @@
             showLoader(btn);
 
             try {
-                // 1. Créer l'utilisateur dans Firebase Auth
                 const userCredential = await auth.createUserWithEmailAndPassword(email, motDePasse);
-                // 2. Enregistrer les données dans Firestore (avec merge)
                 const userData = {
                     nom,
                     telephone: tel,
@@ -1166,25 +1175,23 @@
                 await db.collection('users').doc(email).set(userData, { merge: true });
                 showToast(`✅ Compte ${role} « ${nom} » créé !`);
                 closeModalInscription();
-                // L'utilisateur est automatiquement connecté via onAuthStateChanged
             } catch (error) {
                 let msg = error.message;
-                if (error.code === 'auth/email-already-in-use') {
-                    msg = 'Cet email est déjà utilisé.';
-                } else if (error.code === 'auth/weak-password') {
-                    msg = 'Mot de passe trop faible (min 6 caractères).';
-                } else if (error.message.includes('offline') || error.message.includes('network')) {
-                    msg = 'Problème de connexion réseau. Vérifiez votre accès Internet.';
+                if (error.code === 'auth/email-already-in-use') msg = 'Cet email est déjà utilisé.';
+                else if (error.code === 'auth/weak-password') msg = 'Mot de passe trop faible (min 6 caractères).';
+                else if (error.message.includes('offline') || error.message.includes('network')) {
+                    msg = 'Problème de connexion réseau.';
                 }
                 showToast(`❌ ${msg}`, true);
                 console.error('Inscription error:', error);
+                // Modale reste ouverte
             }
             hideLoader(btn, originalText);
         }
 
-        // ============================================================
-        // 14. CONNEXION (inchangée)
-        // ============================================================
+        // ========================================================================
+        // 15. CONNEXION
+        // ========================================================================
         async function handleLogin() {
             const email = loginEmail.value.trim();
             const password = loginPassword.value.trim();
@@ -1193,7 +1200,7 @@
                 return;
             }
 
-            // Admin en dur (sans Firebase)
+            // Admin local
             if (email === 'admin@gmail.com' && password === 'admin123') {
                 const adminUser = { nom: 'Admin', email: 'admin@gmail.com', role: 'admin' };
                 currentUser = adminUser;
@@ -1229,9 +1236,9 @@
             hideLoader(btn, originalText);
         }
 
-        // ============================================================
-        // 15. DÉCONNEXION (inchangée)
-        // ============================================================
+        // ========================================================================
+        // 16. DÉCONNEXION
+        // ========================================================================
         async function logout() {
             try {
                 await auth.signOut();
@@ -1245,9 +1252,9 @@
             }
         }
 
-        // ============================================================
-        // 16. CRÉATION D'UNE COURSE (inchangée)
-        // ============================================================
+        // ========================================================================
+        // 17. CRÉATION COURSE
+        // ========================================================================
         async function handleCreateCourse() {
             const depart = courseDepart.value.trim();
             const arrivee = courseArrivee.value.trim();
@@ -1266,7 +1273,6 @@
                 showToast('❌ Vous devez être connecté', true);
                 return;
             }
-
             if (!isOnline()) {
                 showToast('📡 Pas de connexion Internet.', true);
                 return;
@@ -1293,18 +1299,17 @@
                 await renderCourses(currentUser);
             } catch (error) {
                 let msg = error.message;
-                if (error.message.includes('offline')) {
-                    msg = 'Problème de connexion réseau.';
-                }
+                if (error.message.includes('offline')) msg = 'Problème de connexion réseau.';
                 showToast(`❌ ${msg}`, true);
                 console.error('Create course error:', error);
+                // Modale reste ouverte
             }
             hideLoader(btn, originalText);
         }
 
-        // ============================================================
-        // 17. GESTION DE LA SESSION (onAuthStateChanged)
-        // ============================================================
+        // ========================================================================
+        // 18. GESTION DE LA SESSION (onAuthStateChanged)
+        // ========================================================================
         auth.onAuthStateChanged(async (firebaseUser) => {
             if (firebaseUser) {
                 try {
@@ -1314,7 +1319,7 @@
                         currentUser = { ...userData, email: firebaseUser.email };
                         showMainInterface(currentUser);
                     } else {
-                        // L'utilisateur Firebase existe mais pas dans Firestore -> on le déconnecte
+                        // Firebase existe mais pas Firestore
                         await auth.signOut();
                         currentUser = null;
                         showHomeScreen();
@@ -1322,12 +1327,14 @@
                     }
                 } catch (error) {
                     console.error('Erreur récupération utilisateur:', error);
-                    // Si on est hors ligne, on tente d'utiliser les données locales si disponibles
-                    // Pour l'instant, on affiche un message
-                    showToast('📡 Impossible de récupérer le profil (hors ligne)', true);
-                    // On peut quand même laisser l'utilisateur connecté avec un profil minimal
-                    currentUser = { email: firebaseUser.email, nom: firebaseUser.displayName || 'Utilisateur', role: 'passager' };
+                    // En cas d'erreur réseau, on laisse un profil minimal
+                    currentUser = {
+                        email: firebaseUser.email,
+                        nom: firebaseUser.displayName || 'Utilisateur',
+                        role: 'passager'
+                    };
                     showMainInterface(currentUser);
+                    showToast('📡 Profil minimal (hors ligne)', false);
                 }
             } else {
                 currentUser = null;
@@ -1335,75 +1342,96 @@
             }
         });
 
-        // ============================================================
-        // 18. ÉVÉNEMENTS (inchangés)
-        // ============================================================
-        // Inscription
+        // ========================================================================
+        // 19. ÉVÉNEMENTS
+        // ========================================================================
+
+        // -- Inscription --
         btnInscription.addEventListener('click', () => {
             modalInscription.classList.add('active');
-            nomInput.value = ''; telInput.value = ''; emailInput.value = ''; pwdInput.value = '';
+            nomInput.value = '';
+            telInput.value = '';
+            emailInput.value = '';
+            pwdInput.value = '';
             roleSelect.value = 'passager';
             nomInput.focus();
         });
-        btnAnnulerInscription.addEventListener('click', () => modalInscription.classList.remove('active'));
-        modalInscription.addEventListener('click', (e) => { if (e.target === modalInscription) modalInscription.classList.remove('active'); });
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && modalInscription.classList.contains('active')) modalInscription.classList.remove('active');
+        btnAnnulerInscription.addEventListener('click', closeModalInscription);
+        modalInscription.addEventListener('click', (e) => {
+            if (e.target === modalInscription) closeModalInscription();
         });
         [nomInput, telInput, emailInput, pwdInput, roleSelect].forEach(el => {
-            el.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleInscription(); });
+            el.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') handleInscription();
+            });
         });
         btnValiderInscription.addEventListener('click', handleInscription);
 
-        // Connexion
+        // -- Connexion --
         btnConnexion.addEventListener('click', () => {
             modalConnexion.classList.add('active');
-            loginEmail.value = ''; loginPassword.value = '';
+            loginEmail.value = '';
+            loginPassword.value = '';
             loginEmail.focus();
         });
-        btnAnnulerConnexion.addEventListener('click', () => modalConnexion.classList.remove('active'));
-        modalConnexion.addEventListener('click', (e) => { if (e.target === modalConnexion) modalConnexion.classList.remove('active'); });
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && modalConnexion.classList.contains('active')) modalConnexion.classList.remove('active');
+        btnAnnulerConnexion.addEventListener('click', closeModalConnexion);
+        modalConnexion.addEventListener('click', (e) => {
+            if (e.target === modalConnexion) closeModalConnexion();
         });
         [loginEmail, loginPassword].forEach(el => {
-            el.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleLogin(); });
+            el.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') handleLogin();
+            });
         });
         btnValiderConnexion.addEventListener('click', handleLogin);
 
-        // Déconnexion
+        // -- Déconnexion --
         btnLogout.addEventListener('click', logout);
 
-        // Créer course
+        // -- Créer course --
         btnCreateCourse.addEventListener('click', () => {
             modalCreateCourse.classList.add('active');
-            courseDepart.value = ''; courseArrivee.value = ''; courseHeure.value = ''; coursePrix.value = ''; coursePlaces.value = '';
+            courseDepart.value = '';
+            courseArrivee.value = '';
+            courseHeure.value = '';
+            coursePrix.value = '';
+            coursePlaces.value = '';
             courseDepart.focus();
         });
-        btnAnnulerCourse.addEventListener('click', () => modalCreateCourse.classList.remove('active'));
-        modalCreateCourse.addEventListener('click', (e) => { if (e.target === modalCreateCourse) modalCreateCourse.classList.remove('active'); });
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && modalCreateCourse.classList.contains('active')) modalCreateCourse.classList.remove('active');
+        btnAnnulerCourse.addEventListener('click', closeModalCreateCourse);
+        modalCreateCourse.addEventListener('click', (e) => {
+            if (e.target === modalCreateCourse) closeModalCreateCourse();
         });
         [courseDepart, courseArrivee, courseHeure, coursePrix, coursePlaces].forEach(el => {
-            el.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleCreateCourse(); });
+            el.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') handleCreateCourse();
+            });
         });
         btnValiderCourse.addEventListener('click', handleCreateCourse);
 
-        // Clic sur les places
+        // -- Clic sur les places --
         coursesList.addEventListener('click', handleSeatClick);
 
-        // Tooltip
+        // -- Tooltip --
         btnSupprimerResa.addEventListener('click', handleSupprimerResa);
 
-        // ============================================================
-        // 19. INITIALISATION
-        // ============================================================
-        // Mise à jour périodique du compteur
-        setInterval(updateStats, 30000);
+        // -- Fermeture avec Échap --
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                if (modalInscription.classList.contains('active')) closeModalInscription();
+                else if (modalConnexion.classList.contains('active')) closeModalConnexion();
+                else if (modalCreateCourse.classList.contains('active')) closeModalCreateCourse();
+                else if (modalAdminPhoto.classList.contains('active')) closeAdminPhotoModal();
+            }
+        });
 
-        // Affichage initial géré par onAuthStateChanged
-        console.log('✅ Firebase intégré avec persistance hors-ligne');
+        // ========================================================================
+        // 20. INITIALISATION
+        // ========================================================================
+        // Mise à jour périodique des stats
+        setInterval(updateStats, 30000);
+        // Au premier chargement, on laisse onAuthStateChanged gérer l'affichage
+        console.log('✅ Machi prêt avec Firebase + modales corrigées');
     </script>
 </body>
 </html>
