@@ -4,13 +4,22 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes" />
     <title>Machi – Mobile</title>
+
+    <!-- ===== FAVICON ===== -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%230a0d1a'/%3E%3Ctext x='50' y='68' font-family='Arial, sans-serif' font-size='60' font-weight='bold' text-anchor='middle' fill='%2300d4cc'%3EM%3C/text%3E%3C/svg%3E" />
+    <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%230a0d1a'/%3E%3Ctext x='50' y='68' font-family='Arial, sans-serif' font-size='60' font-weight='bold' text-anchor='middle' fill='%2300d4cc'%3EM%3C/text%3E%3C/svg%3E" />
+
+    <!-- ===== FONTS & LIBS ===== -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz@14..32&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
     <style>
+        /* ===== STYLES (inchangés) ===== */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Inter', sans-serif;
@@ -24,8 +33,8 @@
         }
         .glass-card, #mainInterface {
             background: rgba(20,25,45,0.6);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
+            backdrop-filter: blur(12px) saturate(160%);
+            -webkit-backdrop-filter: blur(12px) saturate(160%);
             border: 1px solid rgba(255,255,255,0.08);
             border-radius: 1.5rem;
             padding: 1rem 0.6rem;
@@ -44,15 +53,12 @@
             font-size: 0.8rem;
             color: #d6eaff;
             cursor: pointer;
-            transition: background 0.2s, color 0.2s, opacity 0.2s;
+            transition: background 0.2s, color 0.2s;
             text-align: center;
             display: inline-block;
-            user-select: none;
-            touch-action: manipulation;
         }
         .btn-led:hover { background: #2b3b66; color: #fff; }
         .btn-led:active { background: #16203a; }
-        .btn-led:disabled { opacity: 0.5; cursor: not-allowed; pointer-events: none; }
         .btn-led.pulsing {
             animation: pulse 1s ease-in-out infinite;
             background: #00b8b0;
@@ -104,7 +110,6 @@
             inset: 0;
             background: rgba(0,0,0,0.6);
             backdrop-filter: blur(4px);
-            -webkit-backdrop-filter: blur(4px);
             z-index: 50;
             align-items: center;
             justify-content: center;
@@ -112,8 +117,7 @@
         .modal-overlay.active { display: flex; }
         .modal-content {
             background: rgba(18,24,44,0.85);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
+            backdrop-filter: blur(16px) saturate(180%);
             border: 1px solid rgba(255,255,255,0.06);
             border-radius: 1.5rem;
             padding: 1.2rem 0.8rem;
@@ -153,6 +157,7 @@
             border-radius: 0.8rem;
             padding: 0.4rem 0.6rem;
             width: 100%;
+            backdrop-filter: blur(4px);
             transition: background 0.2s, border-color 0.3s, box-shadow 0.3s;
             position: relative;
         }
@@ -224,11 +229,51 @@
         .car-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
         .car-photo.default { font-size: 1.6rem; background: rgba(255,255,255,0.02); }
         @media (max-width:380px) { .car-photo { font-size:1.2rem; } .course-row { gap:0.6rem; } .seat-grid { gap:0.1rem; } .seat { border-width:1px; } }
+        .admin-panel { margin-top:0.6rem; }
+        .admin-panel .btn-admin {
+            background: #1e2a4a;
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 60px;
+            padding: 0.4rem 1rem;
+            color: #d6eaff;
+            cursor: pointer;
+            transition: background 0.2s;
+            width: 100%;
+            text-align: center;
+            font-weight: 600;
+            margin-bottom: 0.3rem;
+            font-size: 0.85rem;
+        }
+        .admin-panel .btn-admin:hover { background: #2b3b66; }
+        .admin-panel .btn-admin.active { background: #2b3b66; border-color: #4a8cff; }
+        .admin-list {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 0.6rem;
+            padding: 0.4rem;
+            margin-top: 0.3rem;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+        .admin-list .item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.2rem 0;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+            font-size: 0.75rem;
+            color: #b0c8e8;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .admin-list .item:hover { background: rgba(255,255,255,0.05); }
+        .admin-list .item:last-child { border-bottom: none; }
+        .admin-list .item .email { color: #8aa0c8; font-size: 0.65rem; }
+        .crop-container { width: 100%; margin: 0.3rem 0; display: none; min-height: 150px; }
+        .crop-container img { max-width: 100%; display: block; }
         .tooltip-reservation {
             position: fixed;
             background: rgba(18,24,44,0.95);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
+            backdrop-filter: blur(12px);
             border: 1px solid rgba(255,255,255,0.1);
             border-radius: 1rem;
             padding: 0.4rem 0.6rem;
@@ -265,7 +310,6 @@
             transform: translateX(-50%);
             background: rgba(0,180,170,0.15);
             backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
             border: 1px solid rgba(0,255,200,0.15);
             padding: 0.4rem 1.2rem;
             border-radius: 60px;
@@ -295,7 +339,6 @@
             display: none;
             cursor: pointer;
             animation: pulseButton 1.5s ease-in-out infinite;
-            transition: transform 0.2s;
         }
         .btn-start-ride:hover { background: #00d4cc; transform: translateX(-50%) scale(1.02); }
         @keyframes pulseButton { 0% { box-shadow: 0 0 0 0 rgba(0,200,180,0.5); } 70% { box-shadow: 0 0 20px 10px rgba(0,200,180,0); } 100% { box-shadow: 0 0 0 0 rgba(0,200,180,0); } }
@@ -310,16 +353,6 @@
             animation: spin 0.6s linear infinite;
         }
         @keyframes spin { to { transform: rotate(360deg); } }
-        .admin-link {
-            display: block;
-            text-align: center;
-            margin-top: 1rem;
-            font-size: 0.6rem;
-            color: rgba(255,255,255,0.15);
-            text-decoration: none;
-            transition: color 0.2s;
-        }
-        .admin-link:hover { color: rgba(255,255,255,0.4); }
         @media (max-width:480px) {
             body { padding: 0.3rem; }
             .glass-card, #mainInterface { padding: 0.6rem 0.4rem; border-radius: 1rem; }
@@ -331,6 +364,7 @@
     </style>
 </head>
 <body>
+    <!-- ===== HTML (inchangé) ===== -->
     <div id="homeScreen" class="glass-card">
         <h1 class="text-xl font-bold text-center text-cyan-200 mb-0.5">Machi</h1>
         <p class="text-center text-slate-400 text-xs mb-4 tracking-wider">⚡ mobilité en circuit fermé</p>
@@ -357,14 +391,64 @@
                 <p class="text-slate-500 text-center text-xs" id="noCoursesMsg">Aucune course pour le moment.</p>
                 <div id="coursesList" class="courses-list"></div>
             </div>
+            <div id="adminPanel" class="admin-panel" style="display:none;">
+                <button id="btnAdminChauffeurs" class="btn-admin">🚗 Chauffeurs</button>
+                <div id="adminChauffeursList" class="admin-list" style="display:none;"></div>
+                <button id="btnAdminPassagers" class="btn-admin">🚶 Passagers</button>
+                <div id="adminPassagersList" class="admin-list" style="display:none;"></div>
+                <button id="btnAdminSpots" class="btn-admin">📍 Spots</button>
+                <div id="adminSpotsList" class="admin-list" style="display:none;"></div>
+            </div>
         </div>
-        <a href="admin.html" id="adminLink" class="admin-link" style="display:none;">⚙️ Administration</a>
     </div>
 
     <button id="btnStartRide" class="btn-start-ride">🚀 Commencer le trajet</button>
 
-    <!-- Modales -->
-    <div id="modalInscription" class="modal-overlay" data-modal="inscription">
+    <!-- ===== MODALES ===== -->
+    <div id="modalAdminEdit" class="modal-overlay">
+        <div class="modal-content">
+            <h2 class="text-base font-semibold text-center text-cyan-200 mb-2">✏️ Modifier l'utilisateur</h2>
+            <div id="adminEditUserInfo" class="text-xs text-slate-400 mb-2">Chargement...</div>
+            <label>Nom</label><input type="text" id="adminEditNom" placeholder="Nom" />
+            <label>Téléphone</label><input type="tel" id="adminEditTelephone" placeholder="0555 12 34 56" />
+            <label>Email (non modifiable)</label><input type="email" id="adminEditEmail" disabled />
+            <label>Rôle</label><input type="text" id="adminEditRole" disabled />
+            <label>Crédits (Alfrak)</label><input type="number" id="adminEditCredits" placeholder="100" min="0" step="1" />
+            <div class="mt-3 border-t border-white/5 pt-2">
+                <p class="text-xs text-cyan-200 font-medium mb-1">📸 Photos</p>
+                <label class="text-xs">Photo de la voiture (3:2)</label>
+                <input type="file" id="adminEditCarPhotoInput" accept="image/*" />
+                <div id="adminEditCarCropContainer" class="crop-container"><img id="adminEditCarCropImage" src="#" alt="Rogner" /></div>
+                <label class="text-xs mt-2">Photo de profil (1:1)</label>
+                <input type="file" id="adminEditProfilePhotoInput" accept="image/*" />
+                <div id="adminEditProfileCropContainer" class="crop-container"><img id="adminEditProfileCropImage" src="#" alt="Rogner" /></div>
+            </div>
+            <div class="flex gap-2 mt-4">
+                <button id="btnAdminEditSave" class="btn-led btn-validate flex-1">💾 Enregistrer</button>
+                <button id="btnAdminEditCancel" class="btn-led btn-cancel flex-1">✖ Annuler</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modalAdminSpots" class="modal-overlay">
+        <div class="modal-content">
+            <h2 class="text-base font-semibold text-center text-cyan-200 mb-2">📍 Gérer les spots</h2>
+            <div id="adminSpotsListContainer" class="admin-list" style="max-height:200px; margin-bottom:0.5rem;"></div>
+            <hr class="border-white/5 my-2" />
+            <label>Nom du spot</label><input type="text" id="adminSpotNom" placeholder="ex: Aéroport" />
+            <div style="text-align:center; margin:0.3rem 0;"><button id="btnGetLocation" class="btn-led btn-validate" style="width:100%;">📍 Me localiser</button></div>
+            <label>Latitude</label><input type="text" id="adminSpotLat" placeholder="36.7538" />
+            <label>Longitude</label><input type="text" id="adminSpotLon" placeholder="3.0588" />
+            <div class="flex gap-2 mt-3">
+                <button id="btnAdminSpotAdd" class="btn-led btn-validate flex-1">➕ Ajouter</button>
+                <button id="btnAdminSpotCancel" class="btn-led btn-cancel flex-1">✖ Fermer</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="tooltipReservation" class="tooltip-reservation"><span class="nom">Passager</span><button class="btn-supprimer" id="btnSupprimerResa">✕</button></div>
+
+    <div id="modalInscription" class="modal-overlay">
         <div class="modal-content">
             <h2 class="text-base font-semibold text-center text-cyan-200 mb-2">Créer un compte</h2>
             <label>Je suis</label><select id="role"><option value="passager">🚶 Passager</option><option value="chauffeur">🚗 Chauffeur</option></select>
@@ -372,26 +456,20 @@
             <label>Téléphone</label><input type="tel" id="telephone" placeholder="0555 12 34 56" />
             <label>Email</label><input type="email" id="email" placeholder="ex: farid@gmail.com" />
             <label>Mot de passe</label><input type="password" id="motDePasse" placeholder="••••••••" />
-            <div class="flex gap-2 mt-3">
-                <button id="btnValiderInscription" class="btn-led btn-validate flex-1">✔ Valider</button>
-                <button class="btn-led btn-cancel flex-1 modal-close" data-modal="inscription">✖ Annuler</button>
-            </div>
+            <div class="flex gap-2 mt-3"><button id="btnValiderInscription" class="btn-led btn-validate flex-1">✔ Valider</button><button id="btnAnnulerInscription" class="btn-led btn-cancel flex-1">✖ Annuler</button></div>
         </div>
     </div>
 
-    <div id="modalConnexion" class="modal-overlay" data-modal="connexion">
+    <div id="modalConnexion" class="modal-overlay">
         <div class="modal-content">
             <h2 class="text-base font-semibold text-center text-cyan-200 mb-2">🔐 Se connecter</h2>
             <label>Email</label><input type="email" id="loginEmail" placeholder="ex: farid@gmail.com" />
             <label>Mot de passe</label><input type="password" id="loginPassword" placeholder="••••••••" />
-            <div class="flex gap-2 mt-3">
-                <button id="btnValiderConnexion" class="btn-led btn-validate flex-1">✔ Se connecter</button>
-                <button class="btn-led btn-cancel flex-1 modal-close" data-modal="connexion">✖ Annuler</button>
-            </div>
+            <div class="flex gap-2 mt-3"><button id="btnValiderConnexion" class="btn-led btn-validate flex-1">✔ Se connecter</button><button id="btnAnnulerConnexion" class="btn-led btn-cancel flex-1">✖ Annuler</button></div>
         </div>
     </div>
 
-    <div id="modalCreateCourse" class="modal-overlay" data-modal="createCourse">
+    <div id="modalCreateCourse" class="modal-overlay">
         <div class="modal-content">
             <h2 class="text-base font-semibold text-center text-cyan-200 mb-2">🚗 Nouvelle course</h2>
             <label>Départ</label><select id="courseDepart"><option value="">-- Choisir un départ --</option></select>
@@ -399,20 +477,14 @@
             <label>Heure de départ</label><input type="time" id="courseHeure" />
             <label>Prix (unités)</label><input type="number" id="coursePrix" placeholder="ex: 12" min="1" />
             <label>Places (hors chauffeur, max 7)</label><input type="number" id="coursePlaces" placeholder="ex: 3" min="1" max="7" />
-            <div class="flex gap-2 mt-3">
-                <button id="btnValiderCourse" class="btn-led btn-validate flex-1">✔ Confirmer</button>
-                <button class="btn-led btn-cancel flex-1 modal-close" data-modal="createCourse">✖ Annuler</button>
-            </div>
+            <div class="flex gap-2 mt-3"><button id="btnValiderCourse" class="btn-led btn-validate flex-1">✔ Confirmer</button><button id="btnAnnulerCourse" class="btn-led btn-cancel flex-1">✖ Annuler</button></div>
         </div>
     </div>
 
-    <div id="tooltipReservation" class="tooltip-reservation"><span class="nom">Passager</span><button class="btn-supprimer" id="btnSupprimerResa">✕</button></div>
     <div id="toast" class="toast"></div>
 
     <script>
-        // ========================================================================
-        // FIREBASE INIT
-        // ========================================================================
+        // ===== JAVASCRIPT (version allégée) =====
         const FIREBASE_CONFIG = {
             apiKey: "AIzaSyACgeZXog1KZGU29HpjM4qpKTBt54KbJFg",
             authDomain: "machi-51024.firebaseapp.com",
@@ -427,9 +499,6 @@
             db = firebase.firestore();
         db.enablePersistence().catch(()=>{});
 
-        // ========================================================================
-        // DOM REFERENCES
-        // ========================================================================
         const $ = id => document.getElementById(id);
         const homeScreen = $('homeScreen'),
             mainInterface = $('mainInterface'),
@@ -440,6 +509,13 @@
             coursesList = $('coursesList'),
             noCoursesMsg = $('noCoursesMsg'),
             coursesContainer = $('coursesContainer'),
+            adminPanel = $('adminPanel'),
+            btnAdminChauffeurs = $('btnAdminChauffeurs'),
+            btnAdminPassagers = $('btnAdminPassagers'),
+            btnAdminSpots = $('btnAdminSpots'),
+            adminChauffeursList = $('adminChauffeursList'),
+            adminPassagersList = $('adminPassagersList'),
+            adminSpotsList = $('adminSpotsList'),
             btnInscription = $('btnInscription'),
             btnConnexion = $('btnConnexion'),
             btnLogout = $('btnLogout'),
@@ -447,6 +523,7 @@
             btnStartRide = $('btnStartRide'),
             modalInscription = $('modalInscription'),
             btnValiderInscription = $('btnValiderInscription'),
+            btnAnnulerInscription = $('btnAnnulerInscription'),
             roleSelect = $('role'),
             nomInput = $('nom'),
             telInput = $('telephone'),
@@ -456,6 +533,7 @@
             loginEmail = $('loginEmail'),
             loginPassword = $('loginPassword'),
             btnValiderConnexion = $('btnValiderConnexion'),
+            btnAnnulerConnexion = $('btnAnnulerConnexion'),
             modalCreateCourse = $('modalCreateCourse'),
             courseDepart = $('courseDepart'),
             courseArrivee = $('courseArrivee'),
@@ -463,20 +541,41 @@
             coursePrix = $('coursePrix'),
             coursePlaces = $('coursePlaces'),
             btnValiderCourse = $('btnValiderCourse'),
+            btnAnnulerCourse = $('btnAnnulerCourse'),
+            modalAdminEdit = $('modalAdminEdit'),
+            adminEditUserInfo = $('adminEditUserInfo'),
+            adminEditNom = $('adminEditNom'),
+            adminEditTelephone = $('adminEditTelephone'),
+            adminEditEmail = $('adminEditEmail'),
+            adminEditRole = $('adminEditRole'),
+            adminEditCredits = $('adminEditCredits'),
+            adminEditCarPhotoInput = $('adminEditCarPhotoInput'),
+            adminEditCarCropContainer = $('adminEditCarCropContainer'),
+            adminEditCarCropImage = $('adminEditCarCropImage'),
+            adminEditProfilePhotoInput = $('adminEditProfilePhotoInput'),
+            adminEditProfileCropContainer = $('adminEditProfileCropContainer'),
+            adminEditProfileCropImage = $('adminEditProfileCropImage'),
+            btnAdminEditSave = $('btnAdminEditSave'),
+            btnAdminEditCancel = $('btnAdminEditCancel'),
+            modalAdminSpots = $('modalAdminSpots'),
+            adminSpotsListContainer = $('adminSpotsListContainer'),
+            adminSpotNom = $('adminSpotNom'),
+            adminSpotLat = $('adminSpotLat'),
+            adminSpotLon = $('adminSpotLon'),
+            btnAdminSpotAdd = $('btnAdminSpotAdd'),
+            btnAdminSpotCancel = $('btnAdminSpotCancel'),
+            btnGetLocation = $('btnGetLocation'),
             tooltip = $('tooltipReservation'),
             btnSupprimerResa = $('btnSupprimerResa'),
-            toast = $('toast'),
-            adminLink = $('adminLink');
+            toast = $('toast');
 
-        // ========================================================================
-        // STATE & UTILITY
-        // ========================================================================
         let currentUser = null,
             watchId = null,
             tooltipCourseId = null,
-            tooltipPlaceIndex = null;
-
-        const longPressTimers = new Map();
+            tooltipPlaceIndex = null,
+            adminEditTargetEmail = null,
+            adminEditCarCropper = null,
+            adminEditProfileCropper = null;
 
         const showToast = (msg, err = false) => {
             toast.textContent = msg;
@@ -490,19 +589,16 @@
         const hideLoader = (btn, txt) => { btn.disabled = false; btn.textContent = txt; };
         const isOnline = () => navigator.onLine;
 
-        const debounceButton = (btn, delay = 800) => {
-            if (btn._debounceTimer) return false;
-            btn.disabled = true;
-            btn._debounceTimer = setTimeout(() => {
-                btn.disabled = false;
-                btn._debounceTimer = null;
-            }, delay);
-            return true;
-        };
-
-        const closeModal = (modalEl) => { if (modalEl) modalEl.classList.remove('active'); };
+        const closeModal = (modal) => { if (modal) modal.classList.remove('active'); };
         const closeAllModals = () => {
-            document.querySelectorAll('.modal-overlay.active').forEach(m => closeModal(m));
+            [modalInscription, modalConnexion, modalCreateCourse, modalAdminEdit, modalAdminSpots].forEach(m => closeModal(m));
+            if (adminEditCarCropper) { adminEditCarCropper.destroy();
+                adminEditCarCropper = null; }
+            if (adminEditProfileCropper) { adminEditProfileCropper.destroy();
+                adminEditProfileCropper = null; }
+            adminEditCarCropContainer.style.display = 'none';
+            adminEditProfileCropContainer.style.display = 'none';
+            adminEditTargetEmail = null;
         };
 
         const showHome = () => {
@@ -525,19 +621,17 @@
             userRoleBadge.textContent = `Rôle : ${roleFr}`;
             creditsBadge.textContent = `🪙 ${user.credits || 0}`;
             btnCreateCourse.style.display = 'none';
-
             if (user.role === 'admin') {
-                adminLink.style.display = 'block';
+                coursesContainer.style.display = 'none';
+                adminPanel.style.display = 'block';
+                renderAdminLists();
             } else {
-                adminLink.style.display = 'none';
+                coursesContainer.style.display = 'block';
+                adminPanel.style.display = 'none';
+                renderCourses(user);
             }
-
-            renderCourses(user);
         };
 
-        // ========================================================================
-        // FIRESTORE HELPERS
-        // ========================================================================
         const dbGet = (col, id = null) => {
             if (!isOnline()) throw new Error('Offline');
             const ref = id ? db.collection(col).doc(id) : db.collection(col);
@@ -562,13 +656,10 @@
         const fetchAll = async (col) => {
             try { const snap = await dbGet(col); const arr = []; snap.forEach(d => arr.push({ id: d.id, ...d.data() })); return arr; } catch { return []; }
         };
+        const fetchUsers = () => fetchAll('users');
         const fetchRides = () => fetchAll('rides');
         const fetchSpots = () => fetchAll('spots');
-        const fetchUsers = () => fetchAll('users');
 
-        // ========================================================================
-        // GEOLOCATION
-        // ========================================================================
         const getCurrentPos = () => new Promise((res, rej) => {
             if (!navigator.geolocation) rej(new Error('Geo not supported'));
             navigator.geolocation.getCurrentPosition(
@@ -587,9 +678,6 @@
             return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         };
 
-        // ========================================================================
-        // SEED DEMO USERS
-        // ========================================================================
         (async () => {
             const demos = [
                 { email: 'chauffeur@gmail.com', password: 'chauffeur123', nom: 'Chauffeur Test', telephone: '0555000001',
@@ -613,9 +701,6 @@
             }
         })();
 
-        // ========================================================================
-        // RENDER COURSES
-        // ========================================================================
         const renderCourses = async (user) => {
             try {
                 const allRides = await fetchRides();
@@ -624,6 +709,7 @@
                 allUsers.forEach(u => userMap[u.email] = u);
 
                 let rides = user.role === 'chauffeur' ? allRides.filter(r => r.chauffeurEmail === user.email) : allRides;
+
                 let activeRide = null;
                 let hasActive = false;
                 if (user.role === 'chauffeur') {
@@ -669,12 +755,14 @@
 
                 const now = new Date(),
                     nowMin = now.getHours() * 60 + now.getMinutes();
-
-                let html = '';
-                for (const course of rides) {
+                rides.forEach(course => {
                     const chauffeur = userMap[course.chauffeurEmail] || {};
                     const carPhoto = chauffeur.photoURL || null;
                     const profilePhoto = chauffeur.profilePhotoURL || null;
+
+                    const card = document.createElement('div');
+                    card.className = 'course-card' + (course.started ? ' course-started' : '');
+                    card.dataset.courseId = course.id;
 
                     let temps = '';
                     if (course.heure) {
@@ -690,7 +778,34 @@
                     const avail = Math.max(0, course.places - reserved);
                     const placesTxt = ` (${avail} place${avail>1?'s':''} restante${avail>1?'s':''})`;
 
-                    const seats = [];
+                    const info = document.createElement('div');
+                    info.className = 'course-info';
+                    const titre = document.createElement('span');
+                    titre.className = 'titre';
+                    titre.textContent = `${course.depart} → ${course.arrivee}`;
+                    info.appendChild(titre);
+                    const heureSpan = document.createElement('span');
+                    heureSpan.className = 'heure';
+                    heureSpan.textContent = `🕐 ${course.heure}`;
+                    info.appendChild(heureSpan);
+                    if (temps) { const ts = document.createElement('span');
+                        ts.className = 'temps-restant';
+                        ts.textContent = temps;
+                        info.appendChild(ts); }
+                    const ps = document.createElement('span');
+                    ps.className = 'places-restantes';
+                    ps.textContent = placesTxt;
+                    info.appendChild(ps);
+                    const prixSpan = document.createElement('span');
+                    prixSpan.className = 'prix';
+                    prixSpan.textContent = `🪙 ${course.prix}`;
+                    info.appendChild(prixSpan);
+                    card.appendChild(info);
+
+                    const row = document.createElement('div');
+                    row.className = 'course-row';
+                    const grid = document.createElement('div');
+                    grid.className = 'seat-grid';
                     const totalSeats = 8,
                         eff = Math.min(total, totalSeats),
                         res = course.reservations || [];
@@ -703,55 +818,478 @@
                     for (let i = eff; i < totalSeats; i++) status[i] = { type: 'disabled' };
                     const order = [0, 1, 2, 3, 4, 5, 6, 7];
                     for (const idx of order) {
+                        const seat = document.createElement('div');
+                        seat.className = 'seat';
+                        seat.dataset.placeIndex = idx;
+                        seat.dataset.courseId = course.id;
                         const s = status[idx];
-                        let classes = 'seat';
-                        let extraAttrs = '';
-                        let style = '';
                         if (idx === 0 && profilePhoto) {
-                            classes += ' driver has-profile';
-                            style = `background-image:url(${profilePhoto});background-color:rgba(0,0,0,0.3);`;
+                            seat.classList.add('driver', 'has-profile');
+                            seat.style.backgroundImage = `url(${profilePhoto})`;
+                            seat.style.backgroundColor = 'rgba(0,0,0,0.3)';
+                            seat.dataset.status = 'driver';
                         } else if (typeof s === 'string') {
-                            classes += ' ' + s;
-                        } else if (s.type === 'available') classes += ' available';
-                        else if (s.type === 'reserved') {
-                            classes += ' reserved';
-                            extraAttrs = `data-reserved-email="${s.email}" data-reserved-nom="${s.nom}"`;
-                        }
-                        seats.push(
-                            `<div class="${classes}" data-place-index="${idx}" data-course-id="${course.id}" data-status="${typeof s === 'string' ? s : s.type}" ${extraAttrs} style="${style}"></div>`
-                            );
+                            if (s === 'driver') seat.classList.add('driver');
+                            else if (s === 'disabled') seat.classList.add('disabled');
+                            seat.dataset.status = s;
+                        } else if (s.type === 'available') { seat.classList.add('available');
+                            seat.dataset.status = 'available'; } else if (s.type === 'reserved') { seat.classList.add(
+                                'reserved');
+                            seat.dataset.status = 'reserved';
+                            seat.dataset.reservedEmail = s.email;
+                            seat.dataset.reservedNom = s.nom; }
+                        grid.appendChild(seat);
                     }
-                    const seatsHtml = seats.join('');
+                    row.appendChild(grid);
 
-                    const photoHtml = carPhoto ?
-                        `<img src="${carPhoto}" alt="Voiture" />` :
-                        '🚗';
-                    const cardClass = 'course-card' + (course.started ? ' course-started' : '');
+                    const photoContainer = document.createElement('div');
+                    photoContainer.className = 'car-photo' + (carPhoto ? '' : ' default');
+                    photoContainer.dataset.courseId = course.id;
+                    if (carPhoto) { const img = document.createElement('img');
+                        img.src = carPhoto;
+                        img.alt = 'Voiture';
+                        photoContainer.appendChild(img); } else photoContainer.textContent = '🚗';
 
-                    html += `
-                        <div class="${cardClass}" data-course-id="${course.id}">
-                            <div class="course-info">
-                                <span class="titre">${course.depart} → ${course.arrivee}</span>
-                                <span class="heure">🕐 ${course.heure}</span>
-                                ${temps ? `<span class="temps-restant">${temps}</span>` : ''}
-                                <span class="places-restantes">${placesTxt}</span>
-                                <span class="prix">🪙 ${course.prix}</span>
-                            </div>
-                            <div class="course-row">
-                                <div class="seat-grid">${seatsHtml}</div>
-                                <div class="car-photo ${carPhoto ? '' : 'default'}" data-course-id="${course.id}">${photoHtml}</div>
-                            </div>
-                        </div>
-                    `;
-                }
-                coursesList.innerHTML = html;
+                    let timer = null;
+                    const start = () => { timer = setTimeout(() => { if (currentUser && currentUser.role === 'chauffeur' &&
+                                confirm('Supprimer cette course ?')) dbDelete('rides', course.id).then(() => { showToast(
+                                '🗑️ Course supprimée');
+                                renderCourses(currentUser); }).catch(e => showToast('❌ Erreur', true)); }, 600); };
+                    const cancel = () => { if (timer) clearTimeout(timer);
+                        timer = null; };
+                    photoContainer.addEventListener('mousedown', start);
+                    photoContainer.addEventListener('mouseup', cancel);
+                    photoContainer.addEventListener('mouseleave', cancel);
+                    photoContainer.addEventListener('touchstart', start, { passive: true });
+                    photoContainer.addEventListener('touchend', cancel, { passive: true });
+                    photoContainer.addEventListener('touchmove', cancel, { passive: true });
+                    photoContainer.addEventListener('contextmenu', e => e.preventDefault());
+                    row.appendChild(photoContainer);
+                    card.appendChild(row);
+                    coursesList.appendChild(card);
+                });
             } catch (e) { showToast('❌ Erreur chargement des courses', true);
                 console.error(e); }
         };
 
-        // ========================================================================
-        // CREATE COURSE
-        // ========================================================================
+        const renderAdminLists = async () => {
+            try {
+                const users = await fetchUsers();
+                const chauffeurs = users.filter(u => u.role === 'chauffeur');
+                const passagers = users.filter(u => u.role === 'passager');
+                adminChauffeursList.innerHTML = '';
+                if (!chauffeurs.length) adminChauffeursList.innerHTML = '<div class="item">Aucun chauffeur</div>';
+                else chauffeurs.forEach(c => {
+                    const div = document.createElement('div');
+                    div.className = 'item';
+                    div.innerHTML = `<span>${c.nom} (${c.telephone})</span><span class="email">${c.email}</span>`;
+                    div.addEventListener('click', () => openAdminEdit(c));
+                    adminChauffeursList.appendChild(div);
+                });
+                adminPassagersList.innerHTML = '';
+                if (!passagers.length) adminPassagersList.innerHTML = '<div class="item">Aucun passager</div>';
+                else passagers.forEach(p => {
+                    const div = document.createElement('div');
+                    div.className = 'item';
+                    div.innerHTML = `<span>${p.nom} (${p.telephone})</span><span class="email">${p.email}</span>`;
+                    div.addEventListener('click', () => openAdminEdit(p));
+                    adminPassagersList.appendChild(div);
+                });
+                await renderSpotsList();
+            } catch (e) { showToast('❌ Erreur chargement utilisateurs', true);
+                console.error(e); }
+        };
+
+        const renderSpotsList = async () => {
+            try {
+                const spots = await fetchSpots();
+                adminSpotsList.innerHTML = '';
+                if (!spots.length) adminSpotsList.innerHTML = '<div class="item">Aucun spot</div>';
+                else spots.forEach(s => {
+                    const div = document.createElement('div');
+                    div.className = 'item';
+                    div.innerHTML = `<span>${s.nom}</span><span class="email">${s.latitude}, ${s.longitude}</span>`;
+                    const del = document.createElement('button');
+                    del.textContent = '✕';
+                    del.style.cssText = 'background:none;border:none;color:#ff6b6b;cursor:pointer';
+                    del.onclick = async (e) => {
+                        e.stopPropagation();
+                        if (confirm(`Supprimer le spot "${s.nom}" ?`)) {
+                            try { await dbDelete('spots', s.id);
+                                showToast('🗑️ Spot supprimé');
+                                renderSpotsList(); } catch (err) { showToast('❌ Erreur suppression', true);
+                                console.error(err); }
+                        }
+                    };
+                    div.appendChild(del);
+                    adminSpotsList.appendChild(div);
+                });
+            } catch (e) { showToast('❌ Erreur chargement spots', true);
+                console.error(e); }
+        };
+
+        const openAdminEdit = (user) => {
+            adminEditTargetEmail = user.email;
+            adminEditUserInfo.textContent = `Édition de ${user.nom} (${user.email})`;
+            adminEditNom.value = user.nom || '';
+            adminEditTelephone.value = user.telephone || '';
+            adminEditEmail.value = user.email || '';
+            adminEditRole.value = user.role || '';
+            adminEditCredits.value = user.credits !== undefined ? user.credits : 100;
+            if (adminEditCarCropper) { adminEditCarCropper.destroy();
+                adminEditCarCropper = null; }
+            if (adminEditProfileCropper) { adminEditProfileCropper.destroy();
+                adminEditProfileCropper = null; }
+            adminEditCarCropContainer.style.display = 'none';
+            adminEditProfileCropContainer.style.display = 'none';
+            adminEditCarPhotoInput.value = '';
+            adminEditProfilePhotoInput.value = '';
+            modalAdminEdit.classList.add('active');
+        };
+
+        adminEditCarPhotoInput.addEventListener('change', function(e) {
+            const file = this.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                adminEditCarCropImage.src = ev.target.result;
+                adminEditCarCropContainer.style.display = 'block';
+                if (adminEditCarCropper) adminEditCarCropper.destroy();
+                adminEditCarCropper = new Cropper(adminEditCarCropImage, { aspectRatio: 3 / 2, viewMode: 1, dragMode: 'move',
+                    autoCropArea: 0.8, restore: false, guides: true, center: true, highlight: false,
+                    cropBoxMovable: true, cropBoxResizable: false, toggleDragModeOnDblclick: false,
+                    zoomOnWheel: true, zoomOnTouch: true, wheelZoomRatio: 0.1, minContainerWidth: 200,
+                    minContainerHeight: 150 });
+            };
+            reader.readAsDataURL(file);
+        });
+        adminEditProfilePhotoInput.addEventListener('change', function(e) {
+            const file = this.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                adminEditProfileCropImage.src = ev.target.result;
+                adminEditProfileCropContainer.style.display = 'block';
+                if (adminEditProfileCropper) adminEditProfileCropper.destroy();
+                adminEditProfileCropper = new Cropper(adminEditProfileCropImage, { aspectRatio: 1 / 1, viewMode: 1,
+                    dragMode: 'move', autoCropArea: 0.8, restore: false, guides: true, center: true,
+                    highlight: false, cropBoxMovable: true, cropBoxResizable: false, toggleDragModeOnDblclick: false,
+                    zoomOnWheel: true, zoomOnTouch: true, wheelZoomRatio: 0.1, minContainerWidth: 200,
+                    minContainerHeight: 150 });
+            };
+            reader.readAsDataURL(file);
+        });
+
+        const saveAdminEdit = async () => {
+            if (!adminEditTargetEmail) return showToast('⚠️ Aucun utilisateur', true);
+            const nom = adminEditNom.value.trim(),
+                tel = adminEditTelephone.value.trim(),
+                credits = parseInt(adminEditCredits.value);
+            if (!nom || !tel || isNaN(credits) || credits < 0) return showToast('⚠️ Nom, téléphone, crédits valides', true);
+            const btn = btnAdminEditSave,
+                orig = btn.textContent;
+            showLoader(btn);
+            try {
+                await dbUpdate('users', adminEditTargetEmail, { nom, telephone: tel, credits });
+                let carURL = null,
+                    profURL = null;
+                if (adminEditCarCropper) {
+                    const canvas = adminEditCarCropper.getCroppedCanvas({ width: 800, height: 533, imageSmoothingQuality: 'high' });
+                    if (canvas) {
+                        const blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg', 0.92));
+                        if (blob) {
+                            const fd = new FormData();
+                            fd.append('file', blob, 'car.jpg');
+                            fd.append('upload_preset', 'machikey');
+                            fd.append('folder', 'machi');
+                            fd.append('cloud_name', 'y6u9peta');
+                            const res = await fetch('https://api.cloudinary.com/v1_1/y6u9peta/image/upload', { method: 'POST',
+                                body: fd });
+                            const data = await res.json();
+                            if (res.ok) carURL = data.secure_url;
+                        }
+                    }
+                }
+                if (adminEditProfileCropper) {
+                    const canvas = adminEditProfileCropper.getCroppedCanvas({ width: 400, height: 400, imageSmoothingQuality: 'high' });
+                    if (canvas) {
+                        const blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg', 0.92));
+                        if (blob) {
+                            const fd = new FormData();
+                            fd.append('file', blob, 'profile.jpg');
+                            fd.append('upload_preset', 'machikey');
+                            fd.append('folder', 'machi');
+                            fd.append('cloud_name', 'y6u9peta');
+                            const res = await fetch('https://api.cloudinary.com/v1_1/y6u9peta/image/upload', { method: 'POST',
+                                body: fd });
+                            const data = await res.json();
+                            if (res.ok) profURL = data.secure_url;
+                        }
+                    }
+                }
+                if (carURL) await dbUpdate('users', adminEditTargetEmail, { photoURL: carURL });
+                if (profURL) await dbUpdate('users', adminEditTargetEmail, { profilePhotoURL: profURL });
+                if (currentUser && currentUser.email === adminEditTargetEmail) { currentUser.credits = credits;
+                    creditsBadge.textContent = `🪙 ${credits}`; }
+                showToast('✅ Utilisateur mis à jour');
+                closeModal(modalAdminEdit);
+                renderAdminLists();
+                if (currentUser && currentUser.role !== 'admin') renderCourses(currentUser);
+            } catch (e) { showToast('❌ Erreur : ' + e.message, true);
+                console.error(e); }
+            hideLoader(btn, orig);
+        };
+
+        const renderSpotsListModal = async () => {
+            const container = adminSpotsListContainer;
+            container.innerHTML = '';
+            const spots = await fetchSpots();
+            if (!spots.length) container.innerHTML = '<div class="item">Aucun spot</div>';
+            else spots.forEach(s => {
+                const div = document.createElement('div');
+                div.className = 'item';
+                div.innerHTML = `<span>${s.nom}</span><span class="email">${s.latitude}, ${s.longitude}</span>`;
+                const del = document.createElement('button');
+                del.textContent = '✕';
+                del.style.cssText = 'background:none;border:none;color:#ff6b6b;cursor:pointer';
+                del.onclick = async (e) => {
+                    e.stopPropagation();
+                    if (confirm(`Supprimer le spot "${s.nom}" ?`)) {
+                        try { await dbDelete('spots', s.id);
+                            showToast('🗑️ Spot supprimé');
+                            renderSpotsListModal();
+                            renderSpotsList(); } catch (err) { showToast('❌ Erreur suppression', true);
+                            console.error(err); }
+                    }
+                };
+                div.appendChild(del);
+                container.appendChild(div);
+            });
+        };
+
+        const openSpotsModal = async () => {
+            modalAdminSpots.classList.add('active');
+            adminSpotNom.value = '';
+            adminSpotLat.value = '';
+            adminSpotLon.value = '';
+            await renderSpotsListModal();
+        };
+        const addSpot = async () => {
+            const nom = adminSpotNom.value.trim(),
+                lat = parseFloat(adminSpotLat.value.trim()),
+                lon = parseFloat(adminSpotLon.value.trim());
+            if (!nom || isNaN(lat) || isNaN(lon)) return showToast('⚠️ Remplissez tous les champs', true);
+            try {
+                await dbAdd('spots', { nom, latitude: lat, longitude: lon });
+                showToast('✅ Spot ajouté');
+                renderSpotsListModal();
+                renderSpotsList();
+                adminSpotNom.value = '';
+                adminSpotLat.value = '';
+                adminSpotLon.value = '';
+            } catch (e) { showToast('❌ Erreur : ' + e.message, true);
+                console.error(e); }
+        };
+
+        btnGetLocation.addEventListener('click', async function() {
+            const orig = this.textContent;
+            this.textContent = '⏳ Localisation…';
+            this.classList.add('pulsing');
+            this.disabled = true;
+            try {
+                const { lat, lon } = await getCurrentPos();
+                adminSpotLat.value = lat.toFixed(6);
+                adminSpotLon.value = lon.toFixed(6);
+                showToast('✅ Coordonnées mises à jour');
+            } catch (e) {
+                let msg = 'Erreur de géolocalisation';
+                if (e.code === 1) msg = 'Permission refusée';
+                else if (e.code === 2) msg = 'Position indisponible';
+                else if (e.code === 3) msg = 'Délai dépassé';
+                else msg = e.message;
+                showToast('❌ ' + msg, true);
+            } finally {
+                this.textContent = orig;
+                this.classList.remove('pulsing');
+                this.disabled = false;
+            }
+        });
+        btnAdminSpotAdd.addEventListener('click', addSpot);
+        btnAdminSpotCancel.addEventListener('click', () => closeModal(modalAdminSpots));
+        modalAdminSpots.addEventListener('click', (e) => { if (e.target === modalAdminSpots) closeModal(modalAdminSpots); });
+
+        coursesList.addEventListener('click', async (e) => {
+            const seat = e.target.closest('.seat');
+            if (!seat) return;
+            const status = seat.dataset.status,
+                courseId = seat.dataset.courseId,
+                placeIndex = parseInt(seat.dataset.placeIndex);
+            if (!currentUser || currentUser.role === 'admin') return;
+
+            if (currentUser.role === 'chauffeur') {
+                if (status === 'reserved') {
+                    const nom = seat.dataset.reservedNom;
+                    if (nom) {
+                        tooltipCourseId = courseId;
+                        tooltipPlaceIndex = placeIndex;
+                        const rect = seat.getBoundingClientRect();
+                        tooltip.style.left = (rect.left + rect.width / 2 - 75) + 'px';
+                        tooltip.style.top = (rect.top - 10) + 'px';
+                        tooltip.style.display = 'flex';
+                        tooltip.querySelector('.nom').textContent = `👤 ${nom}`;
+                    } else tooltip.style.display = 'none';
+                } else tooltip.style.display = 'none';
+            } else if (currentUser.role === 'passager') {
+                if (status === 'available') {
+                    try {
+                        const rides = await fetchRides();
+                        const course = rides.find(r => r.id === courseId);
+                        if (!course) return;
+                        const reservations = course.reservations || [];
+                        if (reservations.some(r => r.email === currentUser.email)) return showToast('❌ Déjà réservé', true);
+                        reservations.push({ email: currentUser.email, nom: currentUser.nom, placeIndex });
+                        await dbUpdate('rides', courseId, { reservations });
+                        showToast(`✅ Place réservée pour ${currentUser.nom}`);
+                        renderCourses(currentUser);
+                    } catch (err) { showToast('❌ Erreur réservation', true);
+                        console.error(err); }
+                } else if (status === 'reserved') {
+                    const reservedEmail = seat.dataset.reservedEmail;
+                    if (reservedEmail === currentUser.email) {
+                        try {
+                            const rides = await fetchRides();
+                            const course = rides.find(r => r.id === courseId);
+                            if (!course) return;
+                            const reservations = course.reservations || [];
+                            const idx = reservations.findIndex(r => r.placeIndex === placeIndex && r.email === currentUser
+                            .email);
+                            if (idx !== -1) { reservations.splice(idx, 1);
+                                await dbUpdate('rides', courseId, { reservations });
+                                showToast('🗑️ Réservation annulée');
+                                renderCourses(currentUser); }
+                        } catch (err) { showToast('❌ Erreur annulation', true);
+                            console.error(err); }
+                    } else showToast('ℹ️ Réservé par un autre', false);
+                }
+            }
+        });
+
+        btnSupprimerResa.addEventListener('click', async () => {
+            if (!tooltipCourseId || tooltipPlaceIndex === null) return;
+            try {
+                const rides = await fetchRides();
+                const course = rides.find(r => r.id === tooltipCourseId);
+                if (!course) return;
+                const reservations = course.reservations || [];
+                const idx = reservations.findIndex(r => r.placeIndex === tooltipPlaceIndex);
+                if (idx !== -1) { reservations.splice(idx, 1);
+                    await dbUpdate('rides', tooltipCourseId, { reservations });
+                    showToast('🗑️ Place libérée');
+                    tooltip.style.display = 'none';
+                    if (currentUser) renderCourses(currentUser); } else tooltip.style.display = 'none';
+            } catch (e) { showToast('❌ Erreur suppression réservation', true);
+                console.error(e); }
+        });
+
+        btnStartRide.addEventListener('click', async function() {
+            const rideId = this.dataset.rideId;
+            if (!rideId) return;
+            try {
+                await dbUpdate('rides', rideId, { started: true, startedAt: new Date().toISOString() });
+                showToast('🚀 Trajet commencé !');
+                btnStartRide.style.display = 'none';
+                if (watchId) { navigator.geolocation.clearWatch(watchId);
+                    watchId = null; }
+                if (currentUser) renderCourses(currentUser);
+            } catch (e) { showToast('❌ Erreur démarrage', true);
+                console.error(e); }
+        });
+
+        const toggleList = (el) => {
+            if (el.style.display === 'block') el.style.display = 'none';
+            else { [adminChauffeursList, adminPassagersList, adminSpotsList].forEach(l => l.style.display = 'none');
+                el.style.display = 'block'; }
+        };
+        btnAdminChauffeurs.addEventListener('click', () => { renderAdminLists();
+            toggleList(adminChauffeursList); });
+        btnAdminPassagers.addEventListener('click', () => { renderAdminLists();
+            toggleList(adminPassagersList); });
+        btnAdminSpots.addEventListener('click', openSpotsModal);
+
+        const handleLogin = async () => {
+            const email = loginEmail.value.trim(),
+                pw = loginPassword.value.trim();
+            if (!email || !pw) return showToast('⚠️ Remplissez tous les champs', true);
+            if (email === 'admin@gmail.com' && pw === 'admin123') {
+                currentUser = { nom: 'Admin', email: 'admin@gmail.com', role: 'admin' };
+                showToast('✅ Bienvenue Admin');
+                closeModal(modalConnexion);
+                showMain(currentUser);
+                return;
+            }
+            if (!isOnline()) return showToast('📡 Pas de connexion', true);
+            const btn = btnValiderConnexion,
+                orig = btn.textContent;
+            showLoader(btn);
+            try {
+                await auth.signInWithEmailAndPassword(email, pw);
+                closeModal(modalConnexion);
+                showToast('✅ Connexion réussie');
+            } catch (e) {
+                let msg = e.message;
+                if (e.code === 'auth/user-not-found' || e.code === 'auth/wrong-password') msg = 'Email ou mot de passe incorrect.';
+                else if (e.message.includes('offline')) msg = 'Problème de connexion réseau.';
+                showToast('❌ ' + msg, true);
+                console.error(e);
+            }
+            hideLoader(btn, orig);
+        };
+
+        const handleInscription = async () => {
+            const role = roleSelect.value,
+                nom = nomInput.value.trim(),
+                tel = telInput.value.trim(),
+                email = emailInput.value.trim(),
+                pw = pwdInput.value.trim();
+            if (!nom || !tel || !email || !pw) return showToast('⚠️ Tous les champs obligatoires', true);
+            if (!/^\d[\d\s]{7,}$/.test(tel.replace(/\s/g, ''))) return showToast('📞 Téléphone invalide', true);
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return showToast('✉️ Email invalide', true);
+            if (pw.length < 4) return showToast('🔒 Mot de passe : au moins 4 caractères', true);
+            if (!isOnline()) return showToast('📡 Pas de connexion', true);
+            const btn = btnValiderInscription,
+                orig = btn.textContent;
+            showLoader(btn);
+            try {
+                await auth.createUserWithEmailAndPassword(email, pw);
+                await dbSet('users', email, { nom, telephone: tel, email, role, credits: 100, dateInscription: new Date()
+                        .toISOString() });
+                showToast(`✅ Compte ${role} « ${nom} » créé !`);
+                closeModal(modalInscription);
+            } catch (e) {
+                let msg = e.message;
+                if (e.code === 'auth/email-already-in-use') msg = 'Cet email est déjà utilisé.';
+                else if (e.code === 'auth/weak-password') msg = 'Mot de passe trop faible (min 6 caractères).';
+                else if (e.message.includes('offline') || e.message.includes('network')) msg = 'Problème de connexion réseau.';
+                showToast('❌ ' + msg, true);
+                console.error(e);
+            }
+            hideLoader(btn, orig);
+        };
+
+        const logout = async () => {
+            try {
+                await auth.signOut();
+                currentUser = null;
+                showHome();
+                showToast('🔓 Déconnecté');
+                tooltip.style.display = 'none';
+                if (watchId) { navigator.geolocation.clearWatch(watchId);
+                    watchId = null; }
+                btnStartRide.style.display = 'none';
+            } catch (e) { showToast('❌ Erreur déconnexion', true);
+                console.error(e); }
+        };
+
         const populateSpotSelects = async () => {
             const spots = await fetchSpots();
             [courseDepart, courseArrivee].forEach(sel => {
@@ -793,7 +1331,6 @@
             if (!isOnline()) return showToast('📡 Pas de connexion', true);
             const btn = btnValiderCourse,
                 orig = btn.textContent;
-            if (!debounceButton(btn)) return;
             showLoader(btn);
             try {
                 const data = {
@@ -820,308 +1357,12 @@
             hideLoader(btn, orig);
         };
 
-        // ========================================================================
-        // SEAT CLICK & RESERVATION
-        // ========================================================================
-        coursesList.addEventListener('click', async (e) => {
-            const seat = e.target.closest('.seat');
-            if (!seat) return;
-            const status = seat.dataset.status,
-                courseId = seat.dataset.courseId,
-                placeIndex = parseInt(seat.dataset.placeIndex);
-            if (!currentUser || currentUser.role === 'admin') return;
-
-            if (currentUser.role === 'chauffeur') {
-                if (status === 'reserved') {
-                    const nom = seat.dataset.reservedNom;
-                    if (nom) {
-                        tooltipCourseId = courseId;
-                        tooltipPlaceIndex = placeIndex;
-                        const rect = seat.getBoundingClientRect();
-                        tooltip.style.left = (rect.left + rect.width / 2 - 75) + 'px';
-                        tooltip.style.top = (rect.top - 10) + 'px';
-                        tooltip.style.display = 'flex';
-                        tooltip.querySelector('.nom').textContent = `👤 ${nom}`;
-                    } else tooltip.style.display = 'none';
-                } else tooltip.style.display = 'none';
-            } else if (currentUser.role === 'passager') {
-                if (status === 'available') {
-                    if (seat.dataset.processing) return;
-                    seat.dataset.processing = 'true';
-                    try {
-                        const rides = await fetchRides();
-                        const course = rides.find(r => r.id === courseId);
-                        if (!course) return;
-                        const reservations = course.reservations || [];
-                        if (reservations.some(r => r.email === currentUser.email)) {
-                            showToast('❌ Déjà réservé', true);
-                            seat.dataset.processing = '';
-                            return;
-                        }
-                        reservations.push({ email: currentUser.email, nom: currentUser.nom, placeIndex });
-                        await dbUpdate('rides', courseId, { reservations });
-                        showToast(`✅ Place réservée pour ${currentUser.nom}`);
-                        renderCourses(currentUser);
-                    } catch (err) { showToast('❌ Erreur réservation', true);
-                        console.error(err); }
-                    seat.dataset.processing = '';
-                } else if (status === 'reserved') {
-                    const reservedEmail = seat.dataset.reservedEmail;
-                    if (reservedEmail === currentUser.email) {
-                        try {
-                            const rides = await fetchRides();
-                            const course = rides.find(r => r.id === courseId);
-                            if (!course) return;
-                            const reservations = course.reservations || [];
-                            const idx = reservations.findIndex(r => r.placeIndex === placeIndex && r.email === currentUser
-                            .email);
-                            if (idx !== -1) { reservations.splice(idx, 1);
-                                await dbUpdate('rides', courseId, { reservations });
-                                showToast('🗑️ Réservation annulée');
-                                renderCourses(currentUser); }
-                        } catch (err) { showToast('❌ Erreur annulation', true);
-                            console.error(err); }
-                    } else showToast('ℹ️ Réservé par un autre', false);
-                }
-            }
-        });
-
-        // Long press sur .car-photo
-        coursesList.addEventListener('mousedown', (e) => {
-            const photo = e.target.closest('.car-photo');
-            if (!photo) return;
-            const courseId = photo.dataset.courseId;
-            if (!courseId || currentUser?.role !== 'chauffeur') return;
-            const timer = setTimeout(() => {
-                if (currentUser && currentUser.role === 'chauffeur' && confirm('Supprimer cette course ?')) {
-                    dbDelete('rides', courseId).then(() => {
-                        showToast('🗑️ Course supprimée');
-                        renderCourses(currentUser);
-                    }).catch(err => showToast('❌ Erreur', true));
-                }
-                longPressTimers.delete(photo);
-            }, 600);
-            longPressTimers.set(photo, timer);
-        });
-        coursesList.addEventListener('mouseup', (e) => {
-            const photo = e.target.closest('.car-photo');
-            if (!photo) return;
-            const timer = longPressTimers.get(photo);
-            if (timer) { clearTimeout(timer);
-                longPressTimers.delete(photo); }
-        });
-        coursesList.addEventListener('mouseleave', (e) => {
-            const photo = e.target.closest('.car-photo');
-            if (!photo) return;
-            const timer = longPressTimers.get(photo);
-            if (timer) { clearTimeout(timer);
-                longPressTimers.delete(photo); }
-        });
-        coursesList.addEventListener('touchstart', (e) => {
-            const photo = e.target.closest('.car-photo');
-            if (!photo) return;
-            const courseId = photo.dataset.courseId;
-            if (!courseId || currentUser?.role !== 'chauffeur') return;
-            const timer = setTimeout(() => {
-                if (currentUser && currentUser.role === 'chauffeur' && confirm('Supprimer cette course ?')) {
-                    dbDelete('rides', courseId).then(() => {
-                        showToast('🗑️ Course supprimée');
-                        renderCourses(currentUser);
-                    }).catch(err => showToast('❌ Erreur', true));
-                }
-                longPressTimers.delete(photo);
-            }, 600);
-            longPressTimers.set(photo, timer);
-        }, { passive: true });
-        coursesList.addEventListener('touchend', (e) => {
-            const photo = e.target.closest('.car-photo');
-            if (!photo) return;
-            const timer = longPressTimers.get(photo);
-            if (timer) { clearTimeout(timer);
-                longPressTimers.delete(photo); }
-        }, { passive: true });
-        coursesList.addEventListener('touchmove', (e) => {
-            const photo = e.target.closest('.car-photo');
-            if (!photo) return;
-            const timer = longPressTimers.get(photo);
-            if (timer) { clearTimeout(timer);
-                longPressTimers.delete(photo); }
-        }, { passive: true });
-
-        btnSupprimerResa.addEventListener('click', async () => {
-            if (!tooltipCourseId || tooltipPlaceIndex === null) return;
-            try {
-                const rides = await fetchRides();
-                const course = rides.find(r => r.id === tooltipCourseId);
-                if (!course) return;
-                const reservations = course.reservations || [];
-                const idx = reservations.findIndex(r => r.placeIndex === tooltipPlaceIndex);
-                if (idx !== -1) { reservations.splice(idx, 1);
-                    await dbUpdate('rides', tooltipCourseId, { reservations });
-                    showToast('🗑️ Place libérée');
-                    tooltip.style.display = 'none';
-                    if (currentUser) renderCourses(currentUser); } else tooltip.style.display = 'none';
-            } catch (e) { showToast('❌ Erreur suppression réservation', true);
-                console.error(e); }
-        });
-
-        btnStartRide.addEventListener('click', async function() {
-            const rideId = this.dataset.rideId;
-            if (!rideId) return;
-            if (!debounceButton(this, 1500)) return;
-            try {
-                await dbUpdate('rides', rideId, { started: true, startedAt: new Date().toISOString() });
-                showToast('🚀 Trajet commencé !');
-                btnStartRide.style.display = 'none';
-                if (watchId) { navigator.geolocation.clearWatch(watchId);
-                    watchId = null; }
-                if (currentUser) renderCourses(currentUser);
-            } catch (e) { showToast('❌ Erreur démarrage', true);
-                console.error(e); }
-            this.disabled = false;
-            this._debounceTimer = null;
-        });
-
-        // ========================================================================
-        // GESTION CENTRALISÉE DES MODALES
-        // ========================================================================
-        document.querySelectorAll('.modal-overlay').forEach(modal => {
-            modal.addEventListener('click', (e) => {
-                if (e.target === modal) closeModal(modal);
-            });
-        });
-
-        document.addEventListener('click', (e) => {
-            const btn = e.target.closest('.modal-close');
-            if (!btn) return;
-            const modalName = btn.dataset.modal;
-            const modal = document.querySelector(`.modal-overlay[data-modal="${modalName}"]`);
-            if (modal) closeModal(modal);
-        });
-
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                const activeModal = document.querySelector('.modal-overlay.active');
-                if (activeModal) closeModal(activeModal);
-            }
-        });
-
-        // ========================================================================
-        // AUTH HANDLERS
-        // ========================================================================
-        const handleLogin = async () => {
-            const email = loginEmail.value.trim(),
-                pw = loginPassword.value.trim();
-            if (!email || !pw) return showToast('⚠️ Remplissez tous les champs', true);
-
-            // --- ADMIN hardcodé ---
-            if (email === 'admin@gmail.com' && pw === 'admin123') {
-                try {
-                    // S'assurer que le doc admin existe dans Firestore
-                    const doc = await dbGet('users', email);
-                    if (!doc.exists) {
-                        await dbSet('users', email, {
-                            nom: 'Admin',
-                            telephone: '0000000000',
-                            email: email,
-                            role: 'admin',
-                            credits: 0,
-                            dateInscription: new Date().toISOString()
-                        });
-                    } else {
-                        // Mettre à jour le rôle si nécessaire
-                        const data = doc.data();
-                        if (data.role !== 'admin') {
-                            await dbUpdate('users', email, { role: 'admin' });
-                        }
-                    }
-                } catch (e) { console.warn('Admin doc sync error', e); }
-
-                currentUser = { nom: 'Admin', email: 'admin@gmail.com', role: 'admin' };
-                showToast('✅ Bienvenue Admin');
-                closeModal(modalConnexion);
-                showMain(currentUser);
-                return;
-            }
-
-            // --- Connexion normale (chauffeur/passager) ---
-            if (!isOnline()) return showToast('📡 Pas de connexion', true);
-            const btn = btnValiderConnexion,
-                orig = btn.textContent;
-            if (!debounceButton(btn)) return;
-            showLoader(btn);
-            try {
-                await auth.signInWithEmailAndPassword(email, pw);
-                closeModal(modalConnexion);
-                showToast('✅ Connexion réussie');
-            } catch (e) {
-                let msg = e.message;
-                if (e.code === 'auth/user-not-found' || e.code === 'auth/wrong-password') msg = 'Email ou mot de passe incorrect.';
-                else if (e.message.includes('offline')) msg = 'Problème de connexion réseau.';
-                showToast('❌ ' + msg, true);
-                console.error(e);
-            }
-            hideLoader(btn, orig);
-        };
-
-        const handleInscription = async () => {
-            const role = roleSelect.value,
-                nom = nomInput.value.trim(),
-                tel = telInput.value.trim(),
-                email = emailInput.value.trim(),
-                pw = pwdInput.value.trim();
-            if (!nom || !tel || !email || !pw) return showToast('⚠️ Tous les champs obligatoires', true);
-            if (!/^\d[\d\s]{7,}$/.test(tel.replace(/\s/g, ''))) return showToast('📞 Téléphone invalide', true);
-            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return showToast('✉️ Email invalide', true);
-            if (pw.length < 4) return showToast('🔒 Mot de passe : au moins 4 caractères', true);
-            if (!isOnline()) return showToast('📡 Pas de connexion', true);
-            const btn = btnValiderInscription,
-                orig = btn.textContent;
-            if (!debounceButton(btn)) return;
-            showLoader(btn);
-            try {
-                await auth.createUserWithEmailAndPassword(email, pw);
-                await dbSet('users', email, { nom, telephone: tel, email, role, credits: 100, dateInscription: new Date()
-                        .toISOString() });
-                showToast(`✅ Compte ${role} « ${nom} » créé !`);
-                closeModal(modalInscription);
-            } catch (e) {
-                let msg = e.message;
-                if (e.code === 'auth/email-already-in-use') msg = 'Cet email est déjà utilisé.';
-                else if (e.code === 'auth/weak-password') msg = 'Mot de passe trop faible (min 6 caractères).';
-                else if (e.message.includes('offline') || e.message.includes('network')) msg = 'Problème de connexion réseau.';
-                showToast('❌ ' + msg, true);
-                console.error(e);
-            }
-            hideLoader(btn, orig);
-        };
-
-        const logout = async () => {
-            try {
-                await auth.signOut();
-                currentUser = null;
-                showHome();
-                showToast('🔓 Déconnecté');
-                tooltip.style.display = 'none';
-                if (watchId) { navigator.geolocation.clearWatch(watchId);
-                    watchId = null; }
-                btnStartRide.style.display = 'none';
-            } catch (e) { showToast('❌ Erreur déconnexion', true);
-                console.error(e); }
-        };
-
-        // ========================================================================
-        // STATS
-        // ========================================================================
         const updateStats = async () => {
             try { const snap = await dbGet('users');
                 stats.textContent = `👤 ${snap.size} inscrit${snap.size > 1 ? 's' : ''}`; } catch { stats.textContent =
                     '👤 ? inscrits (hors ligne)'; }
         };
 
-        // ========================================================================
-        // SESSION
-        // ========================================================================
         auth.onAuthStateChanged(async (user) => {
             if (user) {
                 try {
@@ -1149,9 +1390,6 @@
             }
         });
 
-        // ========================================================================
-        // EVENT LISTENERS
-        // ========================================================================
         btnInscription.addEventListener('click', () => { modalInscription.classList.add('active');
             nomInput.value = '';
             telInput.value = '';
@@ -1159,6 +1397,8 @@
             pwdInput.value = '';
             roleSelect.value = 'passager';
             nomInput.focus(); });
+        btnAnnulerInscription.addEventListener('click', () => closeModal(modalInscription));
+        modalInscription.addEventListener('click', (e) => { if (e.target === modalInscription) closeModal(modalInscription); });
         [nomInput, telInput, emailInput, pwdInput, roleSelect].forEach(el => el.addEventListener('keydown', (e) => { if (e
                     .key === 'Enter') handleInscription(); }));
         btnValiderInscription.addEventListener('click', handleInscription);
@@ -1167,17 +1407,35 @@
             loginEmail.value = '';
             loginPassword.value = '';
             loginEmail.focus(); });
+        btnAnnulerConnexion.addEventListener('click', () => closeModal(modalConnexion));
+        modalConnexion.addEventListener('click', (e) => { if (e.target === modalConnexion) closeModal(modalConnexion); });
         [loginEmail, loginPassword].forEach(el => el.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleLogin(); }));
         btnValiderConnexion.addEventListener('click', handleLogin);
 
         btnLogout.addEventListener('click', logout);
 
+        btnAnnulerCourse.addEventListener('click', () => closeModal(modalCreateCourse));
+        modalCreateCourse.addEventListener('click', (e) => { if (e.target === modalCreateCourse) closeModal(modalCreateCourse); });
         [courseHeure, coursePrix, coursePlaces, courseDepart, courseArrivee].forEach(el => el.addEventListener('keydown', (e) => { if (
                 e.key === 'Enter') handleCreateCourse(); }));
         btnValiderCourse.addEventListener('click', handleCreateCourse);
 
+        btnAdminEditSave.addEventListener('click', saveAdminEdit);
+        btnAdminEditCancel.addEventListener('click', () => closeModal(modalAdminEdit));
+        modalAdminEdit.addEventListener('click', (e) => { if (e.target === modalAdminEdit) closeModal(modalAdminEdit); });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                if (modalInscription.classList.contains('active')) closeModal(modalInscription);
+                else if (modalConnexion.classList.contains('active')) closeModal(modalConnexion);
+                else if (modalCreateCourse.classList.contains('active')) closeModal(modalCreateCourse);
+                else if (modalAdminEdit.classList.contains('active')) closeModal(modalAdminEdit);
+                else if (modalAdminSpots.classList.contains('active')) closeModal(modalAdminSpots);
+            }
+        });
+
         setInterval(updateStats, 30000);
-        console.log('✅ Machi index ready (admin doc sync)');
+        console.log('✅ Machi ready (light + favicon)');
     </script>
 </body>
 </html>
