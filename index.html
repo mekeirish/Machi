@@ -13,7 +13,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
     <style>
-        /* --- Identique à la version précédente (aucun changement CSS) --- */
+        /* --- Styles identiques (inchangés) --- */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Inter', sans-serif;
@@ -521,8 +521,20 @@
         const auth = firebase.auth();
         const db = firebase.firestore();
 
+        // Activer la persistance hors-ligne (optionnel)
+        db.enablePersistence()
+            .catch((err) => {
+                if (err.code === 'failed-precondition') {
+                    // La persistance est déjà activée
+                    console.warn('Persistance déjà active');
+                } else if (err.code === 'unimplemented') {
+                    // Le navigateur ne supporte pas la persistance
+                    console.warn('Persistance non supportée');
+                }
+            });
+
         // ============================================================
-        // 2. DOM & ÉLÉMENTS
+        // 2. DOM & ÉLÉMENTS (inchangé)
         // ============================================================
         const homeScreen = document.getElementById('homeScreen');
         const mainInterface = document.getElementById('mainInterface');
@@ -543,7 +555,6 @@
         const btnLogout = document.getElementById('btnLogout');
         const btnCreateCourse = document.getElementById('btnCreateCourse');
 
-        // Modales
         const modalInscription = document.getElementById('modalInscription');
         const btnValiderInscription = document.getElementById('btnValiderInscription');
         const btnAnnulerInscription = document.getElementById('btnAnnulerInscription');
@@ -568,7 +579,6 @@
         const btnValiderCourse = document.getElementById('btnValiderCourse');
         const btnAnnulerCourse = document.getElementById('btnAnnulerCourse');
 
-        // Admin photo
         const modalAdminPhoto = document.getElementById('modalAdminPhoto');
         const adminPhotoChauffeurNom = document.getElementById('adminPhotoChauffeurNom');
         const adminPhotoPreview = document.getElementById('adminPhotoPreview');
@@ -584,9 +594,8 @@
         let tooltipPlaceIndex = null;
         let adminTargetChauffeurEmail = null;
         let adminTempPhotoData = null;
-        let currentUser = null; // utilisateur Firestore (avec role)
+        let currentUser = null;
 
-        // Clé localStorage pour les photos (temporaire)
         const STORAGE_KEY_PHOTOS = 'chauffeur_photos';
 
         // ============================================================
@@ -615,6 +624,11 @@
         function hideLoader(btn, originalText) {
             btn.disabled = false;
             btn.textContent = originalText;
+        }
+
+        // Vérification de la connectivité
+        function isOnline() {
+            return navigator.onLine;
         }
 
         // ============================================================
@@ -654,45 +668,102 @@
         }
 
         // ============================================================
-        // 5. FONCTIONS FIRESTORE (CRUD)
+        // 5. FONCTIONS FIRESTORE (CRUD avec gestion d'erreur)
         // ============================================================
+
+        // Helper pour les appels Firestore avec retry (optionnel)
+        async function firestoreGet(collection, docId = null) {
+            try {
+                if (!isOnline()) throw new Error('Hors ligne');
+                const ref = docId ? db.collection(collection).doc(docId) : db.collection(collection);
+                const snap = await ref.get();
+                return snap;
+            } catch (error) {
+                console.warn('Firestore get error:', error);
+                throw error;
+            }
+        }
+
+        async function firestoreSet(collection, docId, data) {
+            try {
+                if (!isOnline()) throw new Error('Hors ligne');
+                await db.collection(collection).doc(docId).set(data, { merge: true });
+            } catch (error) {
+                console.warn('Firestore set error:', error);
+                throw error;
+            }
+        }
+
+        async function firestoreAdd(collection, data) {
+            try {
+                if (!isOnline()) throw new Error('Hors ligne');
+                const ref = await db.collection(collection).add(data);
+                return ref.id;
+            } catch (error) {
+                console.warn('Firestore add error:', error);
+                throw error;
+            }
+        }
+
+        async function firestoreUpdate(collection, docId, data) {
+            try {
+                if (!isOnline()) throw new Error('Hors ligne');
+                await db.collection(collection).doc(docId).update(data);
+            } catch (error) {
+                console.warn('Firestore update error:', error);
+                throw error;
+            }
+        }
 
         // --- Lire tous les utilisateurs ---
         async function fetchUsers() {
-            const snapshot = await db.collection('users').get();
-            const users = [];
-            snapshot.forEach(doc => users.push(doc.data()));
-            return users;
+            try {
+                const snap = await firestoreGet('users');
+                const users = [];
+                snap.forEach(doc => users.push(doc.data()));
+                return users;
+            } catch (error) {
+                showToast('📡 Impossible de charger les utilisateurs (hors ligne)', true);
+                return [];
+            }
         }
 
         // --- Lire tous les trajets ---
         async function fetchRides() {
-            const snapshot = await db.collection('rides').get();
-            const rides = [];
-            snapshot.forEach(doc => rides.push({ id: doc.id, ...doc.data() }));
-            return rides;
+            try {
+                const snap = await firestoreGet('rides');
+                const rides = [];
+                snap.forEach(doc => rides.push({ id: doc.id, ...doc.data() }));
+                return rides;
+            } catch (error) {
+                showToast('📡 Impossible de charger les trajets (hors ligne)', true);
+                return [];
+            }
         }
 
         // --- Créer un utilisateur ---
         async function createUser(userData) {
-            await db.collection('users').doc(userData.email).set(userData);
+            await firestoreSet('users', userData.email, userData);
         }
 
         // --- Créer un trajet ---
         async function createRide(rideData) {
-            const docRef = await db.collection('rides').add(rideData);
-            return docRef.id;
+            return await firestoreAdd('rides', rideData);
         }
 
-        // --- Mettre à jour un trajet (réservations) ---
+        // --- Mettre à jour un trajet ---
         async function updateRide(rideId, rideData) {
-            await db.collection('rides').doc(rideId).update(rideData);
+            await firestoreUpdate('rides', rideId, rideData);
         }
 
         // --- Compter les utilisateurs ---
         async function countUsers() {
-            const snapshot = await db.collection('users').get();
-            return snapshot.size;
+            try {
+                const snap = await firestoreGet('users');
+                return snap.size;
+            } catch {
+                return 0;
+            }
         }
 
         // ============================================================
@@ -703,12 +774,12 @@
                 const count = await countUsers();
                 stats.textContent = `👤 ${count} inscrit${count > 1 ? 's' : ''}`;
             } catch {
-                stats.textContent = '👤 0 inscrits';
+                stats.textContent = '👤 ? inscrits (hors ligne)';
             }
         }
 
         // ============================================================
-        // 7. RENDU DES COURSES
+        // 7. RENDU DES COURSES (inchangé)
         // ============================================================
         async function renderCourses(user) {
             try {
@@ -738,7 +809,6 @@
                     card.className = 'course-card';
                     card.dataset.courseId = course.id;
 
-                    // Info
                     const info = document.createElement('div');
                     info.className = 'course-info';
                     const titre = document.createElement('span');
@@ -755,7 +825,6 @@
                     info.appendChild(prix);
                     card.appendChild(info);
 
-                    // Rangée carreaux + photo
                     const row = document.createElement('div');
                     row.className = 'course-row';
 
@@ -809,7 +878,6 @@
                     }
                     row.appendChild(seatGrid);
 
-                    // Photo
                     const photoContainer = document.createElement('div');
                     photoContainer.className = 'car-photo' + (photoData ? '' : ' default');
                     if (photoData) {
@@ -832,7 +900,7 @@
         }
 
         // ============================================================
-        // 8. PANEL ADMIN
+        // 8. PANEL ADMIN (inchangé)
         // ============================================================
         async function renderAdminLists() {
             try {
@@ -871,7 +939,7 @@
         }
 
         // ============================================================
-        // 9. ADMIN PHOTO
+        // 9. ADMIN PHOTO (inchangé)
         // ============================================================
         function openAdminPhotoModal(chauffeur) {
             adminTargetChauffeurEmail = chauffeur.email;
@@ -926,7 +994,7 @@
         });
 
         // ============================================================
-        // 10. GESTION DES CLICS SUR LES PLACES
+        // 10. GESTION DES CLICS SUR LES PLACES (inchangé)
         // ============================================================
         async function handleSeatClick(e) {
             const seat = e.target.closest('.seat');
@@ -1001,7 +1069,7 @@
         }
 
         // ============================================================
-        // 11. SUPPRIMER RÉSERVATION (CHAUFFEUR)
+        // 11. SUPPRIMER RÉSERVATION (CHAUFFEUR) - inchangé
         // ============================================================
         async function handleSupprimerResa() {
             if (!tooltipCourseId || tooltipPlaceIndex === null) return;
@@ -1027,7 +1095,7 @@
         }
 
         // ============================================================
-        // 12. ADMIN : TOGGLES LISTES
+        // 12. ADMIN : TOGGLES LISTES (inchangé)
         // ============================================================
         function toggleAdminList(listElement) {
             if (listElement.style.display === 'block') {
@@ -1049,7 +1117,7 @@
         });
 
         // ============================================================
-        // 13. INSCRIPTION (Firebase Auth + Firestore)
+        // 13. INSCRIPTION (CORRIGÉE)
         // ============================================================
         async function handleInscription() {
             const role = roleSelect.value;
@@ -1075,22 +1143,19 @@
                 return;
             }
 
+            if (!isOnline()) {
+                showToast('📡 Pas de connexion Internet. Vérifiez votre réseau.', true);
+                return;
+            }
+
             const btn = btnValiderInscription;
             const originalText = btn.textContent;
             showLoader(btn);
 
             try {
-                // Vérifier si l'email existe déjà dans Firestore
-                const existing = await db.collection('users').doc(email).get();
-                if (existing.exists) {
-                    showToast('❌ Cet email est déjà utilisé', true);
-                    hideLoader(btn, originalText);
-                    return;
-                }
-
-                // Créer l'utilisateur Firebase Auth
+                // 1. Créer l'utilisateur dans Firebase Auth
                 const userCredential = await auth.createUserWithEmailAndPassword(email, motDePasse);
-                // Enregistrer dans Firestore
+                // 2. Enregistrer les données dans Firestore (avec merge)
                 const userData = {
                     nom,
                     telephone: tel,
@@ -1098,20 +1163,27 @@
                     role,
                     dateInscription: new Date().toISOString()
                 };
-                await createUser(userData);
-
+                await db.collection('users').doc(email).set(userData, { merge: true });
                 showToast(`✅ Compte ${role} « ${nom} » créé !`);
                 closeModalInscription();
                 // L'utilisateur est automatiquement connecté via onAuthStateChanged
             } catch (error) {
-                showToast(`❌ Erreur : ${error.message}`, true);
+                let msg = error.message;
+                if (error.code === 'auth/email-already-in-use') {
+                    msg = 'Cet email est déjà utilisé.';
+                } else if (error.code === 'auth/weak-password') {
+                    msg = 'Mot de passe trop faible (min 6 caractères).';
+                } else if (error.message.includes('offline') || error.message.includes('network')) {
+                    msg = 'Problème de connexion réseau. Vérifiez votre accès Internet.';
+                }
+                showToast(`❌ ${msg}`, true);
                 console.error('Inscription error:', error);
             }
             hideLoader(btn, originalText);
         }
 
         // ============================================================
-        // 14. CONNEXION (Firebase Auth)
+        // 14. CONNEXION (inchangée)
         // ============================================================
         async function handleLogin() {
             const email = loginEmail.value.trim();
@@ -1121,7 +1193,7 @@
                 return;
             }
 
-            // Admin en dur
+            // Admin en dur (sans Firebase)
             if (email === 'admin@gmail.com' && password === 'admin123') {
                 const adminUser = { nom: 'Admin', email: 'admin@gmail.com', role: 'admin' };
                 currentUser = adminUser;
@@ -1131,24 +1203,34 @@
                 return;
             }
 
+            if (!isOnline()) {
+                showToast('📡 Pas de connexion Internet.', true);
+                return;
+            }
+
             const btn = btnValiderConnexion;
             const originalText = btn.textContent;
             showLoader(btn);
 
             try {
                 await auth.signInWithEmailAndPassword(email, password);
-                // L'utilisateur est automatiquement géré par onAuthStateChanged
                 closeModalConnexion();
                 showToast('✅ Connexion réussie');
             } catch (error) {
-                showToast(`❌ ${error.message}`, true);
+                let msg = error.message;
+                if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+                    msg = 'Email ou mot de passe incorrect.';
+                } else if (error.message.includes('offline')) {
+                    msg = 'Problème de connexion réseau.';
+                }
+                showToast(`❌ ${msg}`, true);
                 console.error('Login error:', error);
             }
             hideLoader(btn, originalText);
         }
 
         // ============================================================
-        // 15. DÉCONNEXION
+        // 15. DÉCONNEXION (inchangée)
         // ============================================================
         async function logout() {
             try {
@@ -1164,7 +1246,7 @@
         }
 
         // ============================================================
-        // 16. CRÉATION D'UNE COURSE
+        // 16. CRÉATION D'UNE COURSE (inchangée)
         // ============================================================
         async function handleCreateCourse() {
             const depart = courseDepart.value.trim();
@@ -1182,6 +1264,11 @@
 
             if (!currentUser) {
                 showToast('❌ Vous devez être connecté', true);
+                return;
+            }
+
+            if (!isOnline()) {
+                showToast('📡 Pas de connexion Internet.', true);
                 return;
             }
 
@@ -1205,7 +1292,11 @@
                 closeModalCreateCourse();
                 await renderCourses(currentUser);
             } catch (error) {
-                showToast(`❌ Erreur : ${error.message}`, true);
+                let msg = error.message;
+                if (error.message.includes('offline')) {
+                    msg = 'Problème de connexion réseau.';
+                }
+                showToast(`❌ ${msg}`, true);
                 console.error('Create course error:', error);
             }
             hideLoader(btn, originalText);
@@ -1216,37 +1307,37 @@
         // ============================================================
         auth.onAuthStateChanged(async (firebaseUser) => {
             if (firebaseUser) {
-                // L'utilisateur Firebase est connecté
                 try {
                     const doc = await db.collection('users').doc(firebaseUser.email).get();
                     if (doc.exists) {
                         const userData = doc.data();
                         currentUser = { ...userData, email: firebaseUser.email };
-                        // Vérifier si l'utilisateur n'a pas été supprimé
-                        if (currentUser) {
-                            showMainInterface(currentUser);
-                            return;
-                        }
+                        showMainInterface(currentUser);
+                    } else {
+                        // L'utilisateur Firebase existe mais pas dans Firestore -> on le déconnecte
+                        await auth.signOut();
+                        currentUser = null;
+                        showHomeScreen();
+                        showToast('❌ Utilisateur introuvable dans la base', true);
                     }
                 } catch (error) {
                     console.error('Erreur récupération utilisateur:', error);
+                    // Si on est hors ligne, on tente d'utiliser les données locales si disponibles
+                    // Pour l'instant, on affiche un message
+                    showToast('📡 Impossible de récupérer le profil (hors ligne)', true);
+                    // On peut quand même laisser l'utilisateur connecté avec un profil minimal
+                    currentUser = { email: firebaseUser.email, nom: firebaseUser.displayName || 'Utilisateur', role: 'passager' };
+                    showMainInterface(currentUser);
                 }
-                // Si on arrive ici, l'utilisateur n'existe pas dans Firestore
-                await auth.signOut();
-                currentUser = null;
-                showHomeScreen();
-                showToast('❌ Utilisateur introuvable', true);
             } else {
-                // Déconnecté
                 currentUser = null;
                 showHomeScreen();
             }
         });
 
         // ============================================================
-        // 18. ÉVÉNEMENTS
+        // 18. ÉVÉNEMENTS (inchangés)
         // ============================================================
-
         // Inscription
         btnInscription.addEventListener('click', () => {
             modalInscription.classList.add('active');
@@ -1308,13 +1399,11 @@
         // ============================================================
         // 19. INITIALISATION
         // ============================================================
-        // Au démarrage, on laisse onAuthStateChanged gérer l'affichage
-        // On met à jour les stats périodiquement
-        setInterval(updateStats, 30000); // toutes les 30s
+        // Mise à jour périodique du compteur
+        setInterval(updateStats, 30000);
 
-        // Petite amorce : si pas de données, on crée des utilisateurs de démonstration
-        // (optionnel, on peut le faire manuellement dans Firestore)
-        console.log('✅ Firebase intégré avec succès !');
+        // Affichage initial géré par onAuthStateChanged
+        console.log('✅ Firebase intégré avec persistance hors-ligne');
     </script>
 </body>
 </html>
