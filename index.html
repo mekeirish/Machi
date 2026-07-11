@@ -358,7 +358,6 @@
                 <div id="coursesList" class="courses-list"></div>
             </div>
         </div>
-        <!-- Lien vers l'admin (visible uniquement si le rôle est admin) -->
         <a href="admin.html" id="adminLink" class="admin-link" style="display:none;">⚙️ Administration</a>
     </div>
 
@@ -527,7 +526,6 @@
             creditsBadge.textContent = `🪙 ${user.credits || 0}`;
             btnCreateCourse.style.display = 'none';
 
-            // Afficher le lien admin uniquement si l'utilisateur est admin
             if (user.role === 'admin') {
                 adminLink.style.display = 'block';
             } else {
@@ -1015,13 +1013,38 @@
             const email = loginEmail.value.trim(),
                 pw = loginPassword.value.trim();
             if (!email || !pw) return showToast('⚠️ Remplissez tous les champs', true);
+
+            // --- ADMIN hardcodé ---
             if (email === 'admin@gmail.com' && pw === 'admin123') {
+                try {
+                    // S'assurer que le doc admin existe dans Firestore
+                    const doc = await dbGet('users', email);
+                    if (!doc.exists) {
+                        await dbSet('users', email, {
+                            nom: 'Admin',
+                            telephone: '0000000000',
+                            email: email,
+                            role: 'admin',
+                            credits: 0,
+                            dateInscription: new Date().toISOString()
+                        });
+                    } else {
+                        // Mettre à jour le rôle si nécessaire
+                        const data = doc.data();
+                        if (data.role !== 'admin') {
+                            await dbUpdate('users', email, { role: 'admin' });
+                        }
+                    }
+                } catch (e) { console.warn('Admin doc sync error', e); }
+
                 currentUser = { nom: 'Admin', email: 'admin@gmail.com', role: 'admin' };
                 showToast('✅ Bienvenue Admin');
                 closeModal(modalConnexion);
                 showMain(currentUser);
                 return;
             }
+
+            // --- Connexion normale (chauffeur/passager) ---
             if (!isOnline()) return showToast('📡 Pas de connexion', true);
             const btn = btnValiderConnexion,
                 orig = btn.textContent;
@@ -1154,7 +1177,7 @@
         btnValiderCourse.addEventListener('click', handleCreateCourse);
 
         setInterval(updateStats, 30000);
-        console.log('✅ Machi index ready (light version)');
+        console.log('✅ Machi index ready (admin doc sync)');
     </script>
 </body>
 </html>
