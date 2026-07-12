@@ -152,7 +152,7 @@
     <!-- FLOATING ACTION BUTTON -->
     <button id="rideActionBtn" class="ride-action-btn"></button>
 
-    <!-- MODALS (inchangées) -->
+    <!-- MODALS -->
     <div id="modalAdminEdit" class="modal-overlay">...</div>
     <div id="modalAdminSpots" class="modal-overlay">...</div>
     <div id="tooltipReservation" class="tooltip-reservation">...</div>
@@ -358,7 +358,6 @@
             welcomeMessage.textContent = `👋 Bonjour ${user.nom || 'Admin'}`;
             userRoleBadge.textContent = `Rôle : ${roleFr}`;
             creditsBadge.textContent = `🪙 ${user.credits || 0}`;
-            // On cache le bouton par défaut, il sera géré dans renderCoursesWithData
             btnCreateCourse.style.display = 'none';
             if (user.role === 'admin') {
                 coursesContainer.style.display = 'none';
@@ -478,6 +477,8 @@
             if (!user) user = currentUser;
             if (!user) return;
 
+            console.log('🧾 renderCoursesWithData appelé pour', user.email, 'rôle:', user.role);
+
             // Filtrer les annulés
             let ridesToShow = rides.filter(r => r.status !== 'canceled');
             // Si chauffeur, ne montrer que ses courses
@@ -485,8 +486,9 @@
                 ridesToShow = ridesToShow.filter(r => r.chauffeurEmail === user.email);
             }
 
+            console.log('📊 Nombre de courses affichées:', ridesToShow.length);
+
             // ---- LOGIQUE BOUTON "CRÉER" ----
-            // On détermine si le chauffeur a un trajet actif (futur et non terminé)
             let hasActive = false;
             if (user.role === 'chauffeur') {
                 const now = new Date();
@@ -500,6 +502,8 @@
                     }
                 }
             }
+
+            console.log('🔘 hasActive =', hasActive);
 
             // Affichage du bouton : chauffeur sans trajet actif => visible
             if (user.role === 'chauffeur') {
@@ -1363,6 +1367,7 @@
         };
 
         btnCreateCourse.addEventListener('click', async () => {
+            console.log('🔘 Bouton Créer cliqué');
             await populateSpotSelects();
             modalCreateCourse.classList.add('active');
             courseDate.value = new Date().toISOString().split('T')[0];
@@ -1374,6 +1379,7 @@
         });
 
         const handleCreateCourse = async () => {
+            console.log('📝 Création d\'une course');
             const date = courseDate.value,
                 dep = courseDepart.value,
                 arr = courseArrivee.value,
@@ -1496,6 +1502,7 @@
                 usersUnsubscribe = null; }
 
             ridesUnsubscribe = db.collection('rides').onSnapshot(async (snapshot) => {
+                console.log('📡 Snapshot reçu (rides)');
                 const allUsers = await fetchUsers();
                 const userMap = {};
                 allUsers.forEach(u => userMap[u.email] = u);
@@ -1522,7 +1529,7 @@
         }
 
         // ================================================================
-        // 23. EVENT LISTENERS (inchangés)
+        // 23. EVENT LISTENERS
         // ================================================================
         btnInscription.addEventListener('click', () => { modalInscription.classList.add('active');
             nomInput.value = '';
@@ -1570,7 +1577,7 @@
         });
 
         setInterval(updateStats, 30000);
-        console.log('✅ Machi ready – Create button fixed');
+        console.log('✅ Machi ready – with console logs for debugging');
     </script>
 </body>
 </html>
