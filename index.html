@@ -105,6 +105,8 @@
         .rating-modal textarea{width:100%;padding:.4rem;border-radius:40px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:#e8f0ff;resize:vertical;min-height:60px}
         .manual-depart-btn{margin-top:.3rem;font-size:.7rem;padding:.2rem .8rem;background:#00b8b0;color:#fff;border:none;border-radius:40px;cursor:pointer;transition:background .2s}
         .manual-depart-btn:hover{background:#00d4cc}
+        .cancel-ride-btn{margin-top:.3rem;font-size:.7rem;padding:.2rem .8rem;background:#ff4444;color:#fff;border:none;border-radius:40px;cursor:pointer;transition:background .2s;margin-left:.3rem}
+        .cancel-ride-btn:hover{background:#ff6666}
     </style>
 </head>
 <body>
@@ -514,13 +516,70 @@
         }
 
         // ================================================================
-        // 8. RENDER COURSES WITH DATA (with LONG PRESS on photo)
+        // 8. CANCEL RIDE FUNCTION (with refunds)
+        // ================================================================
+        async function cancelRide(rideId) {
+            if (!currentUser || currentUser.role !== 'chauffeur') return showToast('❌ Action réservée au chauffeur', true);
+            if (!confirm('Annuler ce trajet ? Les passagers seront remboursés.')) return;
+
+            try {
+                const rideDoc = await dbGet('rides', rideId);
+                if (!rideDoc.exists) return showToast('❌ Trajet introuvable', true);
+                const ride = rideDoc.data();
+
+                // Already canceled?
+                if (ride.status === 'canceled') return showToast('ℹ️ Ce trajet est déjà annulé', false);
+
+                // Refund passengers who paid
+                const passengersPaid = ride.passengersPaid || [];
+                const refundAmount = ride.prix || 0;
+                const batch = db.batch();
+
+                // Refund each passenger
+                for (const email of passengersPaid) {
+                    const userRef = db.collection('users').doc(email);
+                    const userDoc = await userRef.get();
+                    if (userDoc.exists) {
+                        const currentCredits = userDoc.data().credits || 0;
+                        batch.update(userRef, { credits: currentCredits + refundAmount });
+                    }
+                }
+
+                // If driver already collected, deduct from driver
+                if (ride.driverCollected && ride.chauffeurEmail) {
+                    const driverRef = db.collection('users').doc(ride.chauffeurEmail);
+                    const driverDoc = await driverRef.get();
+                    if (driverDoc.exists) {
+                        const driverCredits = driverDoc.data().credits || 0;
+                        const totalCollected = passengersPaid.length * refundAmount;
+                        batch.update(driverRef, { credits: Math.max(0, driverCredits - totalCollected) });
+                    }
+                }
+
+                // Update ride status to canceled
+                const rideRef = db.collection('rides').doc(rideId);
+                batch.update(rideRef, { status: 'canceled', canceledAt: new Date().toISOString() });
+
+                await batch.commit();
+                showToast('✅ Trajet annulé et remboursements effectués');
+                // Snapshot will refresh
+            } catch (e) {
+                showToast('❌ Erreur lors de l\'annulation: ' + e.message, true);
+                console.error(e);
+            }
+        }
+
+        // ================================================================
+        // 9. RENDER COURSES WITH DATA (with cancel button)
         // ================================================================
         async function renderCoursesWithData(rides, userMap, user) {
             if (!user) user = currentUser;
             if (!user) return;
 
-            let ridesToShow = user.role === 'chauffeur' ? rides.filter(r => r.chauffeurEmail === user.email) : rides;
+            // Filter out canceled rides
+            let ridesToShow = rides.filter(r => r.status !== 'canceled');
+            // If user is chauffeur, show only his rides; if passenger, show all non-canceled
+            ridesToShow = user.role === 'chauffeur' ? ridesToShow.filter(r => r.chauffeurEmail === user.email) : ridesToShow;
 
             // Find the active ride for driver (for action button)
             let activeRide = null;
@@ -718,7 +777,7 @@
                 }
                 row.appendChild(grid);
 
-                // Car photo (with LONG PRESS for deletion)
+                // Car photo (with LONG PRESS for deletion of non-started rides)
                 const photoContainer = document.createElement('div');
                 photoContainer.className = 'car-photo' + (carPhoto ? '' : ' default');
                 photoContainer.dataset.courseId = course.id;
@@ -727,7 +786,7 @@
                     img.alt = 'Voiture';
                     photoContainer.appendChild(img); } else photoContainer.textContent = '🚗';
 
-                // ---- LONG PRESS DELETE (for chauffeur only) ----
+                // Long press delete only for non-started rides
                 let pressTimer = null;
                 const startPress = () => {
                     pressTimer = setTimeout(() => {
@@ -741,20 +800,15 @@
                     }, 600);
                 };
                 const cancelPress = () => {
-                    if (pressTimer) {
-                        clearTimeout(pressTimer);
-                        pressTimer = null;
-                    }
+                    if (pressTimer) { clearTimeout(pressTimer);
+                        pressTimer = null; }
                 };
-                // Événements souris
                 photoContainer.addEventListener('mousedown', startPress);
                 photoContainer.addEventListener('mouseup', cancelPress);
                 photoContainer.addEventListener('mouseleave', cancelPress);
-                // Événements tactiles
                 photoContainer.addEventListener('touchstart', startPress, { passive: true });
                 photoContainer.addEventListener('touchend', cancelPress, { passive: true });
                 photoContainer.addEventListener('touchmove', cancelPress, { passive: true });
-                // Empêcher le menu contextuel
                 photoContainer.addEventListener('contextmenu', e => e.preventDefault());
 
                 row.appendChild(photoContainer);
@@ -778,6 +832,18 @@
                     card.appendChild(manualBtn);
                 }
 
+                // Cancel button for driver (for any non-canceled ride)
+                if (user.role === 'chauffeur' && course.chauffeurEmail === user.email && course.status !== 'canceled') {
+                    const cancelBtn = document.createElement('button');
+                    cancelBtn.className = 'cancel-ride-btn';
+                    cancelBtn.textContent = '❌ Annuler';
+                    cancelBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        cancelRide(course.id);
+                    });
+                    card.appendChild(cancelBtn);
+                }
+
                 coursesList.appendChild(card);
 
                 // Rating trigger for passengers
@@ -795,7 +861,7 @@
         }
 
         // ================================================================
-        // 9. PAYMENT HANDLER
+        // 10. PAYMENT HANDLER
         // ================================================================
         async function handlePay(rideId, placeIndex, amount) {
             if (!currentUser) return showToast('❌ Connectez-vous', true);
@@ -825,7 +891,7 @@
         }
 
         // ================================================================
-        // 10. RATING MODAL
+        // 11. RATING MODAL
         // ================================================================
         function openRatingModal(rideId) {
             ratingRideId = rideId;
@@ -885,7 +951,7 @@
         });
 
         // ================================================================
-        // 11. RIDE ACTION BUTTON (Charger / Commencer / Encaisser)
+        // 12. RIDE ACTION BUTTON (Charger / Commencer / Encaisser)
         // ================================================================
         rideActionBtn.addEventListener('click', async function() {
             const rideId = this.dataset.rideId;
@@ -923,7 +989,7 @@
         });
 
         // ================================================================
-        // 12. ADMIN LISTS (unchanged)
+        // 13. ADMIN LISTS (unchanged)
         // ================================================================
         const renderAdminLists = async () => {
             try {
@@ -982,7 +1048,7 @@
         };
 
         // ================================================================
-        // 13. ADMIN EDIT MODAL
+        // 14. ADMIN EDIT MODAL
         // ================================================================
         const openAdminEdit = (user) => {
             adminEditTargetEmail = user.email;
@@ -1096,7 +1162,7 @@
         };
 
         // ================================================================
-        // 14. SPOTS MODAL
+        // 15. SPOTS MODAL
         // ================================================================
         const renderSpotsListModal = async () => {
             const container = adminSpotsListContainer;
@@ -1177,7 +1243,7 @@
         modalAdminSpots.addEventListener('click', (e) => { if (e.target === modalAdminSpots) closeModal(modalAdminSpots); });
 
         // ================================================================
-        // 15. SEAT CLICK & RESERVATION
+        // 16. SEAT CLICK & RESERVATION
         // ================================================================
         coursesList.addEventListener('click', async (e) => {
             const seat = e.target.closest('.seat');
@@ -1255,7 +1321,7 @@
         });
 
         // ================================================================
-        // 16. TOGGLE ADMIN LISTS
+        // 17. TOGGLE ADMIN LISTS
         // ================================================================
         const toggleList = (el) => {
             if (el.style.display === 'block') el.style.display = 'none';
@@ -1269,7 +1335,7 @@
         btnAdminSpots.addEventListener('click', openSpotsModal);
 
         // ================================================================
-        // 17. AUTH HANDLERS
+        // 18. AUTH HANDLERS
         // ================================================================
         const handleLogin = async () => {
             const email = loginEmail.value.trim(),
@@ -1350,7 +1416,7 @@
         };
 
         // ================================================================
-        // 18. CREATE COURSE
+        // 19. CREATE COURSE
         // ================================================================
         const populateSpotSelects = async () => {
             const spots = await fetchSpots();
@@ -1427,7 +1493,7 @@
         };
 
         // ================================================================
-        // 19. STATS
+        // 20. STATS
         // ================================================================
         const updateStats = async () => {
             try { const snap = await dbGet('users');
@@ -1436,7 +1502,7 @@
         };
 
         // ================================================================
-        // 20. SESSION
+        // 21. SESSION
         // ================================================================
         auth.onAuthStateChanged(async (user) => {
             if (user) {
@@ -1466,7 +1532,7 @@
         });
 
         // ================================================================
-        // 21. SEED DEMO USERS
+        // 22. SEED DEMO USERS
         // ================================================================
         (async () => {
             const demos = [
@@ -1492,7 +1558,7 @@
         })();
 
         // ================================================================
-        // 22. EVENT LISTENERS
+        // 23. EVENT LISTENERS
         // ================================================================
         btnInscription.addEventListener('click', () => { modalInscription.classList.add('active');
             nomInput.value = '';
@@ -1540,7 +1606,7 @@
         });
 
         setInterval(updateStats, 30000);
-        console.log('✅ Machi ready – long press implemented for ride deletion');
+        console.log('✅ Machi ready – with cancellation & refund');
     </script>
 </body>
 </html>
