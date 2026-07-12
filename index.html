@@ -48,7 +48,7 @@
         @keyframes blinkRed{0%{box-shadow:0 0 0 0 rgba(255,68,68,.4);border-color:#ff4444}50%{box-shadow:0 0 20px 5px rgba(255,68,68,.6);border-color:#ff0000}100%{box-shadow:0 0 0 0 rgba(255,68,68,.4);border-color:#ff4444}}
         .course-info{display:flex;flex-wrap:wrap;align-items:baseline;gap:.2rem .4rem;margin-bottom:.2rem}
         .course-info .titre{font-weight:600;font-size:.8rem;color:#d6eaff;flex:1 1 auto;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-        .course-info .heure{font-size:.65rem;color:#8aa0c8;white-space:nowrap}
+        .course-info .dateheure{font-size:.65rem;color:#8aa0c8;white-space:nowrap}
         .course-info .temps-restant{font-size:.65rem;color:#f0c060;white-space:nowrap}
         .course-info .places-restantes{font-size:.65rem;color:#60c0f0;white-space:nowrap}
         .course-info .prix{font-size:.65rem;color:#ffd700;white-space:nowrap;font-weight:500}
@@ -61,6 +61,8 @@
         .seat.available:hover{background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.5)}
         .seat.reserved{background:#b44cff;border-color:#b44cff;box-shadow:0 0 6px rgba(180,76,255,.3);cursor:pointer}
         .seat.reserved:hover{filter:brightness(1.15)}
+        .seat.paid{background:#ffd700;border-color:#ffd700;box-shadow:0 0 6px rgba(255,215,0,.4);cursor:default}
+        .seat.paid::after{content:"🪙";position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:1.2rem}
         .seat.disabled{background:rgba(255,255,255,.015);border-color:rgba(255,255,255,.02);opacity:.15;cursor:default}
         .car-photo{flex:3;border-radius:6px;overflow:hidden;background:rgba(255,255,255,.03);border:1.5px solid rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;font-size:1.6rem;color:#6a7a9a;cursor:default;position:relative;min-height:40px}
         .car-photo img{width:100%;height:100%;object-fit:cover;display:block}
@@ -83,17 +85,29 @@
         .tooltip-reservation .btn-supprimer:hover{background:rgba(255,70,70,.4)}
         .toast{position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);background:rgba(0,180,170,.15);backdrop-filter:blur(8px);border:1px solid rgba(0,255,200,.15);padding:.4rem 1.2rem;border-radius:60px;color:#c0fff0;font-weight:500;display:none;z-index:100;font-size:.8rem;max-width:90%;text-align:center}
         .toast.show{display:block}
-        .btn-start-ride{position:fixed;bottom:2rem;left:50%;transform:translateX(-50%);background:#00b8b0;color:#fff;border:none;border-radius:60px;padding:.8rem 2rem;font-weight:700;font-size:1rem;box-shadow:0 0 30px rgba(0,200,180,.5);z-index:70;display:none;cursor:pointer;animation:pulseButton 1.5s ease-in-out infinite}
-        .btn-start-ride:hover{background:#00d4cc;transform:translateX(-50%) scale(1.02)}
+        .ride-action-btn{position:fixed;bottom:2rem;left:50%;transform:translateX(-50%);background:#00b8b0;color:#fff;border:none;border-radius:60px;padding:.8rem 2rem;font-weight:700;font-size:1rem;box-shadow:0 0 30px rgba(0,200,180,.5);z-index:70;display:none;cursor:pointer;animation:pulseButton 1.5s ease-in-out infinite}
+        .ride-action-btn:hover{background:#00d4cc;transform:translateX(-50%) scale(1.02)}
         @keyframes pulseButton{0%{box-shadow:0 0 0 0 rgba(0,200,180,.5)}70%{box-shadow:0 0 20px 10px rgba(0,200,180,0)}100%{box-shadow:0 0 0 0 rgba(0,200,180,0)}}
+        .ride-action-btn.secondary{background:#b44cff;box-shadow:0 0 30px rgba(180,76,255,.5)}
+        .ride-action-btn.secondary:hover{background:#c86bff}
+        .rating-stars{display:flex;gap:.5rem;justify-content:center;margin:.5rem 0}
+        .rating-stars .star{font-size:2rem;cursor:pointer;color:#6a7a9a;transition:color .2s}
+        .rating-stars .star.active{color:#ffd700}
         #homeScreen .btn-led{flex:1;text-align:center}
         .spinner{display:inline-block;width:.8rem;height:.8rem;border:2px solid rgba(255,255,255,.1);border-top-color:#00b8b0;border-radius:50%;animation:spin .6s linear infinite}
         @keyframes spin{to{transform:rotate(360deg)}}
-        @media(max-width:480px){body{padding:.3rem}.glass-card,#mainInterface{padding:.6rem .4rem;border-radius:1rem}.modal-content{padding:1rem .6rem}.course-info .titre{font-size:.75rem}.header-actions .btn-logout,.header-actions .btn-create{font-size:.6rem;padding:.15rem .5rem}.btn-start-ride{padding:.6rem 1.5rem;font-size:.9rem;bottom:1.5rem}}
+        @media(max-width:480px){body{padding:.3rem}.glass-card,#mainInterface{padding:.6rem .4rem;border-radius:1rem}.modal-content{padding:1rem .6rem}.course-info .titre{font-size:.75rem}.header-actions .btn-logout,.header-actions .btn-create{font-size:.6rem;padding:.15rem .5rem}.ride-action-btn{padding:.6rem 1.5rem;font-size:.9rem;bottom:1.5rem}}
+        .pay-btn{background:#ffd700;color:#0a0d1a;border:none;border-radius:60px;padding:.2rem .8rem;font-weight:700;font-size:.7rem;cursor:pointer;transition:background .2s}
+        .pay-btn:hover{background:#ffed4a}
+        .pay-btn:disabled{opacity:.5;cursor:not-allowed}
+        .seat .pay-btn{position:absolute;bottom:2px;left:50%;transform:translateX(-50%);font-size:.6rem;padding:.1rem .4rem;z-index:10}
+        .rating-modal textarea{width:100%;padding:.4rem;border-radius:40px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:#e8f0ff;resize:vertical;min-height:60px}
+        .manual-depart-btn{margin-top:.3rem;font-size:.7rem;padding:.2rem .8rem;background:#00b8b0;color:#fff;border:none;border-radius:40px;cursor:pointer;transition:background .2s}
+        .manual-depart-btn:hover{background:#00d4cc}
     </style>
 </head>
 <body>
-    <!-- ===== HOME ===== -->
+    <!-- HOME -->
     <div id="homeScreen" class="glass-card">
         <h1 class="text-xl font-bold text-center text-cyan-200 mb-0.5">Machi</h1>
         <p class="text-center text-slate-400 text-xs mb-4 tracking-wider">⚡ mobilité en circuit fermé</p>
@@ -104,7 +118,7 @@
         <div class="mt-3 text-center text-xs text-slate-500"><span id="stats">👤 0 inscrits</span></div>
     </div>
 
-    <!-- ===== MAIN INTERFACE ===== -->
+    <!-- MAIN INTERFACE -->
     <div id="mainInterface">
         <div class="header-actions">
             <div class="text-slate-400 text-xs truncate" id="userRoleBadge">Rôle : —</div>
@@ -132,10 +146,10 @@
         </div>
     </div>
 
-    <!-- ===== START RIDE BUTTON ===== -->
-    <button id="btnStartRide" class="btn-start-ride">🚀 Commencer le trajet</button>
+    <!-- FLOATING ACTION BUTTON -->
+    <button id="rideActionBtn" class="ride-action-btn"></button>
 
-    <!-- ===== MODALS ===== -->
+    <!-- MODALS -->
     <div id="modalAdminEdit" class="modal-overlay">
         <div class="modal-content">
             <h2 class="text-base font-semibold text-center text-cyan-200 mb-2">✏️ Modifier l'utilisateur</h2>
@@ -200,26 +214,47 @@
         </div>
     </div>
 
-    <!-- MODALE CRÉATION COURSE (avec date) -->
+    <!-- CREATE RIDE MODAL (with date) -->
     <div id="modalCreateCourse" class="modal-overlay">
         <div class="modal-content">
             <h2 class="text-base font-semibold text-center text-cyan-200 mb-2">🚗 Nouvelle course</h2>
             <label>Date</label><input type="date" id="courseDate" />
             <label>Départ</label><select id="courseDepart"><option value="">-- Choisir un départ --</option></select>
             <label>Arrivée</label><select id="courseArrivee"><option value="">-- Choisir une arrivée --</option></select>
-            <label>Heure de départ</label><input type="time" id="courseHeure" />
-            <label>Prix (unités)</label><input type="number" id="coursePrix" placeholder="ex: 12" min="1" />
-            <label>Places (hors chauffeur, max 7)</label><input type="number" id="coursePlaces" placeholder="ex: 3" min="1" max="7" />
+            <label>Heure</label><input type="time" id="courseHeure" />
+            <label>Prix (Alfrak)</label><input type="number" id="coursePrix" placeholder="12" min="1" />
+            <label>Places (hors chauffeur, max 7)</label><input type="number" id="coursePlaces" placeholder="3" min="1" max="7" />
             <div class="flex gap-2 mt-3"><button id="btnValiderCourse" class="btn-led btn-validate flex-1">✔ Confirmer</button><button id="btnAnnulerCourse" class="btn-led btn-cancel flex-1">✖ Annuler</button></div>
+        </div>
+    </div>
+
+    <!-- RATING MODAL -->
+    <div id="modalRating" class="modal-overlay">
+        <div class="modal-content">
+            <h2 class="text-base font-semibold text-center text-cyan-200 mb-2">⭐ Évaluez votre trajet</h2>
+            <p class="text-xs text-slate-400 text-center mb-2">Notez ce trajet (1 à 5 étoiles)</p>
+            <div id="ratingStarsContainer" class="rating-stars">
+                <span class="star" data-value="1">★</span>
+                <span class="star" data-value="2">★</span>
+                <span class="star" data-value="3">★</span>
+                <span class="star" data-value="4">★</span>
+                <span class="star" data-value="5">★</span>
+            </div>
+            <label>Commentaire (optionnel)</label>
+            <textarea id="ratingComment" placeholder="Votre avis sur ce trajet..."></textarea>
+            <div class="flex gap-2 mt-3">
+                <button id="btnSubmitRating" class="btn-led btn-validate flex-1">✔ Envoyer</button>
+                <button id="btnCancelRating" class="btn-led btn-cancel flex-1">✖ Passer</button>
+            </div>
         </div>
     </div>
 
     <div id="toast" class="toast"></div>
 
     <script>
-        // ============================================================
+        // ================================================================
         // 1. FIREBASE CONFIG
-        // ============================================================
+        // ================================================================
         const FIREBASE_CONFIG = {
             apiKey: "AIzaSyACgeZXog1KZGU29HpjM4qpKTBt54KbJFg",
             authDomain: "machi-51024.firebaseapp.com",
@@ -234,9 +269,9 @@
             db = firebase.firestore();
         db.enablePersistence().catch(()=>{});
 
-        // ============================================================
+        // ================================================================
         // 2. DOM REFS
-        // ============================================================
+        // ================================================================
         const $ = id => document.getElementById(id);
         const homeScreen = $('homeScreen'),
             mainInterface = $('mainInterface'),
@@ -258,7 +293,7 @@
             btnConnexion = $('btnConnexion'),
             btnLogout = $('btnLogout'),
             btnCreateCourse = $('btnCreateCourse'),
-            btnStartRide = $('btnStartRide'),
+            rideActionBtn = $('rideActionBtn'),
             modalInscription = $('modalInscription'),
             btnValiderInscription = $('btnValiderInscription'),
             btnAnnulerInscription = $('btnAnnulerInscription'),
@@ -306,11 +341,16 @@
             btnGetLocation = $('btnGetLocation'),
             tooltip = $('tooltipReservation'),
             btnSupprimerResa = $('btnSupprimerResa'),
-            toast = $('toast');
+            toast = $('toast'),
+            modalRating = $('modalRating'),
+            ratingStarsContainer = $('ratingStarsContainer'),
+            ratingComment = $('ratingComment'),
+            btnSubmitRating = $('btnSubmitRating'),
+            btnCancelRating = $('btnCancelRating');
 
-        // ============================================================
+        // ================================================================
         // 3. STATE
-        // ============================================================
+        // ================================================================
         let currentUser = null,
             watchId = null,
             tooltipCourseId = null,
@@ -319,11 +359,13 @@
             adminEditCarCropper = null,
             adminEditProfileCropper = null,
             ridesUnsubscribe = null,
-            usersUnsubscribe = null;
+            usersUnsubscribe = null,
+            selectedRating = 0,
+            ratingRideId = null;
 
-        // ============================================================
+        // ================================================================
         // 4. UTILITY FUNCTIONS
-        // ============================================================
+        // ================================================================
         const showToast = (msg, err = false) => {
             toast.textContent = msg;
             toast.style.borderColor = err ? 'rgba(255,100,100,0.2)' : 'rgba(0,255,200,0.15)';
@@ -338,7 +380,7 @@
 
         const closeModal = (modal) => { if (modal) modal.classList.remove('active'); };
         const closeAllModals = () => {
-            [modalInscription, modalConnexion, modalCreateCourse, modalAdminEdit, modalAdminSpots].forEach(m => closeModal(m));
+            [modalInscription, modalConnexion, modalCreateCourse, modalAdminEdit, modalAdminSpots, modalRating].forEach(m => closeModal(m));
             if (adminEditCarCropper) { adminEditCarCropper.destroy();
                 adminEditCarCropper = null; }
             if (adminEditProfileCropper) { adminEditProfileCropper.destroy();
@@ -354,7 +396,7 @@
             mainInterface.style.display = 'none';
             updateStats();
             tooltip.style.display = 'none';
-            btnStartRide.style.display = 'none';
+            rideActionBtn.style.display = 'none';
             if (watchId) { navigator.geolocation.clearWatch(watchId);
                 watchId = null; }
             if (ridesUnsubscribe) { ridesUnsubscribe();
@@ -383,9 +425,9 @@
             }
         };
 
-        // ============================================================
+        // ================================================================
         // 5. FIRESTORE HELPERS
-        // ============================================================
+        // ================================================================
         const dbGet = (col, id = null) => {
             if (!isOnline()) throw new Error('Offline');
             const ref = id ? db.collection(col).doc(id) : db.collection(col);
@@ -414,9 +456,9 @@
         const fetchRides = () => fetchAll('rides');
         const fetchSpots = () => fetchAll('spots');
 
-        // ============================================================
+        // ================================================================
         // 6. GEOLOCATION
-        // ============================================================
+        // ================================================================
         const getCurrentPos = () => new Promise((res, rej) => {
             if (!navigator.geolocation) rej(new Error('Geo not supported'));
             navigator.geolocation.getCurrentPosition(
@@ -435,25 +477,19 @@
             return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         };
 
-        // ============================================================
-        // 7. REAL-TIME RIDES
-        // ============================================================
+        // ================================================================
+        // 7. REAL-TIME RIDES (with snapshot)
+        // ================================================================
         function setupRealtimeRides(user) {
-            if (ridesUnsubscribe) {
-                ridesUnsubscribe();
-                ridesUnsubscribe = null;
-            }
-            if (usersUnsubscribe) {
-                usersUnsubscribe();
-                usersUnsubscribe = null;
-            }
-            // Écouter les changements sur la collection rides
+            if (ridesUnsubscribe) { ridesUnsubscribe();
+                ridesUnsubscribe = null; }
+            if (usersUnsubscribe) { usersUnsubscribe();
+                usersUnsubscribe = null; }
+
             ridesUnsubscribe = db.collection('rides').onSnapshot(async (snapshot) => {
-                // Récupérer la liste des utilisateurs à jour
                 const allUsers = await fetchUsers();
                 const userMap = {};
                 allUsers.forEach(u => userMap[u.email] = u);
-                // On reconstruit les données pour les passer à renderCoursesWithData
                 const rides = [];
                 snapshot.forEach(doc => rides.push({ id: doc.id, ...doc.data() }));
                 renderCoursesWithData(rides, userMap, user);
@@ -462,10 +498,7 @@
                 showToast('Erreur de synchronisation en temps réel', true);
             });
 
-            // Écouter aussi les changements sur les utilisateurs (pour les photos / crédits)
             usersUnsubscribe = db.collection('users').onSnapshot(async () => {
-                // Re-fetch et re-render si besoin – on laisse le listener rides gérer le re-render
-                // Mais on peut rafraîchir les crédits et photos de profil
                 if (currentUser) {
                     const doc = await dbGet('users', currentUser.email);
                     if (doc.exists) {
@@ -479,61 +512,80 @@
             });
         }
 
-        // ============================================================
-        // 8. RENDER COURSES WITH DATA (utilisée par le snapshot)
-        // ============================================================
+        // ================================================================
+        // 8. RENDER COURSES WITH DATA (with manual depart button)
+        // ================================================================
         async function renderCoursesWithData(rides, userMap, user) {
             if (!user) user = currentUser;
             if (!user) return;
 
-            // Filtrer les courses selon le rôle
             let ridesToShow = user.role === 'chauffeur' ? rides.filter(r => r.chauffeurEmail === user.email) : rides;
 
-            // Vérifier si le chauffeur a un trajet actif (non commencé et dans le futur)
+            // Find the active ride for driver (for action button)
             let activeRide = null;
-            let hasActive = false;
+            let rideForAction = null;
             if (user.role === 'chauffeur') {
                 const now = new Date();
-                const today = now.toISOString().split('T')[0];
                 for (const r of ridesToShow) {
                     if (r.date && r.heure) {
-                        // Comparer date + heure
-                        const [h, m] = r.heure.split(':').map(Number);
                         const rideDate = new Date(r.date + 'T' + r.heure);
-                        if (rideDate > now && !r.started) {
-                            hasActive = true;
+                        if (rideDate > now && !r.completed) {
+                            if (r.status === 'created') {
+                                rideForAction = { ride: r, action: 'load' };
+                            } else if (r.status === 'loading' && !r.started) {
+                                rideForAction = { ride: r, action: 'start' };
+                            } else if (r.status === 'started') {
+                                // Arrival detection handled by watch
+                            } else if (r.status === 'arrived' && !r.driverCollected) {
+                                rideForAction = { ride: r, action: 'collect' };
+                            }
                             activeRide = r;
                             break;
                         }
                     }
                 }
             }
-            btnCreateCourse.style.display = (user.role === 'chauffeur' && hasActive) ? 'none' : (user.role === 'chauffeur' ?
-                'inline-block' : 'none');
 
-            // Démarrer / arrêter la géolocalisation
-            if (user.role === 'chauffeur' && activeRide && activeRide.departLat && activeRide.departLon) {
+            // Manage action button (auto)
+            if (rideForAction) {
+                rideActionBtn.style.display = 'block';
+                rideActionBtn.dataset.rideId = rideForAction.ride.id;
+                if (rideForAction.action === 'load') {
+                    rideActionBtn.textContent = '⚡ Charger';
+                    rideActionBtn.className = 'ride-action-btn';
+                } else if (rideForAction.action === 'start') {
+                    rideActionBtn.textContent = '🚀 Commencer';
+                    rideActionBtn.className = 'ride-action-btn secondary';
+                } else if (rideForAction.action === 'collect') {
+                    rideActionBtn.textContent = '💰 Encaisser';
+                    rideActionBtn.className = 'ride-action-btn';
+                }
+            } else {
+                rideActionBtn.style.display = 'none';
+            }
+
+            // Geolocation watch for arrival detection
+            if (user.role === 'chauffeur' && activeRide && activeRide.status === 'started' && activeRide.arriveeLat && activeRide
+                .arriveeLon) {
                 if (!watchId) {
                     watchId = navigator.geolocation.watchPosition(
                         (pos) => {
-                            const dist = haversine(pos.coords.latitude, pos.coords.longitude, activeRide.departLat,
-                                activeRide.departLon);
-                            if (dist < 20) {
-                                btnStartRide.style.display = 'block';
-                                btnStartRide.dataset.rideId = activeRide.id;
-                            } else btnStartRide.style.display = 'none';
+                            const dist = haversine(pos.coords.latitude, pos.coords.longitude, activeRide.arriveeLat,
+                                activeRide.arriveeLon);
+                            if (dist < 20 && activeRide.status === 'started') {
+                                dbUpdate('rides', activeRide.id, { status: 'arrived' }).catch(e => console.error(e));
+                                if (watchId) { navigator.geolocation.clearWatch(watchId);
+                                    watchId = null; }
+                            }
                         },
-                        () => btnStartRide.style.display = 'none', { enableHighAccuracy: true, timeout: 5000,
-                            maximumAge: 10000 }
+                        () => {}, { enableHighAccuracy: true, timeout: 5000, maximumAge: 10000 }
                     );
                 }
             } else {
                 if (watchId) { navigator.geolocation.clearWatch(watchId);
                     watchId = null; }
-                btnStartRide.style.display = 'none';
             }
 
-            // Mettre à jour le crédit
             creditsBadge.textContent = `🪙 ${user.credits || 0}`;
 
             coursesList.innerHTML = '';
@@ -546,9 +598,7 @@
             coursesList.style.display = 'flex';
 
             const now = new Date();
-            const today = now.toISOString().split('T')[0];
-
-            ridesToShow.forEach(course => {
+            for (const course of ridesToShow) {
                 const chauffeur = userMap[course.chauffeurEmail] || {};
                 const carPhoto = chauffeur.photoURL || null;
                 const profilePhoto = chauffeur.profilePhotoURL || null;
@@ -557,7 +607,7 @@
                 card.className = 'course-card' + (course.started ? ' course-started' : '');
                 card.dataset.courseId = course.id;
 
-                // Temps restant basé sur la date + heure
+                // Info line
                 let temps = '';
                 if (course.date && course.heure) {
                     const rideDate = new Date(course.date + 'T' + course.heure);
@@ -585,10 +635,10 @@
                 titre.className = 'titre';
                 titre.textContent = `${course.depart} → ${course.arrivee}`;
                 info.appendChild(titre);
-                const dateHeure = document.createElement('span');
-                dateHeure.className = 'heure';
-                dateHeure.textContent = `📅 ${course.date || ''} 🕐 ${course.heure || ''}`;
-                info.appendChild(dateHeure);
+                const dateheure = document.createElement('span');
+                dateheure.className = 'dateheure';
+                dateheure.textContent = `📅 ${course.date || ''} 🕐 ${course.heure || ''}`;
+                info.appendChild(dateheure);
                 if (temps) { const ts = document.createElement('span');
                     ts.className = 'temps-restant';
                     ts.textContent = temps;
@@ -603,18 +653,25 @@
                 info.appendChild(prixSpan);
                 card.appendChild(info);
 
+                // Seats
                 const row = document.createElement('div');
                 row.className = 'course-row';
                 const grid = document.createElement('div');
                 grid.className = 'seat-grid';
                 const totalSeats = 8,
                     eff = Math.min(total, totalSeats),
-                    res = course.reservations || [];
+                    res = course.reservations || [],
+                    passengersPaid = course.passengersPaid || [];
                 const status = [];
                 status[0] = 'driver';
                 for (let i = 1; i < eff; i++) {
                     const r = res.find(r => r.placeIndex === i);
-                    status[i] = r ? { type: 'reserved', email: r.email, nom: r.nom } : { type: 'available' };
+                    if (r) {
+                        const paid = passengersPaid.includes(r.email);
+                        status[i] = { type: paid ? 'paid' : 'reserved', email: r.email, nom: r.nom };
+                    } else {
+                        status[i] = { type: 'available' };
+                    }
                 }
                 for (let i = eff; i < totalSeats; i++) status[i] = { type: 'disabled' };
                 const order = [0, 1, 2, 3, 4, 5, 6, 7];
@@ -633,16 +690,38 @@
                         if (s === 'driver') seat.classList.add('driver');
                         else if (s === 'disabled') seat.classList.add('disabled');
                         seat.dataset.status = s;
-                    } else if (s.type === 'available') { seat.classList.add('available');
-                        seat.dataset.status = 'available'; } else if (s.type === 'reserved') { seat.classList.add(
-                            'reserved');
+                    } else if (s.type === 'available') {
+                        seat.classList.add('available');
+                        seat.dataset.status = 'available';
+                    } else if (s.type === 'reserved') {
+                        seat.classList.add('reserved');
                         seat.dataset.status = 'reserved';
                         seat.dataset.reservedEmail = s.email;
-                        seat.dataset.reservedNom = s.nom; }
+                        seat.dataset.reservedNom = s.nom;
+                        if (course.status === 'loading' && !passengersPaid.includes(s.email) && currentUser && currentUser
+                            .email === s.email) {
+                            const payBtn = document.createElement('button');
+                            payBtn.className = 'pay-btn';
+                            payBtn.textContent = '💰 Payer';
+                            payBtn.dataset.rideId = course.id;
+                            payBtn.dataset.placeIndex = idx;
+                            payBtn.addEventListener('click', (e) => {
+                                e.stopPropagation();
+                                handlePay(course.id, idx, course.prix);
+                            });
+                            seat.appendChild(payBtn);
+                        }
+                    } else if (s.type === 'paid') {
+                        seat.classList.add('paid');
+                        seat.dataset.status = 'paid';
+                        seat.dataset.reservedEmail = s.email;
+                        seat.dataset.reservedNom = s.nom;
+                    }
                     grid.appendChild(seat);
                 }
                 row.appendChild(grid);
 
+                // Car photo
                 const photoContainer = document.createElement('div');
                 photoContainer.className = 'car-photo' + (carPhoto ? '' : ' default');
                 photoContainer.dataset.courseId = course.id;
@@ -654,10 +733,9 @@
                 // Long press delete
                 let timer = null;
                 const start = () => { timer = setTimeout(() => { if (currentUser && currentUser.role === 'chauffeur' &&
+                                course.status !== 'started' && !course.started &&
                                 confirm('Supprimer cette course ?')) dbDelete('rides', course.id).then(() => { showToast(
-                                '🗑️ Course supprimée');
-                                // Le snapshot mettra à jour
-                            }).catch(e => showToast('❌ Erreur', true)); }, 600); };
+                                '🗑️ Course supprimée'); }).catch(e => showToast('❌ Erreur', true)); }, 600); };
                 const cancel = () => { if (timer) clearTimeout(timer);
                     timer = null; };
                 photoContainer.addEventListener('mousedown', start);
@@ -669,13 +747,172 @@
                 photoContainer.addEventListener('contextmenu', e => e.preventDefault());
                 row.appendChild(photoContainer);
                 card.appendChild(row);
+
+                // ===== MANUAL DEPART BUTTON =====
+                if (user.role === 'chauffeur' && course.status === 'created' && course.chauffeurEmail === user.email) {
+                    const manualBtn = document.createElement('button');
+                    manualBtn.className = 'manual-depart-btn';
+                    manualBtn.textContent = '📍 Je suis au départ';
+                    manualBtn.addEventListener('click', async (e) => {
+                        e.stopPropagation();
+                        try {
+                            await dbUpdate('rides', course.id, { status: 'loading' });
+                            showToast('⚡ Mode chargement activé manuellement');
+                        } catch (err) {
+                            showToast('❌ Erreur: ' + err.message, true);
+                            console.error(err);
+                        }
+                    });
+                    card.appendChild(manualBtn);
+                }
+
                 coursesList.appendChild(card);
-            });
+
+                // Rating trigger for passengers
+                if (course.status === 'arrived' && currentUser && currentUser.role === 'passager') {
+                    const userReservation = course.reservations ? course.reservations.find(r => r.email === currentUser.email) :
+                        null;
+                    if (userReservation && !course.ratings) {
+                        if (!course._ratingShown) {
+                            course._ratingShown = true;
+                            openRatingModal(course.id);
+                        }
+                    }
+                }
+            }
         }
 
-        // ============================================================
-        // 9. ADMIN LISTS
-        // ============================================================
+        // ================================================================
+        // 9. PAYMENT HANDLER
+        // ================================================================
+        async function handlePay(rideId, placeIndex, amount) {
+            if (!currentUser) return showToast('❌ Connectez-vous', true);
+            if (currentUser.credits < amount) return showToast('❌ Crédits insuffisants', true);
+
+            try {
+                const rideDoc = await dbGet('rides', rideId);
+                if (!rideDoc.exists) return showToast('❌ Trajet introuvable', true);
+                const ride = rideDoc.data();
+                if (ride.passengersPaid && ride.passengersPaid.includes(currentUser.email))
+                    return showToast('❌ Vous avez déjà payé', true);
+
+                const newBalance = currentUser.credits - amount;
+                await dbUpdate('users', currentUser.email, { credits: newBalance });
+                currentUser.credits = newBalance;
+                creditsBadge.textContent = `🪙 ${newBalance}`;
+
+                const paid = ride.passengersPaid || [];
+                paid.push(currentUser.email);
+                await dbUpdate('rides', rideId, { passengersPaid: paid });
+
+                showToast('✅ Paiement effectué !');
+            } catch (e) {
+                showToast('❌ Erreur paiement: ' + e.message, true);
+                console.error(e);
+            }
+        }
+
+        // ================================================================
+        // 10. RATING MODAL
+        // ================================================================
+        function openRatingModal(rideId) {
+            ratingRideId = rideId;
+            selectedRating = 0;
+            ratingComment.value = '';
+            document.querySelectorAll('#ratingStarsContainer .star').forEach(el => {
+                el.classList.remove('active');
+                el.textContent = '★';
+            });
+            modalRating.classList.add('active');
+        }
+
+        ratingStarsContainer.addEventListener('click', (e) => {
+            const star = e.target.closest('.star');
+            if (!star) return;
+            const val = parseInt(star.dataset.value);
+            selectedRating = val;
+            document.querySelectorAll('#ratingStarsContainer .star').forEach(el => {
+                const v = parseInt(el.dataset.value);
+                if (v <= val) { el.classList.add('active');
+                    el.textContent = '★'; } else { el.classList.remove('active');
+                    el.textContent = '★'; }
+            });
+        });
+
+        btnSubmitRating.addEventListener('click', async () => {
+            if (selectedRating < 1 || selectedRating > 5) return showToast('⚠️ Sélectionnez une note', true);
+            if (!ratingRideId) return showToast('❌ Erreur', true);
+            if (!currentUser) return showToast('❌ Connectez-vous', true);
+
+            try {
+                const rideDoc = await dbGet('rides', ratingRideId);
+                if (!rideDoc.exists) return showToast('❌ Trajet introuvable', true);
+                const ride = rideDoc.data();
+                const ratings = ride.ratings || [];
+                if (ratings.some(r => r.email === currentUser.email)) return showToast('❌ Déjà noté', true);
+                ratings.push({
+                    email: currentUser.email,
+                    nom: currentUser.nom,
+                    rating: selectedRating,
+                    comment: ratingComment.value.trim() || '',
+                    timestamp: new Date().toISOString()
+                });
+                await dbUpdate('rides', ratingRideId, { ratings });
+                showToast('✅ Merci pour votre avis !');
+                closeModal(modalRating);
+                ratingRideId = null;
+            } catch (e) {
+                showToast('❌ Erreur: ' + e.message, true);
+                console.error(e);
+            }
+        });
+
+        btnCancelRating.addEventListener('click', () => {
+            closeModal(modalRating);
+            ratingRideId = null;
+        });
+
+        // ================================================================
+        // 11. RIDE ACTION BUTTON (Charger / Commencer / Encaisser)
+        // ================================================================
+        rideActionBtn.addEventListener('click', async function() {
+            const rideId = this.dataset.rideId;
+            if (!rideId) return;
+            const action = this.textContent.trim();
+            try {
+                const rideDoc = await dbGet('rides', rideId);
+                if (!rideDoc.exists) return showToast('❌ Trajet introuvable', true);
+                const ride = rideDoc.data();
+
+                if (action.includes('Charger')) {
+                    await dbUpdate('rides', rideId, { status: 'loading' });
+                    showToast('⚡ Mode chargement activé');
+                } else if (action.includes('Commencer')) {
+                    await dbUpdate('rides', rideId, { status: 'started', started: true, startedAt: new Date().toISOString() });
+                    showToast('🚀 Trajet démarré');
+                    rideActionBtn.style.display = 'none';
+                } else if (action.includes('Encaisser')) {
+                    const passengersPaid = ride.passengersPaid || [];
+                    const totalAmount = passengersPaid.length * ride.prix;
+                    if (totalAmount === 0) return showToast('⚠️ Aucun passager n\'a payé', true);
+                    const driverDoc = await dbGet('users', ride.chauffeurEmail);
+                    if (!driverDoc.exists) return showToast('❌ Chauffeur introuvable', true);
+                    const driverData = driverDoc.data();
+                    const newDriverCredits = (driverData.credits || 0) + totalAmount;
+                    await dbUpdate('users', ride.chauffeurEmail, { credits: newDriverCredits });
+                    await dbUpdate('rides', rideId, { driverCollected: true, status: 'completed' });
+                    showToast(`💰 Encaissement de ${totalAmount} Alfrak effectué`);
+                    rideActionBtn.style.display = 'none';
+                }
+            } catch (e) {
+                showToast('❌ Erreur: ' + e.message, true);
+                console.error(e);
+            }
+        });
+
+        // ================================================================
+        // 12. ADMIN LISTS (unchanged)
+        // ================================================================
         const renderAdminLists = async () => {
             try {
                 const users = await fetchUsers();
@@ -732,9 +969,9 @@
                 console.error(e); }
         };
 
-        // ============================================================
-        // 10. ADMIN EDIT MODAL
-        // ============================================================
+        // ================================================================
+        // 13. ADMIN EDIT MODAL
+        // ================================================================
         const openAdminEdit = (user) => {
             adminEditTargetEmail = user.email;
             adminEditUserInfo.textContent = `Édition de ${user.nom} (${user.email})`;
@@ -841,15 +1078,14 @@
                 showToast('✅ Utilisateur mis à jour');
                 closeModal(modalAdminEdit);
                 renderAdminLists();
-                // Le snapshot rafraîchira les courses
             } catch (e) { showToast('❌ Erreur : ' + e.message, true);
                 console.error(e); }
             hideLoader(btn, orig);
         };
 
-        // ============================================================
-        // 11. SPOTS MODAL
-        // ============================================================
+        // ================================================================
+        // 14. SPOTS MODAL
+        // ================================================================
         const renderSpotsListModal = async () => {
             const container = adminSpotsListContainer;
             container.innerHTML = '';
@@ -928,12 +1164,13 @@
         btnAdminSpotCancel.addEventListener('click', () => closeModal(modalAdminSpots));
         modalAdminSpots.addEventListener('click', (e) => { if (e.target === modalAdminSpots) closeModal(modalAdminSpots); });
 
-        // ============================================================
-        // 12. SEAT CLICK & RESERVATION (modifié pour utiliser le snapshot)
-        // ============================================================
+        // ================================================================
+        // 15. SEAT CLICK & RESERVATION (with realtime update)
+        // ================================================================
         coursesList.addEventListener('click', async (e) => {
             const seat = e.target.closest('.seat');
             if (!seat) return;
+            if (e.target.closest('.pay-btn')) return;
             const status = seat.dataset.status,
                 courseId = seat.dataset.courseId,
                 placeIndex = parseInt(seat.dataset.placeIndex);
@@ -958,12 +1195,13 @@
                         const rides = await fetchRides();
                         const course = rides.find(r => r.id === courseId);
                         if (!course) return;
+                        if (course.status !== 'loading' && course.status !== 'created')
+                            return showToast('❌ Réservation non disponible', true);
                         const reservations = course.reservations || [];
                         if (reservations.some(r => r.email === currentUser.email)) return showToast('❌ Déjà réservé', true);
                         reservations.push({ email: currentUser.email, nom: currentUser.nom, placeIndex });
                         await dbUpdate('rides', courseId, { reservations });
                         showToast(`✅ Place réservée pour ${currentUser.nom}`);
-                        // Le snapshot mettra à jour
                     } catch (err) { showToast('❌ Erreur réservation', true);
                         console.error(err); }
                 } else if (status === 'reserved') {
@@ -973,6 +1211,8 @@
                             const rides = await fetchRides();
                             const course = rides.find(r => r.id === courseId);
                             if (!course) return;
+                            if (course.passengersPaid && course.passengersPaid.includes(currentUser.email))
+                                return showToast('❌ Vous avez déjà payé, impossible d\'annuler', true);
                             const reservations = course.reservations || [];
                             const idx = reservations.findIndex(r => r.placeIndex === placeIndex && r.email === currentUser
                             .email);
@@ -1002,26 +1242,9 @@
                 console.error(e); }
         });
 
-        // ============================================================
-        // 13. START RIDE
-        // ============================================================
-        btnStartRide.addEventListener('click', async function() {
-            const rideId = this.dataset.rideId;
-            if (!rideId) return;
-            try {
-                await dbUpdate('rides', rideId, { started: true, startedAt: new Date().toISOString() });
-                showToast('🚀 Trajet commencé !');
-                btnStartRide.style.display = 'none';
-                if (watchId) { navigator.geolocation.clearWatch(watchId);
-                    watchId = null; }
-                // Le snapshot mettra à jour
-            } catch (e) { showToast('❌ Erreur démarrage', true);
-                console.error(e); }
-        });
-
-        // ============================================================
-        // 14. TOGGLE ADMIN LISTS
-        // ============================================================
+        // ================================================================
+        // 16. TOGGLE ADMIN LISTS
+        // ================================================================
         const toggleList = (el) => {
             if (el.style.display === 'block') el.style.display = 'none';
             else { [adminChauffeursList, adminPassagersList, adminSpotsList].forEach(l => l.style.display = 'none');
@@ -1033,9 +1256,9 @@
             toggleList(adminPassagersList); });
         btnAdminSpots.addEventListener('click', openSpotsModal);
 
-        // ============================================================
-        // 15. AUTH HANDLERS
-        // ============================================================
+        // ================================================================
+        // 17. AUTH HANDLERS
+        // ================================================================
         const handleLogin = async () => {
             const email = loginEmail.value.trim(),
                 pw = loginPassword.value.trim();
@@ -1105,7 +1328,7 @@
                 tooltip.style.display = 'none';
                 if (watchId) { navigator.geolocation.clearWatch(watchId);
                     watchId = null; }
-                btnStartRide.style.display = 'none';
+                rideActionBtn.style.display = 'none';
                 if (ridesUnsubscribe) { ridesUnsubscribe();
                     ridesUnsubscribe = null; }
                 if (usersUnsubscribe) { usersUnsubscribe();
@@ -1114,9 +1337,9 @@
                 console.error(e); }
         };
 
-        // ============================================================
-        // 16. CREATE COURSE (avec date)
-        // ============================================================
+        // ================================================================
+        // 18. CREATE COURSE (with date, status='created')
+        // ================================================================
         const populateSpotSelects = async () => {
             const spots = await fetchSpots();
             [courseDepart, courseArrivee].forEach(sel => {
@@ -1176,30 +1399,33 @@
                     prix: prix,
                     places: places,
                     reservations: [],
+                    passengersPaid: [],
+                    status: 'created',
                     started: false,
+                    driverCollected: false,
+                    ratings: [],
                     dateCreation: new Date().toISOString()
                 };
                 await dbAdd('rides', data);
                 showToast(`✅ Course créée : ${dep} → ${arr}`);
                 closeModal(modalCreateCourse);
-                // Le snapshot mettra à jour
             } catch (e) { showToast('❌ Erreur : ' + e.message, true);
                 console.error(e); }
             hideLoader(btn, orig);
         };
 
-        // ============================================================
-        // 17. STATS
-        // ============================================================
+        // ================================================================
+        // 19. STATS
+        // ================================================================
         const updateStats = async () => {
             try { const snap = await dbGet('users');
                 stats.textContent = `👤 ${snap.size} inscrit${snap.size > 1 ? 's' : ''}`; } catch { stats.textContent =
                     '👤 ? inscrits (hors ligne)'; }
         };
 
-        // ============================================================
-        // 18. SESSION
-        // ============================================================
+        // ================================================================
+        // 20. SESSION
+        // ================================================================
         auth.onAuthStateChanged(async (user) => {
             if (user) {
                 try {
@@ -1227,9 +1453,9 @@
             }
         });
 
-        // ============================================================
-        // 19. SEED DEMO USERS
-        // ============================================================
+        // ================================================================
+        // 21. SEED DEMO USERS
+        // ================================================================
         (async () => {
             const demos = [
                 { email: 'chauffeur@gmail.com', password: 'chauffeur123', nom: 'Chauffeur Test', telephone: '0555000001',
@@ -1253,9 +1479,9 @@
             }
         })();
 
-        // ============================================================
-        // 20. EVENT LISTENERS
-        // ============================================================
+        // ================================================================
+        // 22. EVENT LISTENERS
+        // ================================================================
         btnInscription.addEventListener('click', () => { modalInscription.classList.add('active');
             nomInput.value = '';
             telInput.value = '';
@@ -1297,11 +1523,12 @@
                 else if (modalCreateCourse.classList.contains('active')) closeModal(modalCreateCourse);
                 else if (modalAdminEdit.classList.contains('active')) closeModal(modalAdminEdit);
                 else if (modalAdminSpots.classList.contains('active')) closeModal(modalAdminSpots);
+                else if (modalRating.classList.contains('active')) closeModal(modalRating);
             }
         });
 
         setInterval(updateStats, 30000);
-        console.log('✅ Machi ready – realtime + date');
+        console.log('✅ Machi ready – full ride flow with manual depart button');
     </script>
 </body>
 </html>
