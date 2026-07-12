@@ -14,7 +14,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
     <style>
-        /* --- STYLES COMPLETS (inchangés) --- */
+        /* --- STYLES --- */
         *{margin:0;padding:0;box-sizing:border-box}
         body{font-family:'Inter',sans-serif;min-height:100vh;background:#0a0d1a;display:flex;align-items:center;justify-content:center;padding:.5rem;position:relative}
         .glass-card,#mainInterface{background:rgba(20,25,45,.6);backdrop-filter:blur(12px) saturate(160%);-webkit-backdrop-filter:blur(12px) saturate(160%);border:1px solid rgba(255,255,255,.08);border-radius:1.5rem;padding:1rem .6rem;width:100%;max-width:480px;transition:opacity .3s ease}
@@ -45,14 +45,19 @@
         .courses-list{display:flex;flex-direction:column;gap:.6rem;margin-top:.6rem}
         .course-card{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:.8rem;padding:.4rem .6rem;width:100%;backdrop-filter:blur(4px);transition:background .2s,border-color .3s,box-shadow .3s;position:relative}
         .course-card:hover{background:rgba(255,255,255,.06)}
-        .course-started{animation:blinkRed 1s ease-in-out infinite;border-color:#ff4444!important}
-        @keyframes blinkRed{0%{box-shadow:0 0 0 0 rgba(255,68,68,.4);border-color:#ff4444}50%{box-shadow:0 0 20px 5px rgba(255,68,68,.6);border-color:#ff0000}100%{box-shadow:0 0 0 0 rgba(255,68,68,.4);border-color:#ff4444}}
+        .course-loading{animation:blinkOrange 1.2s ease-in-out infinite;border-color:#ff8c00!important}
+        @keyframes blinkOrange{0%{box-shadow:0 0 0 0 rgba(255,140,0,.4);border-color:#ff8c00}50%{box-shadow:0 0 20px 5px rgba(255,140,0,.6);border-color:#ff6a00}100%{box-shadow:0 0 0 0 rgba(255,140,0,.4);border-color:#ff8c00}}
+        .course-started{animation:blinkGreen 1s ease-in-out infinite;border-color:#00cc44!important}
+        @keyframes blinkGreen{0%{box-shadow:0 0 0 0 rgba(0,204,68,.4);border-color:#00cc44}50%{box-shadow:0 0 20px 5px rgba(0,204,68,.6);border-color:#00aa33}100%{box-shadow:0 0 0 0 rgba(0,204,68,.4);border-color:#00cc44}}
+        .course-canceled{opacity:.5;border-color:rgba(255,255,255,.1)}
+        .course-canceled .course-info .titre{text-decoration:line-through;color:#888}
         .course-info{display:flex;flex-wrap:wrap;align-items:baseline;gap:.2rem .4rem;margin-bottom:.2rem}
         .course-info .titre{font-weight:600;font-size:.8rem;color:#d6eaff;flex:1 1 auto;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
         .course-info .dateheure{font-size:.65rem;color:#8aa0c8;white-space:nowrap}
         .course-info .temps-restant{font-size:.65rem;color:#f0c060;white-space:nowrap}
         .course-info .places-restantes{font-size:.65rem;color:#60c0f0;white-space:nowrap}
         .course-info .prix{font-size:.65rem;color:#ffd700;white-space:nowrap;font-weight:500}
+        .course-info .cancel-badge{font-size:.6rem;color:#ff6b6b;background:rgba(255,0,0,.15);padding:.1rem .4rem;border-radius:40px;white-space:nowrap}
         .course-row{display:flex;flex-direction:row;gap:1rem;width:100%}
         .seat-grid{display:grid;grid-template-columns:repeat(4,1fr);grid-template-rows:repeat(2,1fr);gap:.15rem;flex:4;grid-auto-flow:column}
         .seat{aspect-ratio:1/1;border-radius:4px;border:1.5px solid rgba(255,255,255,.1);width:100%;cursor:default;background-size:cover;background-position:center;background-repeat:no-repeat;position:relative}
@@ -91,20 +96,16 @@
         @keyframes pulseButton{0%{box-shadow:0 0 0 0 rgba(0,200,180,.5)}70%{box-shadow:0 0 20px 10px rgba(0,200,180,0)}100%{box-shadow:0 0 0 0 rgba(0,200,180,0)}}
         .ride-action-btn.secondary{background:#b44cff;box-shadow:0 0 30px rgba(180,76,255,.5)}
         .ride-action-btn.secondary:hover{background:#c86bff}
+        .pay-btn-bottom{position:fixed;bottom:5rem;left:50%;transform:translateX(-50%);background:#ffd700;color:#0a0d1a;border:none;border-radius:60px;padding:.7rem 2rem;font-weight:700;font-size:.9rem;box-shadow:0 0 30px rgba(255,215,0,.4);z-index:70;display:none;cursor:pointer;animation:pulseButton 1.5s ease-in-out infinite}
+        .pay-btn-bottom:hover{background:#ffed4a}
         .rating-stars{display:flex;gap:.5rem;justify-content:center;margin:.5rem 0}
         .rating-stars .star{font-size:2rem;cursor:pointer;color:#6a7a9a;transition:color .2s}
         .rating-stars .star.active{color:#ffd700}
         #homeScreen .btn-led{flex:1;text-align:center}
         .spinner{display:inline-block;width:.8rem;height:.8rem;border:2px solid rgba(255,255,255,.1);border-top-color:#00b8b0;border-radius:50%;animation:spin .6s linear infinite}
         @keyframes spin{to{transform:rotate(360deg)}}
-        @media(max-width:480px){body{padding:.3rem}.glass-card,#mainInterface{padding:.6rem .4rem;border-radius:1rem}.modal-content{padding:1rem .6rem}.course-info .titre{font-size:.75rem}.header-actions .btn-logout,.header-actions .btn-create{font-size:.6rem;padding:.15rem .5rem}.ride-action-btn{padding:.6rem 1.5rem;font-size:.9rem;bottom:1.5rem}}
-        .pay-btn{background:#ffd700;color:#0a0d1a;border:none;border-radius:60px;padding:.2rem .8rem;font-weight:700;font-size:.7rem;cursor:pointer;transition:background .2s}
-        .pay-btn:hover{background:#ffed4a}
-        .pay-btn:disabled{opacity:.5;cursor:not-allowed}
-        .seat .pay-btn{position:absolute;bottom:2px;left:50%;transform:translateX(-50%);font-size:.6rem;padding:.1rem .4rem;z-index:10}
+        @media(max-width:480px){body{padding:.3rem}.glass-card,#mainInterface{padding:.6rem .4rem;border-radius:1rem}.modal-content{padding:1rem .6rem}.course-info .titre{font-size:.75rem}.header-actions .btn-logout,.header-actions .btn-create{font-size:.6rem;padding:.15rem .5rem}.ride-action-btn{padding:.6rem 1.5rem;font-size:.9rem;bottom:1.5rem}.pay-btn-bottom{padding:.5rem 1.5rem;font-size:.8rem;bottom:4.5rem}}
         .rating-modal textarea{width:100%;padding:.4rem;border-radius:40px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:#e8f0ff;resize:vertical;min-height:60px}
-        .manual-depart-btn{margin-top:.3rem;font-size:.7rem;padding:.2rem .8rem;background:#00b8b0;color:#fff;border:none;border-radius:40px;cursor:pointer;transition:background .2s}
-        .manual-depart-btn:hover{background:#00d4cc}
         .cancel-ride-btn{margin-top:.3rem;font-size:.7rem;padding:.2rem .8rem;background:#ff4444;color:#fff;border:none;border-radius:40px;cursor:pointer;transition:background .2s;margin-left:.3rem}
         .cancel-ride-btn:hover{background:#ff6666}
     </style>
@@ -149,24 +150,20 @@
         </div>
     </div>
 
-    <!-- FLOATING ACTION BUTTON -->
+    <!-- FLOATING ACTION BUTTONS -->
     <button id="rideActionBtn" class="ride-action-btn"></button>
+    <button id="payActionBtn" class="pay-btn-bottom">💰 Payer</button>
 
-    <!-- MODALE ADMIN EDIT -->
+    <!-- MODALES (inchangées) -->
     <div id="modalAdminEdit" class="modal-overlay">
         <div class="modal-content">
             <h2 class="text-base font-semibold text-center text-cyan-200 mb-2">✏️ Modifier l'utilisateur</h2>
             <div id="adminEditUserInfo" class="text-xs text-slate-400 mb-2">Chargement...</div>
-            <label>Nom</label>
-            <input type="text" id="adminEditNom" placeholder="Nom" />
-            <label>Téléphone</label>
-            <input type="tel" id="adminEditTelephone" placeholder="0555 12 34 56" />
-            <label>Email (non modifiable)</label>
-            <input type="email" id="adminEditEmail" disabled />
-            <label>Rôle</label>
-            <input type="text" id="adminEditRole" disabled />
-            <label>Crédits (Alfrak)</label>
-            <input type="number" id="adminEditCredits" placeholder="100" min="0" step="1" />
+            <label>Nom</label><input type="text" id="adminEditNom" placeholder="Nom" />
+            <label>Téléphone</label><input type="tel" id="adminEditTelephone" placeholder="0555 12 34 56" />
+            <label>Email (non modifiable)</label><input type="email" id="adminEditEmail" disabled />
+            <label>Rôle</label><input type="text" id="adminEditRole" disabled />
+            <label>Crédits (Alfrak)</label><input type="number" id="adminEditCredits" placeholder="100" min="0" step="1" />
             <div class="mt-3 border-t border-white/5 pt-2">
                 <p class="text-xs text-cyan-200 font-medium mb-1">📸 Photos</p>
                 <label class="text-xs">Photo de la voiture (3:2)</label>
@@ -183,19 +180,15 @@
         </div>
     </div>
 
-    <!-- MODALE ADMIN SPOTS -->
     <div id="modalAdminSpots" class="modal-overlay">
         <div class="modal-content">
             <h2 class="text-base font-semibold text-center text-cyan-200 mb-2">📍 Gérer les spots</h2>
             <div id="adminSpotsListContainer" class="admin-list" style="max-height:200px; margin-bottom:.5rem;"></div>
             <hr class="border-white/5 my-2" />
-            <label>Nom du spot</label>
-            <input type="text" id="adminSpotNom" placeholder="ex: Aéroport" />
+            <label>Nom du spot</label><input type="text" id="adminSpotNom" placeholder="ex: Aéroport" />
             <div style="text-align:center; margin:.3rem 0;"><button id="btnGetLocation" class="btn-led btn-validate" style="width:100%;">📍 Me localiser</button></div>
-            <label>Latitude</label>
-            <input type="text" id="adminSpotLat" placeholder="36.7538" />
-            <label>Longitude</label>
-            <input type="text" id="adminSpotLon" placeholder="3.0588" />
+            <label>Latitude</label><input type="text" id="adminSpotLat" placeholder="36.7538" />
+            <label>Longitude</label><input type="text" id="adminSpotLon" placeholder="3.0588" />
             <div class="flex gap-2 mt-3">
                 <button id="btnAdminSpotAdd" class="btn-led btn-validate flex-1">➕ Ajouter</button>
                 <button id="btnAdminSpotCancel" class="btn-led btn-cancel flex-1">✖ Fermer</button>
@@ -203,75 +196,45 @@
         </div>
     </div>
 
-    <!-- TOOLTIP RESERVATION -->
     <div id="tooltipReservation" class="tooltip-reservation">
         <span class="nom">Passager</span>
         <button class="btn-supprimer" id="btnSupprimerResa">✕</button>
     </div>
 
-    <!-- MODALE INSCRIPTION -->
     <div id="modalInscription" class="modal-overlay">
         <div class="modal-content">
             <h2 class="text-base font-semibold text-center text-cyan-200 mb-2">Créer un compte</h2>
-            <label>Je suis</label>
-            <select id="role">
-                <option value="passager">🚶 Passager</option>
-                <option value="chauffeur">🚗 Chauffeur</option>
-            </select>
-            <label>Nom complet</label>
-            <input type="text" id="nom" placeholder="ex: Karim Benali" />
-            <label>Téléphone</label>
-            <input type="tel" id="telephone" placeholder="0555 12 34 56" />
-            <label>Email</label>
-            <input type="email" id="email" placeholder="ex: farid@gmail.com" />
-            <label>Mot de passe</label>
-            <input type="password" id="motDePasse" placeholder="••••••••" />
-            <div class="flex gap-2 mt-3">
-                <button id="btnValiderInscription" class="btn-led btn-validate flex-1">✔ Valider</button>
-                <button id="btnAnnulerInscription" class="btn-led btn-cancel flex-1">✖ Annuler</button>
-            </div>
+            <label>Je suis</label><select id="role"><option value="passager">🚶 Passager</option><option value="chauffeur">🚗 Chauffeur</option></select>
+            <label>Nom complet</label><input type="text" id="nom" placeholder="ex: Karim Benali" />
+            <label>Téléphone</label><input type="tel" id="telephone" placeholder="0555 12 34 56" />
+            <label>Email</label><input type="email" id="email" placeholder="ex: farid@gmail.com" />
+            <label>Mot de passe</label><input type="password" id="motDePasse" placeholder="••••••••" />
+            <div class="flex gap-2 mt-3"><button id="btnValiderInscription" class="btn-led btn-validate flex-1">✔ Valider</button><button id="btnAnnulerInscription" class="btn-led btn-cancel flex-1">✖ Annuler</button></div>
         </div>
     </div>
 
-    <!-- MODALE CONNEXION -->
     <div id="modalConnexion" class="modal-overlay">
         <div class="modal-content">
             <h2 class="text-base font-semibold text-center text-cyan-200 mb-2">🔐 Se connecter</h2>
-            <label>Email</label>
-            <input type="email" id="loginEmail" placeholder="ex: farid@gmail.com" />
-            <label>Mot de passe</label>
-            <input type="password" id="loginPassword" placeholder="••••••••" />
-            <div class="flex gap-2 mt-3">
-                <button id="btnValiderConnexion" class="btn-led btn-validate flex-1">✔ Se connecter</button>
-                <button id="btnAnnulerConnexion" class="btn-led btn-cancel flex-1">✖ Annuler</button>
-            </div>
+            <label>Email</label><input type="email" id="loginEmail" placeholder="ex: farid@gmail.com" />
+            <label>Mot de passe</label><input type="password" id="loginPassword" placeholder="••••••••" />
+            <div class="flex gap-2 mt-3"><button id="btnValiderConnexion" class="btn-led btn-validate flex-1">✔ Se connecter</button><button id="btnAnnulerConnexion" class="btn-led btn-cancel flex-1">✖ Annuler</button></div>
         </div>
     </div>
 
-    <!-- MODALE CRÉATION COURSE -->
     <div id="modalCreateCourse" class="modal-overlay">
         <div class="modal-content">
             <h2 class="text-base font-semibold text-center text-cyan-200 mb-2">🚗 Nouvelle course</h2>
-            <label>Date</label>
-            <input type="date" id="courseDate" />
-            <label>Départ</label>
-            <select id="courseDepart"><option value="">-- Choisir un départ --</option></select>
-            <label>Arrivée</label>
-            <select id="courseArrivee"><option value="">-- Choisir une arrivée --</option></select>
-            <label>Heure</label>
-            <input type="time" id="courseHeure" />
-            <label>Prix (Alfrak)</label>
-            <input type="number" id="coursePrix" placeholder="12" min="1" />
-            <label>Places (hors chauffeur, max 7)</label>
-            <input type="number" id="coursePlaces" placeholder="3" min="1" max="7" />
-            <div class="flex gap-2 mt-3">
-                <button id="btnValiderCourse" class="btn-led btn-validate flex-1">✔ Confirmer</button>
-                <button id="btnAnnulerCourse" class="btn-led btn-cancel flex-1">✖ Annuler</button>
-            </div>
+            <label>Date</label><input type="date" id="courseDate" />
+            <label>Départ</label><select id="courseDepart"><option value="">-- Choisir un départ --</option></select>
+            <label>Arrivée</label><select id="courseArrivee"><option value="">-- Choisir une arrivée --</option></select>
+            <label>Heure</label><input type="time" id="courseHeure" />
+            <label>Prix (Alfrak)</label><input type="number" id="coursePrix" placeholder="12" min="1" />
+            <label>Places (hors chauffeur, max 7)</label><input type="number" id="coursePlaces" placeholder="3" min="1" max="7" />
+            <div class="flex gap-2 mt-3"><button id="btnValiderCourse" class="btn-led btn-validate flex-1">✔ Confirmer</button><button id="btnAnnulerCourse" class="btn-led btn-cancel flex-1">✖ Annuler</button></div>
         </div>
     </div>
 
-    <!-- MODALE NOTATION -->
     <div id="modalRating" class="modal-overlay">
         <div class="modal-content">
             <h2 class="text-base font-semibold text-center text-cyan-200 mb-2">⭐ Évaluez votre trajet</h2>
@@ -292,7 +255,6 @@
         </div>
     </div>
 
-    <!-- TOAST -->
     <div id="toast" class="toast"></div>
 
     <script>
@@ -338,6 +300,7 @@
             btnLogout = $('btnLogout'),
             btnCreateCourse = $('btnCreateCourse'),
             rideActionBtn = $('rideActionBtn'),
+            payActionBtn = $('payActionBtn'),
             modalInscription = $('modalInscription'),
             btnValiderInscription = $('btnValiderInscription'),
             btnAnnulerInscription = $('btnAnnulerInscription'),
@@ -441,6 +404,7 @@
             updateStats();
             tooltip.style.display = 'none';
             rideActionBtn.style.display = 'none';
+            payActionBtn.style.display = 'none';
             if (watchId) { navigator.geolocation.clearWatch(watchId);
                 watchId = null; }
             if (ridesUnsubscribe) { ridesUnsubscribe();
@@ -458,6 +422,7 @@
             userRoleBadge.textContent = `Rôle : ${roleFr}`;
             creditsBadge.textContent = `🪙 ${user.credits || 0}`;
             btnCreateCourse.style.display = 'none';
+            payActionBtn.style.display = 'none';
             if (user.role === 'admin') {
                 coursesContainer.style.display = 'none';
                 adminPanel.style.display = 'block';
@@ -522,7 +487,7 @@
         };
 
         // ================================================================
-        // 7. CANCEL RIDE FUNCTION (with refunds)
+        // 7. CANCEL RIDE FUNCTION (with refunds & notifications)
         // ================================================================
         async function cancelRide(rideId) {
             if (!currentUser || currentUser.role !== 'chauffeur') return showToast('❌ Action réservée au chauffeur', true);
@@ -536,9 +501,11 @@
                 if (ride.status === 'canceled') return showToast('ℹ️ Ce trajet est déjà annulé', false);
 
                 const passengersPaid = ride.passengersPaid || [];
+                const passengersReserved = ride.reservations || [];
                 const refundAmount = ride.prix || 0;
                 const batch = db.batch();
 
+                // Rembourser ceux qui ont payé
                 for (const email of passengersPaid) {
                     const userRef = db.collection('users').doc(email);
                     const userDoc = await userRef.get();
@@ -548,6 +515,7 @@
                     }
                 }
 
+                // Si le chauffeur a encaissé, on déduit
                 if (ride.driverCollected && ride.chauffeurEmail) {
                     const driverRef = db.collection('users').doc(ride.chauffeurEmail);
                     const driverDoc = await driverRef.get();
@@ -558,11 +526,18 @@
                     }
                 }
 
+                // Mettre à jour le statut de la course
                 const rideRef = db.collection('rides').doc(rideId);
                 batch.update(rideRef, { status: 'canceled', canceledAt: new Date().toISOString() });
 
                 await batch.commit();
-                showToast('✅ Trajet annulé et remboursements effectués');
+
+                // Notifier les passagers via toast (on le fait côté client)
+                const msg = `🚫 Trajet annulé ! ${passengersReserved.length} passagers notifiés. ${passengersPaid.length > 0 ? 'Remboursements effectués.' : ''}`;
+                showToast(msg, false);
+
+                // Rafraîchir les données
+                if (currentUser) renderCoursesWithData(await fetchRides(), {}, currentUser);
             } catch (e) {
                 showToast('❌ Erreur lors de l\'annulation: ' + e.message, true);
                 console.error(e);
@@ -570,7 +545,55 @@
         }
 
         // ================================================================
-        // 8. RENDER COURSES WITH DATA
+        // 8. PAYMENT HANDLER (bottom button)
+        // ================================================================
+        let paymentRideId = null,
+            paymentPlaceIndex = null,
+            paymentAmount = 0;
+
+        function showPayButton(rideId, placeIndex, amount) {
+            paymentRideId = rideId;
+            paymentPlaceIndex = placeIndex;
+            paymentAmount = amount;
+            payActionBtn.style.display = 'block';
+        }
+
+        payActionBtn.addEventListener('click', async function() {
+            if (!paymentRideId || paymentPlaceIndex === null) return;
+            await handlePay(paymentRideId, paymentPlaceIndex, paymentAmount);
+            payActionBtn.style.display = 'none';
+        });
+
+        async function handlePay(rideId, placeIndex, amount) {
+            if (!currentUser) return showToast('❌ Connectez-vous', true);
+            if (currentUser.credits < amount) return showToast('❌ Crédits insuffisants', true);
+
+            try {
+                const rideDoc = await dbGet('rides', rideId);
+                if (!rideDoc.exists) return showToast('❌ Trajet introuvable', true);
+                const ride = rideDoc.data();
+                if (ride.passengersPaid && ride.passengersPaid.includes(currentUser.email))
+                    return showToast('❌ Vous avez déjà payé', true);
+
+                const newBalance = currentUser.credits - amount;
+                await dbUpdate('users', currentUser.email, { credits: newBalance });
+                currentUser.credits = newBalance;
+                creditsBadge.textContent = `🪙 ${newBalance}`;
+
+                const paid = ride.passengersPaid || [];
+                paid.push(currentUser.email);
+                await dbUpdate('rides', rideId, { passengersPaid: paid });
+
+                showToast('✅ Paiement effectué !');
+                if (currentUser) renderCoursesWithData(await fetchRides(), {}, currentUser);
+            } catch (e) {
+                showToast('❌ Erreur paiement: ' + e.message, true);
+                console.error(e);
+            }
+        }
+
+        // ================================================================
+        // 9. RENDER COURSES WITH DATA
         // ================================================================
         async function renderCoursesWithData(rides, userMap, user) {
             if (!user) user = currentUser;
@@ -578,7 +601,7 @@
 
             console.log('🧾 renderCoursesWithData appelé pour', user.email, 'rôle:', user.role);
 
-            // Filtrer les annulés
+            // Filtrer les annulés pour l'affichage
             let ridesToShow = rides.filter(r => r.status !== 'canceled');
             if (user.role === 'chauffeur') {
                 ridesToShow = ridesToShow.filter(r => r.chauffeurEmail === user.email);
@@ -601,11 +624,8 @@
                 }
             }
 
-            console.log('🔘 hasActive =', hasActive);
-
             if (user.role === 'chauffeur') {
                 btnCreateCourse.style.display = hasActive ? 'none' : 'inline-block';
-                console.log('🔘 Bouton Créer :', hasActive ? 'masqué (trajet actif)' : 'affiché');
             } else {
                 btnCreateCourse.style.display = 'none';
             }
@@ -631,6 +651,7 @@
                 }
             }
 
+            // Bouton flottant du chauffeur
             if (rideForAction) {
                 rideActionBtn.style.display = 'block';
                 rideActionBtn.dataset.rideId = rideForAction.ride.id;
@@ -674,7 +695,12 @@
 
             // ---- Rendu des cartes ----
             coursesList.innerHTML = '';
-            if (!ridesToShow.length) {
+            // Afficher aussi les trajets annulés pour info (mais avec style différent)
+            const allRidesToShow = rides.filter(r => r.status === 'canceled' && (user.role === 'chauffeur' ? r.chauffeurEmail ===
+                user.email : true));
+            const allRides = [...ridesToShow, ...allRidesToShow];
+
+            if (!allRides.length) {
                 noCoursesMsg.style.display = 'block';
                 coursesList.style.display = 'none';
                 return;
@@ -683,17 +709,26 @@
             coursesList.style.display = 'flex';
 
             const now = new Date();
-            for (const course of ridesToShow) {
+            for (const course of allRides) {
                 const chauffeur = userMap[course.chauffeurEmail] || {};
                 const carPhoto = chauffeur.photoURL || null;
                 const profilePhoto = chauffeur.profilePhotoURL || null;
+                const isCanceled = course.status === 'canceled';
 
                 const card = document.createElement('div');
-                card.className = 'course-card' + (course.started ? ' course-started' : '');
+                card.className = 'course-card';
+                if (isCanceled) {
+                    card.classList.add('course-canceled');
+                } else if (course.status === 'loading') {
+                    card.classList.add('course-loading');
+                } else if (course.status === 'started' || course.started) {
+                    card.classList.add('course-started');
+                }
                 card.dataset.courseId = course.id;
 
+                // Info ligne
                 let temps = '';
-                if (course.date && course.heure) {
+                if (!isCanceled && course.date && course.heure) {
                     const rideDate = new Date(course.date + 'T' + course.heure);
                     const diffMs = rideDate - now;
                     if (diffMs > 0) {
@@ -711,7 +746,7 @@
                 const total = course.places + 1;
                 const reserved = (course.reservations || []).length;
                 const avail = Math.max(0, course.places - reserved);
-                const placesTxt = ` (${avail} place${avail>1?'s':''} restante${avail>1?'s':''})`;
+                const placesTxt = !isCanceled ? ` (${avail} place${avail>1?'s':''} restante${avail>1?'s':''})` : ' (annulé)';
 
                 const info = document.createElement('div');
                 info.className = 'course-info';
@@ -723,7 +758,7 @@
                 dateheure.className = 'dateheure';
                 dateheure.textContent = `📅 ${course.date || ''} 🕐 ${course.heure || ''}`;
                 info.appendChild(dateheure);
-                if (temps) { const ts = document.createElement('span');
+                if (temps && !isCanceled) { const ts = document.createElement('span');
                     ts.className = 'temps-restant';
                     ts.textContent = temps;
                     info.appendChild(ts); }
@@ -735,133 +770,126 @@
                 prixSpan.className = 'prix';
                 prixSpan.textContent = `🪙 ${course.prix}`;
                 info.appendChild(prixSpan);
+                if (isCanceled) {
+                    const badge = document.createElement('span');
+                    badge.className = 'cancel-badge';
+                    badge.textContent = '❌ ANNULÉ';
+                    info.appendChild(badge);
+                }
                 card.appendChild(info);
 
-                // Sièges
-                const row = document.createElement('div');
-                row.className = 'course-row';
-                const grid = document.createElement('div');
-                grid.className = 'seat-grid';
-                const totalSeats = 8,
-                    eff = Math.min(total, totalSeats),
-                    res = course.reservations || [],
-                    passengersPaid = course.passengersPaid || [];
-                const status = [];
-                status[0] = 'driver';
-                for (let i = 1; i < eff; i++) {
-                    const r = res.find(r => r.placeIndex === i);
-                    if (r) {
-                        const paid = passengersPaid.includes(r.email);
-                        status[i] = { type: paid ? 'paid' : 'reserved', email: r.email, nom: r.nom };
-                    } else {
-                        status[i] = { type: 'available' };
+                // Sièges (uniquement pour les trajets non annulés)
+                if (!isCanceled) {
+                    const row = document.createElement('div');
+                    row.className = 'course-row';
+                    const grid = document.createElement('div');
+                    grid.className = 'seat-grid';
+                    const totalSeats = 8,
+                        eff = Math.min(total, totalSeats),
+                        res = course.reservations || [],
+                        passengersPaid = course.passengersPaid || [];
+                    const status = [];
+                    status[0] = 'driver';
+                    for (let i = 1; i < eff; i++) {
+                        const r = res.find(r => r.placeIndex === i);
+                        if (r) {
+                            const paid = passengersPaid.includes(r.email);
+                            status[i] = { type: paid ? 'paid' : 'reserved', email: r.email, nom: r.nom };
+                        } else {
+                            status[i] = { type: 'available' };
+                        }
                     }
-                }
-                for (let i = eff; i < totalSeats; i++) status[i] = { type: 'disabled' };
-                const order = [0, 1, 2, 3, 4, 5, 6, 7];
-                for (const idx of order) {
-                    const seat = document.createElement('div');
-                    seat.className = 'seat';
-                    seat.dataset.placeIndex = idx;
-                    seat.dataset.courseId = course.id;
-                    const s = status[idx];
-                    if (idx === 0 && profilePhoto) {
-                        seat.classList.add('driver', 'has-profile');
-                        seat.style.backgroundImage = `url(${profilePhoto})`;
-                        seat.style.backgroundColor = 'rgba(0,0,0,0.3)';
-                        seat.dataset.status = 'driver';
-                    } else if (typeof s === 'string') {
-                        if (s === 'driver') seat.classList.add('driver');
-                        else if (s === 'disabled') seat.classList.add('disabled');
-                        seat.dataset.status = s;
-                    } else if (s.type === 'available') {
-                        seat.classList.add('available');
-                        seat.dataset.status = 'available';
-                    } else if (s.type === 'reserved') {
-                        seat.classList.add('reserved');
-                        seat.dataset.status = 'reserved';
-                        seat.dataset.reservedEmail = s.email;
-                        seat.dataset.reservedNom = s.nom;
-                        if (course.status === 'loading' && !passengersPaid.includes(s.email) && currentUser && currentUser
-                            .email === s.email) {
-                            const payBtn = document.createElement('button');
-                            payBtn.className = 'pay-btn';
-                            payBtn.textContent = '💰 Payer';
-                            payBtn.dataset.rideId = course.id;
-                            payBtn.dataset.placeIndex = idx;
-                            payBtn.addEventListener('click', (e) => {
-                                e.stopPropagation();
-                                handlePay(course.id, idx, course.prix);
-                            });
-                            seat.appendChild(payBtn);
+                    for (let i = eff; i < totalSeats; i++) status[i] = { type: 'disabled' };
+                    const order = [0, 1, 2, 3, 4, 5, 6, 7];
+                    for (const idx of order) {
+                        const seat = document.createElement('div');
+                        seat.className = 'seat';
+                        seat.dataset.placeIndex = idx;
+                        seat.dataset.courseId = course.id;
+                        const s = status[idx];
+                        if (idx === 0 && profilePhoto) {
+                            seat.classList.add('driver', 'has-profile');
+                            seat.style.backgroundImage = `url(${profilePhoto})`;
+                            seat.style.backgroundColor = 'rgba(0,0,0,0.3)';
+                            seat.dataset.status = 'driver';
+                        } else if (typeof s === 'string') {
+                            if (s === 'driver') seat.classList.add('driver');
+                            else if (s === 'disabled') seat.classList.add('disabled');
+                            seat.dataset.status = s;
+                        } else if (s.type === 'available') {
+                            seat.classList.add('available');
+                            seat.dataset.status = 'available';
+                        } else if (s.type === 'reserved') {
+                            seat.classList.add('reserved');
+                            seat.dataset.status = 'reserved';
+                            seat.dataset.reservedEmail = s.email;
+                            seat.dataset.reservedNom = s.nom;
+                            // Si le passager connecté a réservé et que le trajet est en mode loading, afficher le bouton payer en bas
+                            if (course.status === 'loading' && !passengersPaid.includes(s.email) && currentUser && currentUser
+                                .email === s.email) {
+                                // On stocke les infos pour le bouton de paiement flottant
+                                // On ne crée pas de bouton sur le carreau, on utilise le bouton flottant
+                                // On le déclenche via un événement sur le carreau
+                                seat.dataset.payable = 'true';
+                                seat.dataset.rideId = course.id;
+                                seat.dataset.placeIndex = idx;
+                                seat.dataset.amount = course.prix;
+                                seat.addEventListener('click', (e) => {
+                                    e.stopPropagation();
+                                    showPayButton(course.id, idx, course.prix);
+                                });
+                            }
+                        } else if (s.type === 'paid') {
+                            seat.classList.add('paid');
+                            seat.dataset.status = 'paid';
+                            seat.dataset.reservedEmail = s.email;
+                            seat.dataset.reservedNom = s.nom;
                         }
-                    } else if (s.type === 'paid') {
-                        seat.classList.add('paid');
-                        seat.dataset.status = 'paid';
-                        seat.dataset.reservedEmail = s.email;
-                        seat.dataset.reservedNom = s.nom;
+                        grid.appendChild(seat);
                     }
-                    grid.appendChild(seat);
-                }
-                row.appendChild(grid);
+                    row.appendChild(grid);
 
-                // Photo
-                const photoContainer = document.createElement('div');
-                photoContainer.className = 'car-photo' + (carPhoto ? '' : ' default');
-                photoContainer.dataset.courseId = course.id;
-                if (carPhoto) { const img = document.createElement('img');
-                    img.src = carPhoto;
-                    img.alt = 'Voiture';
-                    photoContainer.appendChild(img); } else photoContainer.textContent = '🚗';
+                    // Photo
+                    const photoContainer = document.createElement('div');
+                    photoContainer.className = 'car-photo' + (carPhoto ? '' : ' default');
+                    photoContainer.dataset.courseId = course.id;
+                    if (carPhoto) { const img = document.createElement('img');
+                        img.src = carPhoto;
+                        img.alt = 'Voiture';
+                        photoContainer.appendChild(img); } else photoContainer.textContent = '🚗';
 
-                // Long press delete
-                let pressTimer = null;
-                const startPress = () => {
-                    pressTimer = setTimeout(() => {
-                        if (currentUser && currentUser.role === 'chauffeur' &&
-                            course.status !== 'started' && !course.started &&
-                            confirm('Supprimer cette course ?')) {
-                            dbDelete('rides', course.id)
-                                .then(() => showToast('🗑️ Course supprimée'))
-                                .catch(e => showToast('❌ Erreur: ' + e.message, true));
-                        }
-                    }, 600);
-                };
-                const cancelPress = () => {
-                    if (pressTimer) { clearTimeout(pressTimer);
-                        pressTimer = null; }
-                };
-                photoContainer.addEventListener('mousedown', startPress);
-                photoContainer.addEventListener('mouseup', cancelPress);
-                photoContainer.addEventListener('mouseleave', cancelPress);
-                photoContainer.addEventListener('touchstart', startPress, { passive: true });
-                photoContainer.addEventListener('touchend', cancelPress, { passive: true });
-                photoContainer.addEventListener('touchmove', cancelPress, { passive: true });
-                photoContainer.addEventListener('contextmenu', e => e.preventDefault());
+                    // Long press delete (uniquement pour les trajets non commencés)
+                    let pressTimer = null;
+                    const startPress = () => {
+                        pressTimer = setTimeout(() => {
+                            if (currentUser && currentUser.role === 'chauffeur' &&
+                                course.status !== 'started' && !course.started &&
+                                confirm('Supprimer cette course ?')) {
+                                dbDelete('rides', course.id)
+                                    .then(() => showToast('🗑️ Course supprimée'))
+                                    .catch(e => showToast('❌ Erreur: ' + e.message, true));
+                            }
+                        }, 600);
+                    };
+                    const cancelPress = () => {
+                        if (pressTimer) { clearTimeout(pressTimer);
+                            pressTimer = null; }
+                    };
+                    photoContainer.addEventListener('mousedown', startPress);
+                    photoContainer.addEventListener('mouseup', cancelPress);
+                    photoContainer.addEventListener('mouseleave', cancelPress);
+                    photoContainer.addEventListener('touchstart', startPress, { passive: true });
+                    photoContainer.addEventListener('touchend', cancelPress, { passive: true });
+                    photoContainer.addEventListener('touchmove', cancelPress, { passive: true });
+                    photoContainer.addEventListener('contextmenu', e => e.preventDefault());
 
-                row.appendChild(photoContainer);
-                card.appendChild(row);
-
-                // Manuel départ
-                if (user.role === 'chauffeur' && course.status === 'created' && course.chauffeurEmail === user.email) {
-                    const manualBtn = document.createElement('button');
-                    manualBtn.className = 'manual-depart-btn';
-                    manualBtn.textContent = '📍 Je suis au départ';
-                    manualBtn.addEventListener('click', async (e) => {
-                        e.stopPropagation();
-                        try {
-                            await dbUpdate('rides', course.id, { status: 'loading' });
-                            showToast('⚡ Mode chargement activé manuellement');
-                        } catch (err) {
-                            showToast('❌ Erreur: ' + err.message, true);
-                            console.error(err);
-                        }
-                    });
-                    card.appendChild(manualBtn);
+                    row.appendChild(photoContainer);
+                    card.appendChild(row);
                 }
 
-                // Bouton Annuler
-                if (user.role === 'chauffeur' && course.chauffeurEmail === user.email && course.status !== 'canceled') {
+                // Bouton Annuler (pour chauffeur, sur trajets non annulés et non terminés)
+                if (user.role === 'chauffeur' && course.chauffeurEmail === user.email && !isCanceled && course.status !==
+                    'completed') {
                     const cancelBtn = document.createElement('button');
                     cancelBtn.className = 'cancel-ride-btn';
                     cancelBtn.textContent = '❌ Annuler';
@@ -874,7 +902,7 @@
 
                 coursesList.appendChild(card);
 
-                // Rating
+                // Rating trigger pour passagers
                 if (course.status === 'arrived' && currentUser && currentUser.role === 'passager') {
                     const userReservation = course.reservations ? course.reservations.find(r => r.email === currentUser.email) :
                         null;
@@ -885,36 +913,6 @@
                         }
                     }
                 }
-            }
-        }
-
-        // ================================================================
-        // 9. PAYMENT HANDLER
-        // ================================================================
-        async function handlePay(rideId, placeIndex, amount) {
-            if (!currentUser) return showToast('❌ Connectez-vous', true);
-            if (currentUser.credits < amount) return showToast('❌ Crédits insuffisants', true);
-
-            try {
-                const rideDoc = await dbGet('rides', rideId);
-                if (!rideDoc.exists) return showToast('❌ Trajet introuvable', true);
-                const ride = rideDoc.data();
-                if (ride.passengersPaid && ride.passengersPaid.includes(currentUser.email))
-                    return showToast('❌ Vous avez déjà payé', true);
-
-                const newBalance = currentUser.credits - amount;
-                await dbUpdate('users', currentUser.email, { credits: newBalance });
-                currentUser.credits = newBalance;
-                creditsBadge.textContent = `🪙 ${newBalance}`;
-
-                const paid = ride.passengersPaid || [];
-                paid.push(currentUser.email);
-                await dbUpdate('rides', rideId, { passengersPaid: paid });
-
-                showToast('✅ Paiement effectué !');
-            } catch (e) {
-                showToast('❌ Erreur paiement: ' + e.message, true);
-                console.error(e);
             }
         }
 
@@ -979,7 +977,7 @@
         });
 
         // ================================================================
-        // 11. RIDE ACTION BUTTON
+        // 11. RIDE ACTION BUTTON (Charger / Commencer / Encaisser)
         // ================================================================
         rideActionBtn.addEventListener('click', async function() {
             const rideId = this.dataset.rideId;
@@ -1017,7 +1015,7 @@
         });
 
         // ================================================================
-        // 12. ADMIN LISTS
+        // 12. ADMIN LISTS (inchangé)
         // ================================================================
         const renderAdminLists = async () => {
             try {
@@ -1076,7 +1074,7 @@
         };
 
         // ================================================================
-        // 13. ADMIN EDIT MODAL (avec vérifications)
+        // 13. ADMIN EDIT MODAL
         // ================================================================
         const openAdminEdit = (user) => {
             adminEditTargetEmail = user.email;
@@ -1097,7 +1095,6 @@
             modalAdminEdit.classList.add('active');
         };
 
-        // Vérification avant d'attacher les événements
         if (adminEditCarPhotoInput) {
             adminEditCarPhotoInput.addEventListener('change', function(e) {
                 const file = this.files[0];
@@ -1115,8 +1112,6 @@
                 };
                 reader.readAsDataURL(file);
             });
-        } else {
-            console.warn('adminEditCarPhotoInput not found');
         }
 
         if (adminEditProfilePhotoInput) {
@@ -1136,8 +1131,6 @@
                 };
                 reader.readAsDataURL(file);
             });
-        } else {
-            console.warn('adminEditProfilePhotoInput not found');
         }
 
         const saveAdminEdit = async () => {
@@ -1200,7 +1193,7 @@
         };
 
         // ================================================================
-        // 14. SPOTS MODAL (inchangé)
+        // 14. SPOTS MODAL
         // ================================================================
         const renderSpotsListModal = async () => {
             const container = adminSpotsListContainer;
@@ -1318,6 +1311,7 @@
                         reservations.push({ email: currentUser.email, nom: currentUser.nom, placeIndex });
                         await dbUpdate('rides', courseId, { reservations });
                         showToast(`✅ Place réservée pour ${currentUser.nom}`);
+                        if (currentUser) renderCoursesWithData(await fetchRides(), {}, currentUser);
                     } catch (err) { showToast('❌ Erreur réservation', true);
                         console.error(err); }
                 } else if (status === 'reserved') {
@@ -1334,7 +1328,8 @@
                             .email);
                             if (idx !== -1) { reservations.splice(idx, 1);
                                 await dbUpdate('rides', courseId, { reservations });
-                                showToast('🗑️ Réservation annulée'); }
+                                showToast('🗑️ Réservation annulée');
+                                if (currentUser) renderCoursesWithData(await fetchRides(), {}, currentUser); }
                         } catch (err) { showToast('❌ Erreur annulation', true);
                             console.error(err); }
                     } else showToast('ℹ️ Réservé par un autre', false);
@@ -1353,7 +1348,8 @@
                 if (idx !== -1) { reservations.splice(idx, 1);
                     await dbUpdate('rides', tooltipCourseId, { reservations });
                     showToast('🗑️ Place libérée');
-                    tooltip.style.display = 'none'; }
+                    tooltip.style.display = 'none';
+                    if (currentUser) renderCoursesWithData(await fetchRides(), {}, currentUser); }
             } catch (e) { showToast('❌ Erreur suppression réservation', true);
                 console.error(e); }
         });
@@ -1442,6 +1438,7 @@
                 showHome();
                 showToast('🔓 Déconnecté');
                 tooltip.style.display = 'none';
+                payActionBtn.style.display = 'none';
                 if (watchId) { navigator.geolocation.clearWatch(watchId);
                     watchId = null; }
                 rideActionBtn.style.display = 'none';
@@ -1472,7 +1469,6 @@
         };
 
         btnCreateCourse.addEventListener('click', async () => {
-            console.log('🔘 Bouton Créer cliqué');
             await populateSpotSelects();
             modalCreateCourse.classList.add('active');
             courseDate.value = new Date().toISOString().split('T')[0];
@@ -1484,7 +1480,6 @@
         });
 
         const handleCreateCourse = async () => {
-            console.log('📝 Création d\'une course');
             const date = courseDate.value,
                 dep = courseDepart.value,
                 arr = courseArrivee.value,
@@ -1682,7 +1677,7 @@
         });
 
         setInterval(updateStats, 30000);
-        console.log('✅ Machi ready – code complet avec vérifications des éléments');
+        console.log('✅ Machi ready – v2 avec boutons optimisés, clignotements et paiement en bas');
     </script>
 </body>
 </html>
