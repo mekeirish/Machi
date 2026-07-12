@@ -14,7 +14,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
     <style>
-        /* --- STYLES --- */
+        /* --- STYLES (inchangés) --- */
         *{margin:0;padding:0;box-sizing:border-box}
         body{font-family:'Inter',sans-serif;min-height:100vh;background:#0a0d1a;display:flex;align-items:center;justify-content:center;padding:.5rem;position:relative}
         .glass-card,#mainInterface{background:rgba(20,25,45,.6);backdrop-filter:blur(12px) saturate(160%);-webkit-backdrop-filter:blur(12px) saturate(160%);border:1px solid rgba(255,255,255,.08);border-radius:1.5rem;padding:1rem .6rem;width:100%;max-width:480px;transition:opacity .3s ease}
@@ -108,6 +108,7 @@
         .rating-modal textarea{width:100%;padding:.4rem;border-radius:40px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:#e8f0ff;resize:vertical;min-height:60px}
         .cancel-ride-btn{margin-top:.3rem;font-size:.7rem;padding:.2rem .8rem;background:#ff4444;color:#fff;border:none;border-radius:40px;cursor:pointer;transition:background .2s;margin-left:.3rem}
         .cancel-ride-btn:hover{background:#ff6666}
+        #toggleHistoryBtn { display: none; width: 100%; margin-bottom: 0.5rem; }
     </style>
 </head>
 <body>
@@ -135,6 +136,8 @@
         <h2 id="welcomeMessage" class="text-base font-semibold text-cyan-200 mb-0.5">Bienvenue</h2>
         <hr class="border-white/5 my-1.5" />
         <div id="mainContent">
+            <!-- BOUTON HISTORIQUE (pour chauffeur) -->
+            <button id="toggleHistoryBtn" class="btn-led">📜 Voir historique</button>
             <div id="coursesContainer">
                 <p class="text-slate-500 text-center text-xs" id="noCoursesMsg">Aucune course pour le moment.</p>
                 <div id="coursesList" class="courses-list"></div>
@@ -154,7 +157,7 @@
     <button id="rideActionBtn" class="ride-action-btn"></button>
     <button id="payActionBtn" class="pay-btn-bottom">💰 Payer</button>
 
-    <!-- MODALES (inchangées) -->
+    <!-- MODALES -->
     <div id="modalAdminEdit" class="modal-overlay">
         <div class="modal-content">
             <h2 class="text-base font-semibold text-center text-cyan-200 mb-2">✏️ Modifier l'utilisateur</h2>
@@ -353,7 +356,8 @@
             ratingStarsContainer = $('ratingStarsContainer'),
             ratingComment = $('ratingComment'),
             btnSubmitRating = $('btnSubmitRating'),
-            btnCancelRating = $('btnCancelRating');
+            btnCancelRating = $('btnCancelRating'),
+            toggleHistoryBtn = $('toggleHistoryBtn'); // NOUVEAU
 
         // ================================================================
         // 3. STATE
@@ -368,7 +372,8 @@
             ridesUnsubscribe = null,
             usersUnsubscribe = null,
             selectedRating = 0,
-            ratingRideId = null;
+            ratingRideId = null,
+            showHistory = false; // NOUVEAU pour l'historique
 
         // ================================================================
         // 4. UTILITY FUNCTIONS
@@ -423,6 +428,8 @@
             creditsBadge.textContent = `🪙 ${user.credits || 0}`;
             btnCreateCourse.style.display = 'none';
             payActionBtn.style.display = 'none';
+            // Afficher le bouton d'historique seulement si chauffeur
+            toggleHistoryBtn.style.display = (user.role === 'chauffeur') ? 'inline-block' : 'none';
             if (user.role === 'admin') {
                 coursesContainer.style.display = 'none';
                 adminPanel.style.display = 'block';
@@ -505,7 +512,6 @@
                 const refundAmount = ride.prix || 0;
                 const batch = db.batch();
 
-                // Rembourser ceux qui ont payé
                 for (const email of passengersPaid) {
                     const userRef = db.collection('users').doc(email);
                     const userDoc = await userRef.get();
@@ -515,7 +521,6 @@
                     }
                 }
 
-                // Si le chauffeur a encaissé, on déduit
                 if (ride.driverCollected && ride.chauffeurEmail) {
                     const driverRef = db.collection('users').doc(ride.chauffeurEmail);
                     const driverDoc = await driverRef.get();
@@ -526,17 +531,14 @@
                     }
                 }
 
-                // Mettre à jour le statut de la course
                 const rideRef = db.collection('rides').doc(rideId);
                 batch.update(rideRef, { status: 'canceled', canceledAt: new Date().toISOString() });
 
                 await batch.commit();
 
-                // Notifier les passagers via toast (on le fait côté client)
                 const msg = `🚫 Trajet annulé ! ${passengersReserved.length} passagers notifiés. ${passengersPaid.length > 0 ? 'Remboursements effectués.' : ''}`;
                 showToast(msg, false);
 
-                // Rafraîchir les données
                 if (currentUser) renderCoursesWithData(await fetchRides(), {}, currentUser);
             } catch (e) {
                 showToast('❌ Erreur lors de l\'annulation: ' + e.message, true);
@@ -601,10 +603,21 @@
 
             console.log('🧾 renderCoursesWithData appelé pour', user.email, 'rôle:', user.role);
 
-            // Filtrer les annulés pour l'affichage
-            let ridesToShow = rides.filter(r => r.status !== 'canceled');
+            // ---- FILTRAGE DES COURSES ----
+            const historyRides = rides.filter(r => r.status === 'canceled' || r.status === 'completed');
+            const activeRides = rides.filter(r => r.status !== 'canceled' && r.status !== 'completed');
+
+            let ridesToShow = [];
             if (user.role === 'chauffeur') {
+                // Affichage du bouton d'historique
+                toggleHistoryBtn.style.display = 'inline-block';
+                toggleHistoryBtn.textContent = showHistory ? '📅 Voir courses actives' : '📜 Voir historique';
+                ridesToShow = showHistory ? historyRides : activeRides;
                 ridesToShow = ridesToShow.filter(r => r.chauffeurEmail === user.email);
+            } else {
+                // Pour les passagers : pas d'historique, que les actives
+                toggleHistoryBtn.style.display = 'none';
+                ridesToShow = activeRides;
             }
 
             console.log('📊 Nombre de courses affichées:', ridesToShow.length);
@@ -613,7 +626,7 @@
             let hasActive = false;
             if (user.role === 'chauffeur') {
                 const now = new Date();
-                for (const r of ridesToShow) {
+                for (const r of activeRides) {
                     if (r.date && r.heure) {
                         const rideDate = new Date(r.date + 'T' + r.heure);
                         if (rideDate > now && !r.completed && r.status !== 'canceled') {
@@ -638,12 +651,14 @@
                 for (const r of ridesToShow) {
                     if (r.date && r.heure) {
                         const rideDate = new Date(r.date + 'T' + r.heure);
-                        if (rideDate > now && !r.completed) {
+                        if (rideDate > now && !r.completed && r.status !== 'canceled' && r.status !== 'completed') {
                             if (r.status === 'created') rideForAction = { ride: r, action: 'load' };
                             else if (r.status === 'loading' && !r.started) rideForAction = { ride: r, action: 'start' };
-                            else if (r.status === 'started') { /* arrival detection by watch */ }
-                            else if (r.status === 'arrived' && !r.driverCollected) rideForAction = { ride: r,
-                                action: 'collect' };
+                            else if (r.status === 'started') {
+                                // NOUVEAU : bouton "Je suis arrivé"
+                                rideForAction = { ride: r, action: 'arrive' };
+                            }
+                            else if (r.status === 'arrived' && !r.driverCollected) rideForAction = { ride: r, action: 'collect' };
                             activeRide = r;
                             break;
                         }
@@ -661,6 +676,9 @@
                 } else if (rideForAction.action === 'start') {
                     rideActionBtn.textContent = '🚀 Commencer';
                     rideActionBtn.className = 'ride-action-btn secondary';
+                } else if (rideForAction.action === 'arrive') {
+                    rideActionBtn.textContent = '📍 Je suis arrivé';
+                    rideActionBtn.className = 'ride-action-btn';
                 } else if (rideForAction.action === 'collect') {
                     rideActionBtn.textContent = '💰 Encaisser';
                     rideActionBtn.className = 'ride-action-btn';
@@ -669,7 +687,7 @@
                 rideActionBtn.style.display = 'none';
             }
 
-            // Géolocalisation pour l'arrivée
+            // Géolocalisation pour l'arrivée (toujours active pour auto-détection)
             if (user.role === 'chauffeur' && activeRide && activeRide.status === 'started' && activeRide.arriveeLat && activeRide
                 .arriveeLon) {
                 if (!watchId) {
@@ -695,12 +713,10 @@
 
             // ---- Rendu des cartes ----
             coursesList.innerHTML = '';
-            // Afficher aussi les trajets annulés pour info (mais avec style différent)
-            const allRidesToShow = rides.filter(r => r.status === 'canceled' && (user.role === 'chauffeur' ? r.chauffeurEmail ===
-                user.email : true));
-            const allRides = [...ridesToShow, ...allRidesToShow];
+            // Afficher aussi les trajets annulés s'ils font partie de ridesToShow (historique)
+            const allRidesToShow = ridesToShow;
 
-            if (!allRides.length) {
+            if (!allRidesToShow.length) {
                 noCoursesMsg.style.display = 'block';
                 coursesList.style.display = 'none';
                 return;
@@ -709,11 +725,12 @@
             coursesList.style.display = 'flex';
 
             const now = new Date();
-            for (const course of allRides) {
+            for (const course of allRidesToShow) {
                 const chauffeur = userMap[course.chauffeurEmail] || {};
                 const carPhoto = chauffeur.photoURL || null;
                 const profilePhoto = chauffeur.profilePhotoURL || null;
                 const isCanceled = course.status === 'canceled';
+                const isCompleted = course.status === 'completed';
 
                 const card = document.createElement('div');
                 card.className = 'course-card';
@@ -728,7 +745,7 @@
 
                 // Info ligne
                 let temps = '';
-                if (!isCanceled && course.date && course.heure) {
+                if (!isCanceled && !isCompleted && course.date && course.heure) {
                     const rideDate = new Date(course.date + 'T' + course.heure);
                     const diffMs = rideDate - now;
                     if (diffMs > 0) {
@@ -746,7 +763,9 @@
                 const total = course.places + 1;
                 const reserved = (course.reservations || []).length;
                 const avail = Math.max(0, course.places - reserved);
-                const placesTxt = !isCanceled ? ` (${avail} place${avail>1?'s':''} restante${avail>1?'s':''})` : ' (annulé)';
+                let placesTxt = !isCanceled && !isCompleted ? ` (${avail} place${avail>1?'s':''} restante${avail>1?'s':''})` : '';
+                if (isCanceled) placesTxt = ' (annulé)';
+                if (isCompleted) placesTxt = ' (terminé)';
 
                 const info = document.createElement('div');
                 info.className = 'course-info';
@@ -758,7 +777,7 @@
                 dateheure.className = 'dateheure';
                 dateheure.textContent = `📅 ${course.date || ''} 🕐 ${course.heure || ''}`;
                 info.appendChild(dateheure);
-                if (temps && !isCanceled) { const ts = document.createElement('span');
+                if (temps && !isCanceled && !isCompleted) { const ts = document.createElement('span');
                     ts.className = 'temps-restant';
                     ts.textContent = temps;
                     info.appendChild(ts); }
@@ -775,11 +794,18 @@
                     badge.className = 'cancel-badge';
                     badge.textContent = '❌ ANNULÉ';
                     info.appendChild(badge);
+                } else if (isCompleted) {
+                    const badge = document.createElement('span');
+                    badge.className = 'cancel-badge';
+                    badge.textContent = '✅ TERMINÉ';
+                    badge.style.color = '#00cc44';
+                    badge.style.background = 'rgba(0,204,68,0.15)';
+                    info.appendChild(badge);
                 }
                 card.appendChild(info);
 
-                // Sièges (uniquement pour les trajets non annulés)
-                if (!isCanceled) {
+                // Sièges (uniquement pour les trajets non annulés et non terminés)
+                if (!isCanceled && !isCompleted) {
                     const row = document.createElement('div');
                     row.className = 'course-row';
                     const grid = document.createElement('div');
@@ -824,12 +850,8 @@
                             seat.dataset.status = 'reserved';
                             seat.dataset.reservedEmail = s.email;
                             seat.dataset.reservedNom = s.nom;
-                            // Si le passager connecté a réservé et que le trajet est en mode loading, afficher le bouton payer en bas
                             if (course.status === 'loading' && !passengersPaid.includes(s.email) && currentUser && currentUser
                                 .email === s.email) {
-                                // On stocke les infos pour le bouton de paiement flottant
-                                // On ne crée pas de bouton sur le carreau, on utilise le bouton flottant
-                                // On le déclenche via un événement sur le carreau
                                 seat.dataset.payable = 'true';
                                 seat.dataset.rideId = course.id;
                                 seat.dataset.placeIndex = idx;
@@ -888,8 +910,7 @@
                 }
 
                 // Bouton Annuler (pour chauffeur, sur trajets non annulés et non terminés)
-                if (user.role === 'chauffeur' && course.chauffeurEmail === user.email && !isCanceled && course.status !==
-                    'completed') {
+                if (user.role === 'chauffeur' && course.chauffeurEmail === user.email && !isCanceled && !isCompleted) {
                     const cancelBtn = document.createElement('button');
                     cancelBtn.className = 'cancel-ride-btn';
                     cancelBtn.textContent = '❌ Annuler';
@@ -917,7 +938,7 @@
         }
 
         // ================================================================
-        // 10. RATING MODAL
+        // 10. RATING MODAL (inchangé)
         // ================================================================
         function openRatingModal(rideId) {
             ratingRideId = rideId;
@@ -977,7 +998,7 @@
         });
 
         // ================================================================
-        // 11. RIDE ACTION BUTTON (Charger / Commencer / Encaisser)
+        // 11. RIDE ACTION BUTTON (Charger / Commencer / Arrivé / Encaisser)
         // ================================================================
         rideActionBtn.addEventListener('click', async function() {
             const rideId = this.dataset.rideId;
@@ -994,6 +1015,10 @@
                 } else if (action.includes('Commencer')) {
                     await dbUpdate('rides', rideId, { status: 'started', started: true, startedAt: new Date().toISOString() });
                     showToast('🚀 Trajet démarré');
+                    rideActionBtn.style.display = 'none';
+                } else if (action.includes('arrivé')) { // NOUVEAU
+                    await dbUpdate('rides', rideId, { status: 'arrived' });
+                    showToast('📍 Arrivée déclarée, vous pouvez encaisser maintenant');
                     rideActionBtn.style.display = 'none';
                 } else if (action.includes('Encaisser')) {
                     const passengersPaid = ride.passengersPaid || [];
@@ -1074,7 +1099,7 @@
         };
 
         // ================================================================
-        // 13. ADMIN EDIT MODAL
+        // 13. ADMIN EDIT MODAL (inchangé)
         // ================================================================
         const openAdminEdit = (user) => {
             adminEditTargetEmail = user.email;
@@ -1193,7 +1218,7 @@
         };
 
         // ================================================================
-        // 14. SPOTS MODAL
+        // 14. SPOTS MODAL (inchangé)
         // ================================================================
         const renderSpotsListModal = async () => {
             const container = adminSpotsListContainer;
@@ -1355,7 +1380,7 @@
         });
 
         // ================================================================
-        // 16. TOGGLE ADMIN LISTS
+        // 16. TOGGLE ADMIN LISTS (inchangé)
         // ================================================================
         const toggleList = (el) => {
             if (el.style.display === 'block') el.style.display = 'none';
@@ -1369,7 +1394,7 @@
         btnAdminSpots.addEventListener('click', openSpotsModal);
 
         // ================================================================
-        // 17. AUTH HANDLERS
+        // 17. AUTH HANDLERS (inchangé)
         // ================================================================
         const handleLogin = async () => {
             const email = loginEmail.value.trim(),
@@ -1451,7 +1476,7 @@
         };
 
         // ================================================================
-        // 18. CREATE COURSE
+        // 18. CREATE COURSE (inchangé)
         // ================================================================
         const populateSpotSelects = async () => {
             const spots = await fetchSpots();
@@ -1528,7 +1553,7 @@
         };
 
         // ================================================================
-        // 19. STATS
+        // 19. STATS (inchangé)
         // ================================================================
         const updateStats = async () => {
             try { const snap = await dbGet('users');
@@ -1537,7 +1562,7 @@
         };
 
         // ================================================================
-        // 20. SESSION
+        // 20. SESSION (inchangé)
         // ================================================================
         auth.onAuthStateChanged(async (user) => {
             if (user) {
@@ -1567,7 +1592,7 @@
         });
 
         // ================================================================
-        // 21. SEED DEMO USERS
+        // 21. SEED DEMO USERS (inchangé)
         // ================================================================
         (async () => {
             const demos = [
@@ -1593,7 +1618,7 @@
         })();
 
         // ================================================================
-        // 22. REAL-TIME RIDES SETUP
+        // 22. REAL-TIME RIDES SETUP (inchangé)
         // ================================================================
         function setupRealtimeRides(user) {
             if (ridesUnsubscribe) { ridesUnsubscribe();
@@ -1676,8 +1701,44 @@
             }
         });
 
+        // ================================================================
+        // 24. NOUVEAU : GESTION DE LA BULLE D'INFO (Tooltip)
+        // ================================================================
+        tooltip.addEventListener('click', function(e) {
+            e.stopPropagation();
+            this.style.display = 'none';
+        });
+
+        document.addEventListener('click', function(e) {
+            if (tooltip.style.display === 'flex') {
+                const isSeatReserved = e.target.closest('.seat.reserved');
+                if (!tooltip.contains(e.target) && !isSeatReserved) {
+                    tooltip.style.display = 'none';
+                }
+            }
+        });
+
+        // ================================================================
+        // 25. NOUVEAU : BOUTON HISTORIQUE (toggle)
+        // ================================================================
+        toggleHistoryBtn.addEventListener('click', function() {
+            showHistory = !showHistory;
+            // Recharger les données pour mettre à jour l'affichage
+            if (currentUser) {
+                db.collection('rides').get().then(snapshot => {
+                    const rides = [];
+                    snapshot.forEach(doc => rides.push({ id: doc.id, ...doc.data() }));
+                    fetchUsers().then(users => {
+                        const userMap = {};
+                        users.forEach(u => userMap[u.email] = u);
+                        renderCoursesWithData(rides, userMap, currentUser);
+                    });
+                }).catch(err => console.error(err));
+            }
+        });
+
         setInterval(updateStats, 30000);
-        console.log('✅ Machi ready – v2 avec boutons optimisés, clignotements et paiement en bas');
+        console.log('✅ Machi ready – v3 avec historique, tooltip amélioré et bouton "Je suis arrivé"');
     </script>
 </body>
 </html>
