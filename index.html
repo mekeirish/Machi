@@ -110,23 +110,7 @@
         .cancel-ride-btn:hover{background:#ff6666}
         #toggleHistoryBtn { display: none; width: 100%; margin-bottom: 0.5rem; }
 
-        /* ===== CONSOLE DEBUG ===== */
-        #debugConsole {
-            position: fixed;
-            bottom: 0; left: 0; right: 0;
-            height: 45vh;
-            background: rgba(5, 8, 18, 0.97);
-            backdrop-filter: blur(12px);
-            border-top: 2px solid #00d4cc;
-            color: #c0fff0;
-            font-family: 'Courier New', monospace;
-            font-size: 11px;
-            z-index: 9999;
-            display: none;
-            flex-direction: column;
-            transform: translateY(100%);
-            transition: transform 0.3s ease;
-        }
+        #debugConsole { position: fixed; bottom: 0; left: 0; right: 0; height: 45vh; background: rgba(5, 8, 18, 0.97); backdrop-filter: blur(12px); border-top: 2px solid #00d4cc; color: #c0fff0; font-family: 'Courier New', monospace; font-size: 11px; z-index: 9999; display: none; flex-direction: column; transform: translateY(100%); transition: transform 0.3s ease; }
         #debugConsole.open { display: flex; transform: translateY(0); }
         #debugConsole .dbg-header { display: flex; justify-content: space-between; align-items: center; padding: 6px 10px; background: rgba(0, 212, 204, 0.1); border-bottom: 1px solid rgba(0, 212, 204, 0.3); flex-shrink: 0; }
         #debugConsole .dbg-title { color: #00d4cc; font-weight: 700; font-size: 12px; }
@@ -151,7 +135,6 @@
 </head>
 <body>
 
-    <!-- ÉCRAN DE CHARGEMENT -->
     <div id="loadingScreen" class="glass-card">
         <h1 class="text-xl font-bold text-center text-cyan-200 mb-0.5">Machi</h1>
         <p class="text-center text-slate-400 text-xs mb-4 tracking-wider">⚡ mobilité en circuit fermé</p>
@@ -161,7 +144,6 @@
         </div>
     </div>
 
-    <!-- INTERFACE PRINCIPALE -->
     <div id="mainInterface">
         <div class="header-actions">
             <div class="text-slate-400 text-xs truncate" id="userRoleBadge">Rôle : —</div>
@@ -192,7 +174,6 @@
         </div>
     </div>
 
-    <!-- BOUTONS FLOTTANTS -->
     <button id="rideActionBtn" class="ride-action-btn"></button>
     <button id="payActionBtn" class="pay-btn-bottom">💰 Payer</button>
 
@@ -267,6 +248,10 @@
                 <button id="btnAdminEditSave" class="btn-led btn-validate flex-1">💾 Enregistrer</button>
                 <button id="btnAdminEditCancel" class="btn-led btn-cancel flex-1">✖ Annuler</button>
             </div>
+
+            <button id="btnAdminEditResetEmail" class="btn-led" style="width:100%; margin-top:.5rem; background:rgba(255,215,0,.15); border-color:rgba(255,215,0,.3); color:#ffd700;">
+                📧 Réinitialiser par email
+            </button>
 
             <button id="btnAdminEditDelete" class="btn-led" style="width:100%; margin-top:.5rem; background:rgba(255,70,70,.18); border-color:rgba(255,70,70,.4); color:#ff8080; font-weight:700;">
                 🗑️ Supprimer cet utilisateur
@@ -347,7 +332,6 @@
 
     <div id="toast" class="toast"></div>
 
-    <!-- CONSOLE DEBUG -->
     <button id="debugToggle">🐞 Console <span id="debugBadge" style="display:none;">●</span></button>
     <div id="debugConsole">
         <div class="dbg-header">
@@ -669,6 +653,75 @@
             const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
             return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         };
+
+        // ================================================================
+        // 🔑 HELPER ROBUSTE : changement de mot de passe Firebase Auth
+        // ================================================================
+        async function updateAuthPassword(email, oldPassword, newPassword) {
+            try { await secondaryAuth.signOut(); } catch(_) {}
+
+            // Cas 1 : pas d'ancien mdp connu
+            if (!oldPassword) {
+                try {
+                    await secondaryAuth.createUserWithEmailAndPassword(email, newPassword);
+                    await secondaryAuth.signOut();
+                    console.log('✅ Compte Auth créé (n\'existait pas)');
+                    return { success: true };
+                } catch (e) {
+                    if (e.code === 'auth/email-already-in-use') {
+                        return { success: false, error: 'NO_OLD_PASSWORD' };
+                    }
+                    return { success: false, error: e.code || e.message };
+                }
+            }
+
+            // Cas 2 : on a l'ancien mdp → tentative de connexion secondaire
+            let cred;
+            try {
+                console.log('🔐 Sign-in secondaire avec ancien mdp...');
+                cred = await secondaryAuth.signInWithEmailAndPassword(email, oldPassword);
+            } catch (e) {
+                if (e.code === 'auth/wrong-password' || e.code === 'auth/invalid-login-credentials' || e.code === 'auth/invalid-credential') {
+                    return { success: false, error: 'OLD_PASSWORD_MISMATCH' };
+                }
+                if (e.code === 'auth/user-not-found') {
+                    try {
+                        await secondaryAuth.createUserWithEmailAndPassword(email, newPassword);
+                        await secondaryAuth.signOut();
+                        console.log('✅ Compte Auth créé (n\'existait pas)');
+                        return { success: true };
+                    } catch (e2) {
+                        return { success: false, error: e2.code || e2.message };
+                    }
+                }
+                if (e.code === 'auth/too-many-requests') {
+                    return { success: false, error: 'Trop de tentatives, attends 1 min' };
+                }
+                return { success: false, error: e.code || e.message };
+            }
+
+            // Cas 3 : mise à jour du mdp
+            try {
+                console.log('🔑 updatePassword...');
+                await cred.user.updatePassword(newPassword);
+                await secondaryAuth.signOut();
+            } catch (e) {
+                try { await secondaryAuth.signOut(); } catch(_) {}
+                return { success: false, error: e.code || e.message };
+            }
+
+            // Cas 4 : vérification par reconnexion
+            try {
+                const testCred = await secondaryAuth.signInWithEmailAndPassword(email, newPassword);
+                await testCred.user.reload();
+                await secondaryAuth.signOut();
+                console.log('✅ Vérification OK : nouveau mdp fonctionne');
+            } catch (e) {
+                console.warn('⚠️ Vérification échouée :', e.code, '(délai de propagation possible)');
+            }
+
+            return { success: true };
+        }
 
         // ================================================================
         // 7. ANNULATION COURSE
@@ -1156,7 +1209,6 @@
             hideLoader(btn, orig);
         });
 
-        // 🎲 Générer un mot de passe
         document.getElementById('btnGenPassword').addEventListener('click', () => {
             const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
             let pwd = '';
@@ -1164,7 +1216,6 @@
             document.getElementById('newUserPassword').value = pwd;
         });
 
-        // 📋 Copier les identifiants
         document.getElementById('btnCopyCredentials').addEventListener('click', async () => {
             const email = document.getElementById('createdEmail').textContent;
             const pwd = document.getElementById('createdPassword').textContent;
@@ -1210,14 +1261,12 @@
             modalAdminEdit.classList.add('active');
         };
 
-        // 👁️ Toggle affichage mot de passe
         document.getElementById('btnTogglePassword').addEventListener('click', () => {
             const input = document.getElementById('adminEditPassword');
             input.type = input.type === 'password' ? 'text' : 'password';
             document.getElementById('btnTogglePassword').textContent = input.type === 'password' ? '👁️' : '🙈';
         });
 
-        // 📋 Copier mot de passe
         document.getElementById('btnCopyPassword').addEventListener('click', async () => {
             const pwd = document.getElementById('adminEditPassword').value;
             if (!pwd) return showToast('⚠️ Aucun mot de passe stocké', true);
@@ -1259,6 +1308,9 @@
             });
         }
 
+        // ================================================================
+        // 💾 SAVE ADMIN EDIT (avec changement mdp robuste)
+        // ================================================================
         const saveAdminEdit = async () => {
             if (!adminEditTargetEmail) return showToast('⚠️ Aucun utilisateur', true);
             const nom = adminEditNom.value.trim();
@@ -1272,35 +1324,45 @@
 
             const btn = btnAdminEditSave, orig = btn.textContent;
             showLoader(btn);
+
             try {
                 const oldDoc = await dbGet('users', adminEditTargetEmail);
-                const oldPassword = oldDoc.exists ? (oldDoc.data().password || null) : null;
+                const oldData = oldDoc.exists ? oldDoc.data() : {};
+                const oldPassword = oldData.password || null;
+                const updateData = { nom, telephone: tel, credits, role };
 
-                let authPasswordUpdated = false;
-                if (newPassword && oldPassword && newPassword !== oldPassword) {
-                    try {
-                        console.log('🔑 Mise à jour mot de passe Auth pour', adminEditTargetEmail);
-                        const cred = await secondaryAuth.signInWithEmailAndPassword(adminEditTargetEmail, oldPassword);
-                        await cred.user.updatePassword(newPassword);
-                        await secondaryAuth.signOut();
-                        authPasswordUpdated = true;
-                        console.log('✅ Mot de passe Auth mis à jour');
-                    } catch (e) {
-                        console.warn('⚠️ Échec mise à jour Auth:', e.code, e.message);
-                        if (e.code === 'auth/wrong-password' || e.code === 'auth/invalid-login-credentials') {
-                            showToast('⚠️ Ancien mot de passe Firestore invalide → Auth non modifié', true);
-                        } else if (e.code === 'auth/too-many-requests') {
-                            showToast('⚠️ Trop de tentatives, réessayez plus tard', true);
+                // 🔑 Changement de mot de passe demandé ?
+                if (newPassword && newPassword !== oldPassword) {
+                    console.log('🔑 Changement mdp demandé pour', adminEditTargetEmail);
+                    console.log('   Ancien mdp (Firestore) :', oldPassword ? 'présent' : 'ABSENT');
+
+                    const res = await updateAuthPassword(adminEditTargetEmail, oldPassword, newPassword);
+
+                    if (!res.success) {
+                        console.error('❌ Échec Auth :', res.error);
+                        let userMsg = '❌ Échec changement de mot de passe';
+                        if (res.error === 'NO_OLD_PASSWORD') {
+                            userMsg = '❌ Ancien mot de passe inconnu. Utilise "📧 Réinitialiser par email".';
+                        } else if (res.error === 'OLD_PASSWORD_MISMATCH') {
+                            userMsg = '❌ Ancien mot de passe ne correspond pas à Firebase. Utilise "📧 Réinitialiser par email".';
+                        } else if (res.error === 'USER_NOT_FOUND') {
+                            userMsg = '❌ Compte Firebase Auth introuvable pour cet email.';
                         } else {
-                            showToast('⚠️ Firestore mis à jour, mais Auth non modifié', true);
+                            userMsg = '❌ Erreur Auth : ' + res.error;
                         }
+                        showToast(userMsg, true);
+                        hideLoader(btn, orig);
+                        return; // On n'enregistre RIEN dans Firestore pour rester cohérent
                     }
+
+                    console.log('✅ Mot de passe Auth mis à jour et vérifié');
+                    updateData.password = newPassword;
                 }
 
-                const updateData = { nom, telephone: tel, credits, role };
-                if (newPassword) updateData.password = newPassword;
+                // Mise à jour Firestore
                 await dbUpdate('users', adminEditTargetEmail, updateData);
 
+                // Photos Cloudinary
                 let carURL = null, profURL = null;
                 const uploadToCloudinary = async (blob, filename) => {
                     const fd = new FormData();
@@ -1328,13 +1390,7 @@
                     creditsBadge.textContent = `🪙 ${credits}`;
                 }
 
-                if (newPassword && !authPasswordUpdated && oldPassword) {
-                    showToast('✅ Firestore OK — Auth non modifié (voir console)', true);
-                } else if (newPassword && !oldPassword) {
-                    showToast('✅ Firestore OK — (ancien mdp inconnu, Auth non modifié)', true);
-                } else {
-                    showToast('✅ Utilisateur mis à jour');
-                }
+                showToast('✅ Utilisateur mis à jour');
                 closeModal(modalAdminEdit);
                 renderAdminLists();
             } catch (e) {
@@ -1347,7 +1403,25 @@
         btnAdminEditCancel.addEventListener('click', () => closeModal(modalAdminEdit));
         modalAdminEdit.addEventListener('click', (e) => { if (e.target === modalAdminEdit) closeModal(modalAdminEdit); });
 
-        // 🗑️ Suppression d'un utilisateur
+        // 📧 Reset par email
+        document.getElementById('btnAdminEditResetEmail').addEventListener('click', async function() {
+            if (!adminEditTargetEmail) return showToast('⚠️ Aucun utilisateur', true);
+            if (!confirm(`Envoyer un lien de réinitialisation à ${adminEditTargetEmail} ?\n\nL'utilisateur recevra un email pour choisir un nouveau mot de passe.`)) return;
+
+            const btn = this, orig = btn.textContent;
+            showLoader(btn);
+            try {
+                console.log('📧 Envoi reset email à', adminEditTargetEmail);
+                await auth.sendPasswordResetEmail(adminEditTargetEmail);
+                showToast('✅ Email envoyé à ' + adminEditTargetEmail);
+            } catch (e) {
+                showToast('❌ ' + (e.code || e.message), true);
+                console.error(e);
+            }
+            hideLoader(btn, orig);
+        });
+
+        // 🗑️ Suppression
         document.getElementById('btnAdminEditDelete').addEventListener('click', async function() {
             if (!adminEditTargetEmail) return showToast('⚠️ Aucun utilisateur', true);
             if (currentUser && currentUser.email === adminEditTargetEmail) {
@@ -1736,7 +1810,7 @@
             }
         });
 
-        console.log('✅ Machi v7 – admin peut voir mdp + supprimer utilisateur');
+        console.log('✅ Machi v8 – fix changement de mot de passe Auth');
     </script>
 </body>
 </html>
